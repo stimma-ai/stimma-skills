@@ -1,0 +1,126 @@
+---
+name: parameter-grid
+display_name: Parameter Grid
+description: Generate structured comparison grids by sweeping parameters systematically
+author: system
+tags: [grid, sweep, comparison, lora, parameters]
+---
+
+# Parameter Grid
+
+Generate structured comparison grids by sweeping one or more parameters across a matrix of generations. The output is always a `.stimmagrid.json` with labeled rows and columns.
+
+## Workflow — THREE DISTINCT STEPS
+
+This workflow has three steps that MUST happen in separate turns. Never combine steps 1+2 or 2+3 in the same turn.
+
+### Step 1. Gather information
+
+Use `list_tools`, `get_schema`, `search_options`, and `ask_user` to gather what you need. This is the ONLY step where `ask_user` is allowed.
+
+### Step 2. Present the plan — MANDATORY GATE
+
+**After gathering information, you MUST present a plan and wait for the user to approve it before generating.**
+
+Rules for this step:
+- **Do NOT call any tools** — no `run_code`, no `call_tool`, no `ask_user`. Output only a text message.
+- **Answering your questions in step 1 is NOT plan approval.** You must still present the plan and get explicit approval.
+- After outputting the plan, **end your turn and wait**. Do not continue.
+
+Your plan message must contain ALL of the following:
+
+1. **Grid dimensions**: e.g. "8 rows × 8 columns = 64 images"
+2. **Row values**: List every row label and what it represents
+3. **Column values**: List every column label and what it represents
+4. **Prompt template**: Show the actual prompt template with placeholders, e.g. `"A close-up portrait of {subject}, {expression}, natural lighting, 85mm lens"`
+5. **Constants**: Tool, seed strategy, shared prompt elements
+6. **End with**: "Does this look right, or would you like to adjust anything?"
+
+**Example plan message:**
+
+> Here's the plan:
+>
+> **8 × 8 grid** (64 images) using `comfyui:flux-klein-9b`
+>
+> **Rows** (subjects): elderly Japanese woman, young Middle-Eastern man, ...
+> **Columns** (expressions): warm smile, belly laugh, joyful surprise, ...
+>
+> **Prompt template**: `"A close-up portrait of {subject}, {expression}, natural lighting, shallow depth of field, 85mm lens"`
+>
+> **Seed**: One fixed seed per row, constant across columns
+>
+> Does this look right, or would you like to adjust anything?
+
+If the user asks for changes, revise and re-present the plan (still no tools). Only move to step 3 when the user says something affirmative like "looks good", "go", "yes", etc.
+
+### 3. Generate and assemble
+
+After user approval, write a single `run_code` block that generates all images and assembles the grid. Follow the reference example below — it covers the complete pattern including path construction, generation order, and assembly.
+
+## Reference example
+
+This example compares LoRA training checkpoints across prompts. Adapt it to your sweep type (LoRA strength, guidance, models, etc.) by changing what varies per column.
+
+```python
+# --- 1. Paths: derive from a search_options result, never transcribe manually ---
+# Copy ONE real path verbatim from search_options, then use string replacement.
+template = "flux2-klein-9b/lora_name/lora_name_000002000.safetensors"  # from search_options
+step_token = "000002000"  # the step substring in the template
+steps = [2000, 4000, 6000, 8000]
+loras = [{"path": template.replace(step_token, str(s).zfill(len(step_token))), "weight": 1.0} for s in steps]
+# Add the base version (no step suffix) — also copy this path verbatim from search_options
+loras.append({"path": "flux2-klein-9b/lora_name/lora_name.safetensors", "weight": 1.0})
+
+col_headers = [f"{s} steps" for s in steps] + ["v1 base"]
+
+# --- 2. Prompts and seeds ---
+prompts = ["prompt A text here", "prompt B text here"]
+row_headers = ["Prompt A description", "Prompt B description"]  # use full values, don't truncate
+seeds = [42, 100]  # one per row, constant across columns
+
+# --- 3. Build coroutines in column-major order (minimizes LoRA switching) ---
+indexed_coros = []
+for col_idx, lora in enumerate(loras):
+    for row_idx, (prompt, seed) in enumerate(zip(prompts, seeds)):
+        coro = stimma.call_tool("comfyui:flux-klein-9b",
+            prompt=prompt, seed=seed, loras=[lora])
+        indexed_coros.append((row_idx, col_idx, coro))
+
+# --- 4. Single gather — one progress bar ---
+all_results = await asyncio.gather(*[c for _, _, c in indexed_coros])
+
+# --- 5. Reorder to row-major and assemble ---
+grid_cells = [[None] * len(loras) for _ in prompts]
+for (row_idx, col_idx, _), result in zip(indexed_coros, all_results):
+    grid_cells[row_idx][col_idx] = result
+
+grid = await stimma.create_parameter_sweep(
+    media_ids=[r for row in grid_cells for r in row],
+    rows=len(prompts), cols=len(loras),
+    row_headers=row_headers, col_headers=col_headers,
+    title="LoRA Step Comparison"
+)
+stimma.show(grid)
+```
+
+### Key points in this pattern
+
+- **Path construction**: Copy a real path from `search_options` as a template string, then use `str.replace()` + `str.zfill()` to derive others. Never manually type zero-padded filenames.
+- **Column-major generation order**: The outer loop is columns (the swept parameter), inner loop is rows (prompts). This groups all work for one LoRA/model together, minimizing expensive VRAM reloads.
+- **Single gather**: All coroutines go into one `asyncio.gather()` call → one progress bar.
+- **ToolResult handling**: `call_tool` returns ToolResult objects. Pass them directly to `create_parameter_sweep` (it accepts them). Use `.media_id` (dot notation) if you need the ID — never `['media_id']`.
+- **Always assemble**: The output is a grid, not loose images. Call `create_parameter_sweep` then `stimma.show(grid)`.
+- **Seed strategy**: One seed per row, constant across columns. This isolates the column variable as the only thing changing.
+- **Flat kwargs**: `stimma.call_tool("tool_id", prompt=..., seed=..., loras=[...])` — no nested `inputs={}` or `parameters={}`.
+
+## Adapting to other sweep types
+
+| Sweep type | What varies per column | Path construction |
+|---|---|---|
+| LoRA checkpoints | `loras.path` (different files) | Template + str.replace |
+| LoRA strength | `loras.weight` (same file) | Same path, different weight values |
+| Guidance/CFG | `guidance` or `cfg` kwarg | N/A — just pass the number |
+| Models | `tool_id` in `call_tool` | N/A — use different tool IDs |
+| Prompt phrasing | `prompt` text | N/A — swap the target phrase only |
+
+For LoRA checkpoint sweeps specifically: training step numbers in filenames (2000, 4000, etc.) refer to different `.safetensors` files, not the `weight` parameter. The `weight` parameter (0–2) controls LoRA strength and is a separate dimension.
