@@ -42,12 +42,12 @@ Img2img treats `input_images` as a **content/composition** reference — it repr
 
 1. **Analyze reference**: Use `view_image` on the reference to identify style elements only (see list above). Mentally set aside everything about what the image depicts.
 2. **Build prompt**: Start with the user's requested subject. Then append only style descriptors extracted from the reference. Structure: `[user's subject], [medium/technique], [color palette], [texture/detail level], [lighting]`. Be highly specific about each attribute — name the exact medium, describe the color palette in detail, characterize line weight and texture precisely. Vague labels like "in the style of the reference" are not enough.
-3. **Choose tool**: Use `discover(action="list_tools", task_type="text-to-image")` to find generation tools. Use text-to-image, not img2img.
-4. **Generate**: Use `call_tool` with your style-descriptive prompt. Do **not** include the style reference in `input_images`.
+3. **Choose tool**: Browse `.stimma/tools/text-to-image/` (glob/read_file) to pick a tool and read its stub. Use text-to-image, not img2img.
+4. **Generate**: In `run_code`, import the tool and `await` it with your style-descriptive prompt. Do **not** include the style reference in `input_images`.
 5. **Iterate**: Use `view_image` to check the result. If the style doesn't match well enough, refine the style descriptors in the prompt and regenerate.
 
 ## Tips
 
-- If the tool supports loras, search for style-specific loras with `discover(action="search_options", ...)` — a style lora is often more effective than prompt-only style matching.
+- If the tool supports loras, grep its lora enum file (named in the tool's `.stimma` stub, e.g. `.stimma/enums/<tool>_loras_path.txt`) for style-specific loras — a style lora is often more effective than prompt-only style matching.
 - Generate 2-3 variations with slightly different style descriptions to find the best match.
 - When reviewing your prompt before generating, double-check: does every phrase describe either the user's subject or a visual style attribute? Remove anything that describes what the reference image depicts.

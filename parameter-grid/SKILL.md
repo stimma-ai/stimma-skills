@@ -16,14 +16,17 @@ This workflow has three steps that MUST happen in separate turns. Never combine 
 
 ### Step 1. Gather information
 
-Use `list_tools`, `get_schema`, `search_options`, and `ask_user` to gather what you need. This is the ONLY step where `ask_user` is allowed.
+Gather what you need by browsing the catalog and asking the user. This is the ONLY step where `ask_user` is allowed:
+- `glob`/`read_file` `.stimma/tools/<category>/` to pick a tool and read its stub (exact function name + parameters).
+- For LoRA/large-option sweeps, `grep` the tool's enum file (its stub's docstring names it, e.g. `.stimma/enums/<tool>_loras_path.txt`) to find real option paths — copy them verbatim, never transcribe by hand.
+- `ask_user` for sweep axes/values.
 
 ### Step 2. Present the plan — MANDATORY GATE
 
 **After gathering information, you MUST present a plan and wait for the user to approve it before generating.**
 
 Rules for this step:
-- **Do NOT call any tools** — no `run_code`, no `call_tool`, no `ask_user`. Output only a text message.
+- **Do NOT generate or call any tools** — no `run_code`, no `ask_user`. Output only a text message.
 - **Answering your questions in step 1 is NOT plan approval.** You must still present the plan and get explicit approval.
 - After outputting the plan, **end your turn and wait**. Do not continue.
 
@@ -62,13 +65,17 @@ After user approval, write a single `run_code` block that generates all images a
 This example compares LoRA training checkpoints across prompts. Adapt it to your sweep type (LoRA strength, guidance, models, etc.) by changing what varies per column.
 
 ```python
-# --- 1. Paths: derive from a search_options result, never transcribe manually ---
-# Copy ONE real path verbatim from search_options, then use string replacement.
-template = "flux2-klein-9b/lora_name/lora_name_000002000.safetensors"  # from search_options
+# The tool you chose in step 1 — import it by its real name from the catalog.
+from stimma.tools.text_to_image import flux_klein_9b  # example; use the tool you picked
+
+# --- 1. Paths: derive from a real path, never transcribe manually ---
+# In step 1 you grepped the tool's lora enum file (.stimma/enums/<tool>_loras_path.txt)
+# and copied ONE real path verbatim. Use it as a template, then string-replace.
+template = "flux2-klein-9b/lora_name/lora_name_000002000.safetensors"  # copied verbatim from the enum file
 step_token = "000002000"  # the step substring in the template
 steps = [2000, 4000, 6000, 8000]
 loras = [{"path": template.replace(step_token, str(s).zfill(len(step_token))), "weight": 1.0} for s in steps]
-# Add the base version (no step suffix) — also copy this path verbatim from search_options
+# Add the base version (no step suffix) — also a real path from the enum file
 loras.append({"path": "flux2-klein-9b/lora_name/lora_name.safetensors", "weight": 1.0})
 
 col_headers = [f"{s} steps" for s in steps] + ["v1 base"]
@@ -82,8 +89,7 @@ seeds = [42, 100]  # one per row, constant across columns
 indexed_coros = []
 for col_idx, lora in enumerate(loras):
     for row_idx, (prompt, seed) in enumerate(zip(prompts, seeds)):
-        coro = stimma.call_tool("comfyui:flux-klein-9b",
-            prompt=prompt, seed=seed, loras=[lora])
+        coro = flux_klein_9b(prompt=prompt, seed=seed, loras=[lora])
         indexed_coros.append((row_idx, col_idx, coro))
 
 # --- 4. Single gather — one progress bar ---
@@ -105,13 +111,13 @@ stimma.show(grid)
 
 ### Key points in this pattern
 
-- **Path construction**: Copy a real path from `search_options` as a template string, then use `str.replace()` + `str.zfill()` to derive others. Never manually type zero-padded filenames.
+- **Path construction**: Copy a real path from the tool's lora enum file (`.stimma/enums/<tool>_loras_path.txt`, grepped in step 1) as a template string, then use `str.replace()` + `str.zfill()` to derive others. Never manually type zero-padded filenames.
 - **Column-major generation order**: The outer loop is columns (the swept parameter), inner loop is rows (prompts). This groups all work for one LoRA/model together, minimizing expensive VRAM reloads.
 - **Single gather**: All coroutines go into one `asyncio.gather()` call → one progress bar.
-- **ToolResult handling**: `call_tool` returns ToolResult objects. Pass them directly to `create_parameter_sweep` (it accepts them). Use `.media_id` (dot notation) if you need the ID — never `['media_id']`.
+- **ToolResult handling**: an awaited tool call returns a ToolResult object. Pass them directly to `create_parameter_sweep` (it accepts them). Use `.media_id` (dot notation) if you need the ID — never `['media_id']`.
 - **Always assemble**: The output is a grid, not loose images. Call `create_parameter_sweep` then `stimma.show(grid)`.
 - **Seed strategy**: One seed per row, constant across columns. This isolates the column variable as the only thing changing.
-- **Flat kwargs**: `stimma.call_tool("tool_id", prompt=..., seed=..., loras=[...])` — no nested `inputs={}` or `parameters={}`.
+- **Flat kwargs**: pass each parameter directly to the imported tool — `TOOLNAME(prompt=..., seed=..., loras=[...])` — no nested `inputs={}` or `parameters={}`.
 
 ## Adapting to other sweep types
 
@@ -120,7 +126,7 @@ stimma.show(grid)
 | LoRA checkpoints | `loras.path` (different files) | Template + str.replace |
 | LoRA strength | `loras.weight` (same file) | Same path, different weight values |
 | Guidance/CFG | `guidance` or `cfg` kwarg | N/A — just pass the number |
-| Models | `tool_id` in `call_tool` | N/A — use different tool IDs |
+| Models | import a different tool per column | N/A — import each tool from `.stimma/tools/` |
 | Prompt phrasing | `prompt` text | N/A — swap the target phrase only |
 
 For LoRA checkpoint sweeps specifically: training step numbers in filenames (2000, 4000, etc.) refer to different `.safetensors` files, not the `weight` parameter. The `weight` parameter (0–2) controls LoRA strength and is a separate dimension.

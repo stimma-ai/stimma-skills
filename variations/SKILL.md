@@ -146,17 +146,20 @@ Use for lucky-roll and "more like this."
 
 ```python
 import asyncio
+# Browse .stimma/tools/text-to-image/ and read a tool's stub for its exact
+# function name, then import it (replace TOOLNAME with that real name).
+from stimma.tools.text_to_image import TOOLNAME
 
 seeds = [101, 202, 303, 404]
 results = await asyncio.gather(*[
-    stimma.call_tool("TOOL_ID", prompt=prompt, seed=seed, width=width, height=height)
+    TOOLNAME(prompt=prompt, seed=seed, width=width, height=height)
     for seed in seeds
 ])
 variation_set = await stimma.create_set(results, title="Variations")
 stimma.show(variation_set)
 ```
 
-Replace `TOOL_ID`, `prompt`, `width`, and `height` with real values from the current tool schema or source lineage.
+Replace `TOOLNAME` with a real tool from `.stimma/tools/text-to-image/`, and `prompt`, `width`, `height` with values from the source lineage. Never invent a tool name — read the catalog.
 
 ### Single-Axis Sweep
 
@@ -164,6 +167,7 @@ Use for "show hair variations", "try different backgrounds", or "explore lightin
 
 ```python
 import asyncio
+from stimma.tools.text_to_image import TOOLNAME  # real name from .stimma/tools/text-to-image/
 
 variants = [
     ("Short bob", prompt.replace("{hair}", "a sharp chin-length bob")),
@@ -173,7 +177,7 @@ variants = [
 ]
 
 results = await asyncio.gather(*[
-    stimma.call_tool("TOOL_ID", prompt=p, seed=seed, width=width, height=height)
+    TOOLNAME(prompt=p, seed=seed, width=width, height=height)
     for _, p in variants
 ])
 
@@ -194,6 +198,8 @@ Use when preserving an attached or selected image matters.
 
 ```python
 import asyncio
+# Reference-guided = image-to-image: browse .stimma/tools/image-to-image/ for the tool.
+from stimma.tools.image_to_image import TOOLNAME  # real name from the catalog
 
 source = "MEDIA_ID"
 prompts = [
@@ -203,13 +209,13 @@ prompts = [
 ]
 
 results = await asyncio.gather(*[
-    stimma.call_tool("TOOL_ID", prompt=p, input_images=[source], seed=seed + i)
+    TOOLNAME(prompt=p, input_images=[source], seed=seed + i)
     for i, p in enumerate(prompts)
 ])
 stimma.show(await stimma.create_set(results, title="Reference-Guided Variations"))
 ```
 
-If structure must stay close and the selected tool supports it, add the appropriate ControlNet parameter after checking `get_schema`.
+If structure must stay close and the selected tool supports it, add the appropriate `controlnet=` parameter — the tool's `.stimma` stub lists which preprocessors it supports.
 
 ## Comparison and Presentation
 

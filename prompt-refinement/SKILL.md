@@ -12,7 +12,7 @@ Iteratively improve generation quality through a generate → review → refine 
 
 ## Workflow
 
-1. **Initial generation**: Start with the user's prompt as-is. Generate one image with `call_tool`.
+1. **Initial generation**: Start with the user's prompt as-is. Generate one image by importing a tool from `.stimma/tools/text-to-image/` in `run_code` and awaiting it.
 2. **Review**: Use `view_image(detail="high")` to examine the result carefully. Identify specific issues: wrong composition, missing details, style mismatch, artifacts.
 3. **Refine prompt**: Adjust the prompt to address identified issues:
    - Add emphasis to missing elements

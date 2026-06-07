@@ -86,7 +86,7 @@ Use Stimma's visual tools to make the result real, not just textual.
 1. **Gather assets**:
    - Use `library(action="get")` or `library(action="search")` for user-provided or existing assets.
    - Use `browse_web` only when the user requests research, current references, competitors, trends, or real-world source material.
-   - Use `discover(action="list_tools", task_type="text-to-image")` and `call_tool` to generate missing reference imagery.
+   - Browse `.stimma/tools/text-to-image/` and import a tool to generate missing reference imagery in `run_code`.
 2. **Generate in batches**:
    - Use `run_code` with `asyncio.gather()` for batches of references.
    - Generate several small, directed images rather than one overloaded prompt.
@@ -157,20 +157,23 @@ Annotations should be short: 2-7 words per label. Use them to name intent, not d
 When generating imagery, create targeted prompt families. Example:
 
 ```python
+import asyncio
+from stimma.tools.text_to_image import TOOLNAME  # real name from .stimma/tools/text-to-image/
+
 prompts = [
     "A sunlit editorial photograph of worn cream paper, pencil notes, and translucent vellum layered on a wooden table, soft natural shadows, warm archival mood",
     "A close cropped product photograph of matte ceramic packaging on a pale oat background, restrained luxury, soft side light, minimal composition",
     "A quiet interior scene with linen curtains, raw plaster walls, warm morning light, natural textures, calm design studio atmosphere",
 ]
 results = await asyncio.gather(*[
-    stimma.call_tool("TOOL_ID", prompt=p, width=1024, height=768)
+    TOOLNAME(prompt=p, width=1024, height=768)
     for p in prompts
 ])
 ref_set = await stimma.create_set(results, title="Sunlit Archive References")
 stimma.show(ref_set)
 ```
 
-Replace `TOOL_ID` with a real tool discovered through `discover`. Keep prompts visually specific and avoid asking one image to contain the whole board.
+Replace `TOOLNAME` with a real tool from `.stimma/tools/text-to-image/` (read the catalog — never invent a name). Keep prompts visually specific and avoid asking one image to contain the whole board.
 
 ## Finished Board Checklist
 
