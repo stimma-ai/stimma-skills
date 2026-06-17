@@ -81,7 +81,7 @@ Use when the user needs to make something after the board. Convert the board int
 
 Use Stimma's visual tools to make the result real, not just textual.
 
-**Before you start**: a mood board ends in a composed layout (step 3). If the `layout-design` skill is surfaced and you haven't loaded it yet, load it now, in the same step as this skill — not when you reach assembly. Loading a skill mid-workflow injects new instructions that can pull your focus back to step one and cause you to regenerate references you've already produced.
+**Before you start**: a mood board ends in a composed layout (step 3). If the `layout-design` stimpack is surfaced and you haven't loaded it yet, load it now, in the same step as this stimpack — not when you reach assembly. Loading a stimpack mid-workflow injects new instructions that can pull your focus back to step one and cause you to regenerate references you've already produced.
 
 1. **Gather assets**:
    - Use `library(action="get")` or `library(action="search")` for user-provided or existing assets.
@@ -91,7 +91,7 @@ Use Stimma's visual tools to make the result real, not just textual.
    - Use `run_code` with `asyncio.gather()` for batches of references.
    - Generate several small, directed images rather than one overloaded prompt.
    - Group references with `stimma.create_set(results, title="...")` when useful.
-3. **Assemble the board** with `create_layout` (using the `layout-design` skill you already loaded):
+3. **Assemble the board** with `create_layout` (using the `layout-design` stimpack you already loaded):
    - Use a fixed artboard unless the user specifies otherwise:
      - Presentation board: 1600 x 1000
      - Square social board: 1080 x 1080
@@ -196,4 +196,4 @@ When showing results, keep the text concise:
 - Mention any assumptions.
 - Offer the next logical action: variants, production prompts, or refining toward a chosen direction.
 
-Do not over-explain mood boarding theory to the user unless they ask. The skill should make them feel capable by doing the design translation for them.
+Do not over-explain mood boarding theory to the user unless they ask. The stimpack should make them feel capable by doing the design translation for them.

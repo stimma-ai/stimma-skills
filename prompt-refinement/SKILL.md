@@ -27,5 +27,5 @@ Iteratively improve generation quality through a generate → review → refine 
 
 - Change one thing at a time between iterations so you can attribute improvements.
 - If the model ignores a prompt element, try moving it earlier in the prompt or adding emphasis.
-- Keep a mental note of what worked — you can save effective prompt patterns as a new skill.
+- Keep a mental note of what worked — you can save effective prompt patterns as a new stimpack.
 - After finding a good prompt, generate 3-4 seed variations to pick the best composition.

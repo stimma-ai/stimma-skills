@@ -1,0 +1,21 @@
+{
+  "name": "mood-board",
+  "display_name": "Mood Board Studio",
+  "description": "Create exploratory visual direction boards with palettes, type, references, and layout cues",
+  "version": "1",
+  "author": "system",
+  "tags": [
+    "mood board",
+    "design",
+    "art direction",
+    "branding",
+    "palette",
+    "exploration"
+  ],
+  "resources": [
+    {
+      "type": "skill",
+      "path": "SKILL.md"
+    }
+  ]
+}

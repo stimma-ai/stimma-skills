@@ -1,0 +1,19 @@
+{
+  "name": "prompt-refinement",
+  "display_name": "Prompt Refinement",
+  "description": "Iterative generate-review-refine loop for prompt optimization",
+  "version": "1",
+  "author": "system",
+  "tags": [
+    "prompt",
+    "refinement",
+    "iteration",
+    "quality"
+  ],
+  "resources": [
+    {
+      "type": "skill",
+      "path": "SKILL.md"
+    }
+  ]
+}

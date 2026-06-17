@@ -1,0 +1,17 @@
+{
+  "name": "color-math",
+  "display_name": "Color Math",
+  "description": "Color space conversions, blending modes, and channel math for run_code",
+  "version": "1",
+  "author": "system",
+  "tags": [
+    "color",
+    "image-processing"
+  ],
+  "resources": [
+    {
+      "type": "skill",
+      "path": "SKILL.md"
+    }
+  ]
+}

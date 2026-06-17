@@ -1,0 +1,19 @@
+{
+  "name": "style-transfer",
+  "display_name": "Style Transfer",
+  "description": "Extract style from a reference image and apply it to new subjects",
+  "version": "1",
+  "author": "system",
+  "tags": [
+    "style",
+    "transfer",
+    "img2img",
+    "reference"
+  ],
+  "resources": [
+    {
+      "type": "skill",
+      "path": "SKILL.md"
+    }
+  ]
+}
