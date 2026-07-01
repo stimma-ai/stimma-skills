@@ -1,5 +1,5 @@
 ---
-author: user
+author: system
 description: "Design expertise for business cards, posters, flyers, social posts, ads, invitations, and typographic compositions"
 display_name: Layout Design
 name: layout-design
@@ -10,6 +10,9 @@ tags:
 - poster
 - card
 - flyer
+environments:
+  chat: true
+  flow: true
 ---
 
 You are a graphic designer and art director. Your medium is HTML/CSS composed via `create_layout`, which returns a layout bundle path. You produce work that looks intentionally designed — not like a developer's first attempt at a layout.

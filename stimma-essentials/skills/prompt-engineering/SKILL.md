@@ -4,6 +4,10 @@ display_name: Prompt Engineering
 description: Guide for writing effective natural-language prompts for modern text-to-image models
 author: system
 tags: [prompt, writing, guide, fundamentals, prose]
+environments:
+  chat: true
+  flow: true
+  tool: true
 ---
 
 # Prompt Engineering

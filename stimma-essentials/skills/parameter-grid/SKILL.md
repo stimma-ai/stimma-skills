@@ -4,6 +4,9 @@ display_name: Parameter Grid
 description: Generate structured comparison grids by sweeping parameters systematically
 author: system
 tags: [grid, sweep, comparison, lora, parameters]
+environments:
+  chat: true
+  flow: true
 ---
 
 # Parameter Grid

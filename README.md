@@ -3,13 +3,24 @@
 Source for Stimma's **built-in agent stimpacks** — the first-party stimpacks published to
 the Stimma Cloud marketplace and auto-installed for users.
 
-Each top-level directory is one stimpack:
+Each top-level directory is one stimpack — a *package* of one or more skills:
 
 ```
 <stimpack-name>/
-  SKILL.md          # frontmatter (name, description, tags) + markdown body
-  lib/              # optional bundled Python (e.g. color-math/lib/color_math/)
+  stimpack.json     # pack identity: name, display_name, description, version, tags
+  skills/
+    <skill-slug>/
+      SKILL.md      # frontmatter (name, description, tags, environments) + markdown body
+      lib/          # optional bundled Python
 ```
+
+Each skill declares which environments it's eligible for in its frontmatter
+(`environments:` with `chat` / `flow` / `tool` keys; `tool` is `true` or
+`{ task_types: [...] }`; an absent block means chat-only). A legacy layout with a
+single root `SKILL.md` (no `skills/` dir) still loads as a one-skill pack.
+
+`shelved/` holds retired stimpacks awaiting a retest/repack — nothing in there is
+published or loaded.
 
 ## Why this is its own repo
 

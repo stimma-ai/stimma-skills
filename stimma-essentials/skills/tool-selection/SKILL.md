@@ -4,11 +4,14 @@ display_name: Tool Selection
 description: Guidelines for picking image and video tools when the user hasn't specified one
 author: system
 tags: [tools, routing, guidelines]
+environments:
+  chat: true
+  flow: true
 ---
 
 # Tool Selection
 
-Use this stimpack when the user asks for image or video generation and **hasn't named a specific tool or model**. If they named one, use it — don't second-guess.
+Use this skill when the user asks for image or video generation and **hasn't named a specific tool or model**. If they named one, use it — don't second-guess.
 
 **These are guidelines, not defaults.** Your job is to read what the user is actually doing, briefly ask when you must, describe the tradeoff, and remember what they tell you.
 
