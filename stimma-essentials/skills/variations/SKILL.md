@@ -35,7 +35,7 @@ Ask one focused question only when the request is underdetermined in a way that 
 - "What should vary: seed/composition, style, or a specific element?"
 - "How many variations do you want?"
 
-If the user gives a direction like "show variations of this character's hair style", do not ask. Generate a compact set with labeled choices.
+If the user gives a direction like "show variations of this character's hair style", do not ask. Generate a compact batch of labeled choices.
 
 If the user does not specify count, use:
 
@@ -54,15 +54,20 @@ Rules:
 - Reuse the same tool/model and core config when lineage or current context gives it.
 - Change only `seed` unless the original had obvious prompt problems.
 - Generate in a batch with `run_code` and `asyncio.gather()`.
-- Show as a set or grid so the user can compare.
+- Show the results individually with `stimma.show(results)` so the user can compare and pick.
 
 ### Same seed, near-miss prompt
 
-Use when the user likes the composition but wants to tune wording or nudge a result.
+Use when the user likes the composition but wants to tune wording or nudge a
+result — including any "same but ..." ask (same but at night, same but in
+watercolor).
 
 Rules:
 
-- Keep the seed fixed.
+- Keep the seed fixed. The mechanic: call the tool with `params_from=` the
+  original's media id AND pass that result's own `seed=` explicitly (both are
+  shown in its generation summary). That reuses the recorded settings so the
+  composition holds while your prompt edit shifts the one detail.
 - Change one prompt axis at a time.
 - Prefer small, legible prompt edits over paraphrasing the whole prompt.
 - Use row/column labels when making a comparison grid.
@@ -142,7 +147,7 @@ Rules:
 
 ## Output Patterns
 
-### Close Variation Set
+### Close Variations
 
 Use for lucky-roll and "more like this."
 
@@ -157,8 +162,7 @@ results = await asyncio.gather(*[
     TOOLNAME(prompt=prompt, seed=seed, width=width, height=height)
     for seed in seeds
 ])
-variation_set = await stimma.create_set(results, title="Variations")
-stimma.show(variation_set)
+stimma.show(results)
 ```
 
 Replace `TOOLNAME` with a real tool from `.stimma/tools/text-to-image/`, and `prompt`, `width`, `height` with values from the source lineage. Never invent a tool name — read the catalog.
@@ -214,14 +218,15 @@ results = await asyncio.gather(*[
     TOOLNAME(prompt=p, input_images=[source], seed=seed + i)
     for i, p in enumerate(prompts)
 ])
-stimma.show(await stimma.create_set(results, title="Reference-Guided Variations"))
+stimma.show(results)
 ```
 
 If structure must stay close and the selected tool supports it, add the appropriate `controlnet=` parameter — the tool's `.stimma` stub lists which preprocessors it supports.
 
 ## Comparison and Presentation
 
-- Use a **set** when the variations are peers and labels are not essential.
+- Show variations individually by default — the user is choosing among peers, and `stimma.show(results)` is the comparison surface.
+- Use a **set** only when the user wants the variations kept as one collection in their library (a pack or series they asked for as a unit).
 - Use a **grid** when the user needs to compare named changes.
 - Use 1 row with labeled columns for a single axis.
 - Use rows for source prompts/images and columns for the varied parameter when comparing multiple sources.
