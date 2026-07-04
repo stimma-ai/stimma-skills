@@ -32,7 +32,7 @@ Emoji in designed layouts looks cheap and amateurish — use CSS-drawn shapes, b
 
 Typography isn't decoration — it IS the layout in most compositions. Treat it as the primary visual element.
 
-- **Scale dramatically.** Headlines should be enormous (72–200px). If it doesn't feel too big, it's not big enough. Body text drops way down (16–20px). The contrast between levels creates hierarchy.
+- **Scale dramatically — but size to measure.** Headlines should be enormous (72–200px), body text way down (16–20px); the contrast between levels creates hierarchy. But a cropped headline is an instant amateur tell, so compute the ceiling before you pick a size: for uppercase display type, each character is roughly 0.6× the font-size wide, so **max font-size ≈ usable width ÷ (0.6 × characters in the longest line)**. (e.g. a 10-character line on a 900px canvas with 60px side padding: 780 ÷ 6 ≈ 130px ceiling.) Want bigger? Break the headline into shorter lines yourself with `<br>` and size each line — never let long display text auto-wrap or overflow.
 - **Pick a real typeface.** `system-ui` is the Comic Sans of 2025 — it says "I didn't try." Use specific fonts with character:
   - Tight grotesks for modern/editorial: `'Helvetica Neue', Helvetica, Arial, sans-serif` with tight letter-spacing (-0.02em to -0.04em on headlines)
   - Serifs for elegance/editorial: `Georgia, 'Times New Roman', serif` — beautiful at large sizes
@@ -51,6 +51,16 @@ Typography isn't decoration — it IS the layout in most compositions. Treat it 
 
 ## Spatial composition
 
+- **The canvas IS the deliverable.** The width/height you pass to `create_layout` is the exact trim size of the piece — a 700×400 canvas IS the business card, edge to edge. Never draw a smaller card/poster floating inside the canvas: the telltale dead margin around your design reads as a rendering bug, not whitespace. Start every layout from this shell and design inside it:
+  ```html
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; }
+    .canvas { width: 100%; height: 100%; box-sizing: border-box;
+              overflow: hidden; position: relative; /* bg + padding here */ }
+  </style>
+  <body><div class="canvas"> ...everything... </div></body>
+  ```
+  `overflow: hidden` on the root is your seatbelt; deliberate edge-bleed still works inside it.
 - **Let the layout engine do the math.** Use flexbox to distribute space — the CSS engine handles spacing and alignment better than manual pixel offsets. If you're computing `top`/`left` values to position things, ask yourself if flexbox or margin/padding would handle it.
 - **Break the grid.** Overlapping elements, text that bleeds to the edge, asymmetric placement — these feel designed. Perfectly centered + evenly spaced = boring.
 - **Generous padding.** 60–100px padding on containers. 40px+ between sections. Cramped layouts look cheap. When in doubt, add more space.
@@ -69,9 +79,14 @@ Work file-first:
 
 1. **Write** your HTML to a file: `write_file(file_path="layout.html", content="<div>...")`
 2. **Render** from the file: `create_layout(file="layout.html", width=1200, height=630)`
-3. **View** the result: `view_image(media_id=...)` to check the render
-4. **Iterate** with targeted edits: `edit_file(file_path="layout.html", old_string="...", new_string="...")`, then `create_layout(file="layout.html", ...)` again
+3. **Inspect** the result with `view_image(media_id=...)` and run this checklist against the pixels:
+   - Nothing cropped at any edge (headlines are the usual victim)
+   - No unintended empty region — the design fills the artboard
+   - No overlapping or illegible text; no stray/leaked markup rendered as text
+4. **Fix and re-render** anything the checklist catches with `edit_file(file_path="layout.html", old_string="...", new_string="...")`, then `create_layout(file="layout.html", ...)` again. Never deliver a render you haven't looked at — a cropped or broken layout is worse than a plain one.
 5. Use `read_file(file_path="layout.html")` to review the current state if needed
+
+If `view_image` reports the renderer is busy, retry once after a moment; if it still isn't available, proceed on your best judgment rather than polling repeatedly — but say so when you present the result.
 
 This avoids re-sending the full HTML on every render — you write it once and patch with small edits.
 
@@ -98,10 +113,9 @@ Always specify both width and height. Design your layout to fill the canvas — 
 ## create_layout constraints
 
 - **Fixed canvas, not responsive** — width and height define the artboard; design to fill it exactly
-- Rendered at 2x for crisp output
-- WeasyPrint engine: **no JavaScript, no external fonts/URLs, no position:fixed/sticky**
-- Use inline `<style>` — external stylesheets won't load
-- Flexbox, position:absolute/relative, and CSS gradients all work. No CSS Grid subgrid, no backdrop-filter.
+- Rendered at high resolution by a real browser engine, but as a **static snapshot**: write no JavaScript (it won't have run when the frame is captured) and reference no external URLs — no web fonts, no remote images, no external stylesheets
+- Use inline `<style>` only
+- Flexbox, CSS grid, position:absolute/relative, gradients, and shadows all work; avoid position:fixed/sticky (meaningless on a fixed canvas)
 - Minimum text size: 14px (anything smaller won't be readable in the PNG)
 
 ## Inline HTML fallback
