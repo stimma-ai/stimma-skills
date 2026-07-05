@@ -32,7 +32,7 @@ Emoji in designed layouts looks cheap and amateurish — use CSS-drawn shapes, b
 
 Typography isn't decoration — it IS the layout in most compositions. Treat it as the primary visual element.
 
-- **Scale dramatically — but size to measure.** Headlines should be enormous (72–200px), body text way down (16–20px); the contrast between levels creates hierarchy. But a cropped headline is an instant amateur tell, so compute the ceiling before you pick a size: for uppercase display type, each character is roughly 0.6× the font-size wide, so **max font-size ≈ usable width ÷ (0.6 × characters in the longest line)**. (e.g. a 10-character line on a 900px canvas with 60px side padding: 780 ÷ 6 ≈ 130px ceiling.) Want bigger? Break the headline into shorter lines yourself with `<br>` and size each line — never let long display text auto-wrap or overflow.
+- **Scale dramatically — but size to measure.** Headlines should be enormous (72–200px), body text way down (16–20px); the contrast between levels creates hierarchy. But a cropped headline is an instant amateur tell, so compute the ceiling before you pick a size: for uppercase display type, each character is roughly 0.6× the font-size wide, so **max font-size ≈ usable width ÷ (0.6 × characters in the longest line)**. (e.g. a 6-character line on a 1080px canvas with 80px side padding: 920 ÷ 3.6 ≈ 255px ceiling.) Want bigger? Break the headline into shorter lines yourself with `<br>` and size each line — never let long display text auto-wrap or overflow.
 - **Pick a real typeface.** `system-ui` is the Comic Sans of 2025 — it says "I didn't try." Use specific fonts with character:
   - Tight grotesks for modern/editorial: `'Helvetica Neue', Helvetica, Arial, sans-serif` with tight letter-spacing (-0.02em to -0.04em on headlines)
   - Serifs for elegance/editorial: `Georgia, 'Times New Roman', serif` — beautiful at large sizes
@@ -51,7 +51,7 @@ Typography isn't decoration — it IS the layout in most compositions. Treat it 
 
 ## Spatial composition
 
-- **The canvas IS the deliverable.** The width/height you pass to `create_layout` is the exact trim size of the piece — a 700×400 canvas IS the business card, edge to edge. Never draw a smaller card/poster floating inside the canvas: the telltale dead margin around your design reads as a rendering bug, not whitespace. Start every layout from this shell and design inside it:
+- **The canvas IS the deliverable.** The width/height you pass to `create_layout` is the exact trim size of the piece — a 1000×1000 canvas IS the album cover, edge to edge. Never draw a smaller piece floating inside the canvas: the telltale dead margin around your design reads as a rendering bug, not whitespace. Start every layout from this shell and design inside it:
   ```html
   <style>
     html, body { margin: 0; width: 100%; height: 100%; }
