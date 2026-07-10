@@ -1,7 +1,7 @@
 ---
 name: variations
 display_name: Variations
-description: Generate useful media variations by choosing the right seed, prompt, and image-reference strategy
+description: Create controlled variations of an existing media asset by preserving selected visual traits while changing seeds, prompts, or image-reference settings
 author: system
 tags: [variations, image generation, img2img, seeds, exploration, prompt editing]
 environments:
