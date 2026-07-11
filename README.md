@@ -44,3 +44,7 @@ Publishing only ever bumps a **new version** of an **already-published** stimpac
 initial publish (entering listing metadata) stays manual.
 
 Default checkout location: `~/stimma/stimma-skills` (sibling to `stimma` and `stimma-cloud`).
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
