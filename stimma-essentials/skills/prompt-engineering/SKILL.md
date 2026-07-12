@@ -1,7 +1,7 @@
 ---
 name: prompt-engineering
 display_name: Prompt Engineering
-description: Guide for writing effective natural-language prompts for modern text-to-image models
+description: Guide for writing effective prompts — prose scene descriptions for text-to-image, imperative edit commands for image-to-image
 author: system
 tags: [prompt, writing, guide, fundamentals, prose]
 environments:
@@ -11,6 +11,8 @@ environments:
 ---
 
 # Prompt Engineering
+
+**Two regimes, opposite rules.** Text-to-image models want a prose *description* of the image to create. Image-to-image edit models want an imperative *command* describing the change — the source image already supplies the description. Everything under "Core Principle" through "Prompt Length" is the text-to-image regime; see "Image-to-Image Prompts" before writing any edit prompt.
 
 ## Core Principle: Write Prose, Not Keywords
 
@@ -52,7 +54,10 @@ Every detail exists in a web of relationships (clothing↔setting, lighting↔ti
 
 ## Image-to-Image Prompts
 
-**Imperative language**: Write commands describing the transformation, not captions of the final result. Start with action verbs: "Change", "Replace", "Add", "Remove". Only describe what changes.
+**Imperative language**: Write commands describing the transformation, not captions of the final result. Start with action verbs: "Change", "Replace", "Add", "Remove". Only describe what changes. Re-describing the source image is the classic failure — a caption tells the model to *generate that description from scratch*, and it invents a new subject instead of editing yours.
+
+**Bad**: `A cheerful cartoon girl with brown hair and a red backpack, standing alone on a pure white background, vibrant colors, soft lighting`
+**Good**: `Remove all other people. Replace the background with plain white. Keep the girl's pose, expression, clothing, and art style unchanged.`
 
 **Explicitly preserve**: State what to hold constant (pose, facial features, expression, camera framing) — models drift without preservation instructions.
 

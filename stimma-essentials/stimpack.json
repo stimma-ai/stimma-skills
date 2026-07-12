@@ -1,7 +1,7 @@
 {
   "name": "stimma-essentials",
   "display_name": "Stimma Essentials",
-  "description": "Core skills for everyday Stimma work: tool selection, prompt writing, variations, layout design, and parameter grids",
+  "description": "Core skills for everyday Stimma work: tool selection, prompt writing, variations, layout design, parameter grids, and subject isolation",
   "version": "1",
   "format": 1,
   "author": "system",
