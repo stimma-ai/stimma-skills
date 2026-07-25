@@ -160,15 +160,28 @@ The loop:
    This is the honest middle: the numbers come from the image, the structure comes from
    you. Then repeat the element with `<use>` and `transform` — one petal you can fix in
    one place beats six you have to fix six times.
-4. **Compare at the same size.** `view_image` the reference and your render one after
-   the other, so you are judging them at comparable scale rather than from memory. To
-   match sizes exactly, or to measure rather than eyeball,
-   `await stimma.rasterize_svg("mark.svg", width=<reference width>)` in `run_code`
-   returns a PIL Image you can inspect. Judge silhouette and proportion first, color
-   second, fine detail last — a mark whose proportions are wrong will not be rescued by
-   matching its palette.
+4. **Compare the two, side by side, before you present anything.** This step is not
+   optional and it is not the same as looking at your render. Build one image with the
+   reference and your version at matched size, and `view_image` that:
+
+   ```python
+   from PIL import Image
+   ref = Image.open("reference.png").convert("RGB")
+   mine = await stimma.rasterize_svg("mark.svg", width=ref.width)
+   pair = Image.new("RGB", (ref.width * 2, ref.height), "white")
+   pair.paste(ref, (0, 0)); pair.paste(mine, (ref.width, 0), mine)
+   pair.save("compare.png")
+   ```
+
+   Judge silhouette and proportion first, color second, fine detail last — a mark whose
+   proportions are wrong will not be rescued by matching its palette. Then read the
+   comparison for what is *missing*, not just what is wrong: a dropped element, an
+   element count that differs, a rotation direction reversed. Those are the errors that
+   survive, because they are the ones you were not already thinking about.
+
 5. **Iterate.** Two or three passes is normal. Expect the first pass to be close on
-   layout and off on angle, weight, or curvature.
+   layout and off on angle, weight, or curvature. Compare again after every pass —
+   a fix in one place routinely breaks something you had already got right.
 
 Sample the reference's colors rather than guessing them — read the pixels with PIL in
 `run_code` and use the actual hex values.
