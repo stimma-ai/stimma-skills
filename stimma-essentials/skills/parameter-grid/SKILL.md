@@ -21,8 +21,10 @@ This workflow has three steps that MUST happen in separate turns. Never combine 
 
 Gather what you need by browsing the catalog and asking the user. This is the ONLY step where `ask_user` is allowed:
 - `glob`/`read_file` `.stimma/tools/<category>/` to pick a tool and read its stub (exact function name + parameters).
-- For LoRA/large-option sweeps, `grep` the tool's enum file (its stub's docstring names it, e.g. `.stimma/enums/<tool>_loras_path.txt`) to find real option paths — copy them verbatim, never transcribe by hand.
+- For LoRA/large-option sweeps, find the real option values and copy them verbatim, never transcribe by hand. The stub's docstring says where they are: either listed inline (`loras[].path: one of ...`) or spilled to a file to `grep` (`see .stimma/enums/<tool>_loras_path.txt`).
 - `ask_user` for sweep axes/values.
+
+**If an option you expect is missing**, `.stimma/` is a snapshot taken when the turn started — reading it again will not update it. Call `await stimma.refresh_catalog()` in `run_code` to re-read every provider and rewrite the tree (it returns `changed`, the enum files that actually differed), then re-read the file. This is the only thing that refreshes it; re-grepping or waiting does nothing.
 
 ### Step 2. Present the plan — MANDATORY GATE
 
@@ -114,13 +116,45 @@ stimma.show(grid)
 
 ### Key points in this pattern
 
-- **Path construction**: Copy a real path from the tool's lora enum file (`.stimma/enums/<tool>_loras_path.txt`, grepped in step 1) as a template string, then use `str.replace()` + `str.zfill()` to derive others. Never manually type zero-padded filenames.
+- **Path construction**: Copy real paths verbatim from what you read in step 1. If you derive a family of paths from a template (`str.replace()` + `str.zfill()`), the derived strings are guesses until checked — a checkpoint sweep whose paths are off by one zero is the exact shape of a sweep that looks finished and compares the wrong things. Assert them against the source list before generating: `assert set(paths) <= set(available)`, where `available` is what you actually read. Never manually type zero-padded filenames.
 - **Column-major generation order**: The outer loop is columns (the swept parameter), inner loop is rows (prompts). This groups all work for one LoRA/model together, minimizing expensive VRAM reloads.
 - **Single gather**: All coroutines go into one `asyncio.gather()` call → one progress bar.
 - **ToolResult handling**: an awaited tool call returns a ToolResult object. Pass them directly to `create_parameter_sweep` (it accepts them). Use `.media_id` (dot notation) if you need the ID — never `['media_id']`.
 - **Always assemble**: The output is a grid, not loose images. Call `create_parameter_sweep` then `stimma.show(grid)`.
 - **Seed strategy**: One seed per row, constant across columns. This isolates the column variable as the only thing changing.
 - **Flat kwargs**: pass each parameter directly to the imported tool — `TOOLNAME(prompt=..., seed=..., loras=[...])` — no nested `inputs={}` or `parameters={}`.
+
+## Growing or fixing an existing grid
+
+When a sweep gains an axis value, or one row needs regenerating (a prompt detail
+caused artifacts, say), do NOT re-list the surviving cells by hand and do NOT
+regenerate them. Use `extend_parameter_sweep`, which reads the existing cells off
+the old grid and returns a new one:
+
+```python
+# Only the new cells get generated — the other 56 are carried over.
+new_cols = {}
+for step in (1400, 1600, 1800):
+    path = f"flux2-klein-9b/dropstock_v1/dropstock_v1_{step:09d}.safetensors"
+    assert path in available, f"{path} not in the catalog"   # never guess a path
+    new_cols[f"Dropstock {step}"] = await asyncio.gather(*[
+        TOOLNAME(prompt=p, seed=s, loras=[{"path": path, "weight": 1.0}])
+        for p, s in zip(prompts, seeds)
+    ])
+
+grid = await stimma.extend_parameter_sweep(
+    grid,                                            # dict or media_id
+    add_cols=new_cols,                               # each: one cell per existing row
+    replace_rows={"Skatepark ledge": redone_row},    # one cell per existing column
+)
+stimma.show(grid, role="final")
+```
+
+`add_cols` / `add_rows` / `replace_cols` / `replace_rows` all map a header to that
+line's cells, ordered along the opposite axis. Replacements match on header text
+and must already exist; additions must not. Hand-transcribing a list of old media
+ids is the failure this exists to prevent — one transposed id silently mislabels
+a cell, and nothing downstream will catch it.
 
 ## Adapting to other sweep types
 
