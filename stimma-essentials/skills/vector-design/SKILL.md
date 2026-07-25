@@ -91,7 +91,7 @@ Work file-first.
 
 Never deliver a mark you have not looked at. A blank or mangled SVG is worse than a plain one — and `create_svg` refuses to save a document that renders empty, so a rejection there means the geometry is wrong, not that the tool failed.
 
-**Two ways to see your work, and no third.** `view_image` puts the render in front of you. Inside `run_code`, `await stimma.rasterize_svg("mark.svg", width=16)` returns a PIL Image, so you can check a mark at icon size or measure its bounding box programmatically. Both use the app's own browser engine.
+**Two ways to see your work, and no third.** `view_image` puts the render in front of you. Inside `run_code`, `await stimma.rasterize_svg("mark.svg", width=16)` returns a PIL Image at exactly that size — so you can check a mark at icon size, or measure its bounding box instead of eyeballing it. Both use the app's own browser engine.
 
 Do not shell out to `rsvg-convert`, `inkscape`, `magick`, or any other command-line tool for this. They are not installed on users' machines, so anything built on them works for you and fails for them — and where they do exist they rasterize differently from what the app ships, so you would be checking your work against something other than the deliverable.
 
@@ -123,8 +123,43 @@ The loop:
    six hand-drawn petals. A monogram is two or three strokes on a shared axis. Say the
    rule out loud before you write markup — if you cannot state it, keep looking. Getting
    this right is most of the job, and it is the part a tracer cannot do at all.
-3. **Author one element well**, then repeat it with `<use>` and `transform`. One petal
-   you can fix in one place beats six you have to fix six times.
+3. **Measure, then author one element well.** Guessing coordinates and tracing pixels
+   are not the only options. Read the reference with numpy in `run_code` — scan rows for
+   the left and right edge of a shape, take a polar profile around the centre, find the
+   bounding box — and fit a curve to what you measured. A two-control-point cubic fitted
+   against a few hundred measured edge points lands within a pixel or two and gives you
+   *one* `<path>`, not hundreds of nodes:
+
+   ```python
+   import numpy as np
+   from PIL import Image
+
+   a = np.array(Image.open("reference.png").convert("RGB")).astype(int)
+   mask = np.abs(a - np.array((243, 135, 36))).sum(2) < 45     # one colour's region
+   cx, cy = 441.0, 430.0                                       # the shape's origin
+
+   edge = []                                                   # left edge, origin-relative
+   for y in range(mask.shape[0]):
+       xs = np.nonzero(mask[y])[0]
+       if len(xs):
+           edge.append((xs.min() - cx, cy - y))
+   edge = np.array(edge)
+
+   def curve(c1, c2, P0, P3, n=400):                            # cubic bezier samples
+       t = np.linspace(0, 1, n)[:, None]
+       return ((1-t)**3)*P0 + 3*((1-t)**2)*t*c1 + 3*(1-t)*t*t*c2 + (t**3)*P3
+
+   def error(c1, c2, P0, P3):                                   # worst point matters most
+       d = np.linalg.norm(edge[:, None, :] - curve(c1, c2, P0, P3)[None], axis=2).min(1)
+       return d.mean() + d.max() * 0.3
+   ```
+
+   Then hill-climb `c1`/`c2` from a straight-line start until the error stops falling —
+   a few thousand cheap iterations, and under two pixels is achievable.
+
+   This is the honest middle: the numbers come from the image, the structure comes from
+   you. Then repeat the element with `<use>` and `transform` — one petal you can fix in
+   one place beats six you have to fix six times.
 4. **Compare at the same size.** `view_image` the reference and your render one after
    the other, so you are judging them at comparable scale rather than from memory. To
    match sizes exactly, or to measure rather than eyeball,
@@ -166,6 +201,14 @@ The document must be **self-contained**. Anything that reaches outside it is str
 - No external images, fonts, or stylesheets — embed a raster as a `data:` URI if you truly need one
 - No `<foreignObject>`
 - Fragment references (`url(#gradient-id)`) are fine — that is how gradients, masks, and `<use>` work
+
+**`<clipPath>` and `<mask>` children must be shapes.** A `<use>` pointing at a `<g>` is
+not valid clip content, and the renderer draws *nothing* — the document parses, saves,
+and comes back blank. If you need to clip to a compound shape, clip to each shape
+individually, or use a `<mask>` whose content is a white `<rect>` with the shapes painted
+black over it. `create_svg` refuses to save a blank document and `stimma.rasterize_svg`
+warns when one renders empty, so you will hear about it either way — but this is the
+usual cause.
 
 Animation (`<animate>`, CSS `@keyframes`) is preserved but warned about: thumbnails and every export path capture a static frame, so an animated document will not look the way you intended anywhere it is consumed here.
 
