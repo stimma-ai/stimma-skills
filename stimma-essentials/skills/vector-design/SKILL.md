@@ -58,7 +58,7 @@ This is where vector work is won or lost.
 - **Optical centering beats geometric centering.** A triangle centered by its bounding box looks left-heavy; nudge it right by a fraction of its width. A circular mark needs to be slightly larger than a square one to look the same size. Trust the eye over the arithmetic.
 - **Keep the node count low.** A circle is `<circle>`, not a four-segment bezier. A rounded rectangle is `<rect rx="">`. Reach for `<path>` only for shapes the primitives cannot express — and when you do, prefer arcs and symmetric curves over long chains of points.
 - **Align to the pixel grid at the target size.** For a 24px icon, a horizontal line at `y="12"` with a 2-unit stroke lands crisply; at `y="12.5"` it renders as two grey rows. Vertical and horizontal edges should sit on whole units when the stroke weight is even, and on half units when it is odd.
-- **Keep the artwork inside the viewBox.** Strokes are centered on the path, so a 2-unit stroke at `x="0"` loses half its width off-canvas. Inset by at least half the stroke weight.
+- **Keep the artwork inside the viewBox, and verify it by measuring.** Strokes are centered on the path, so a 2-unit stroke at `x="0"` loses half its width off-canvas — inset by at least half the stroke weight. A few units of overflow on a large canvas is invisible at fit-to-window, so do not try to catch it by looking: after any pass that moves geometry, recompute the extremes of what you drew (centre ± radius, the largest coordinate in a path, the bounding box of a rotated copy) and check them against the box. `create_svg` measures this too and names the sides that spill, but arriving at the save already knowing is a round trip cheaper.
 
 ## Color and theming
 
@@ -82,7 +82,8 @@ Work file-first.
 2. **Save** it: `create_svg(file="mark.svg", title="acme-mark")`
 3. **Look** at it: `view_image(media_id=...)`. Transparency shows as a grey checkerboard — that is the renderer, not your artwork. Run this checklist against the pixels:
    - The shape is the shape you intended, not a coincidence that happens to parse
-   - Nothing clipped at the viewBox edge
+   - Nothing clipped at the viewBox edge (the render tells you only about gross
+     clipping — small overflow is a measurement, see Geometry discipline)
    - Stroke weights are consistent; no accidental hairlines
    - It still reads when small — squint at it, or view it again after exporting a 16px PNG
    - Counters and gaps are open, not filled in
@@ -194,7 +195,12 @@ person it is a redraw rather than the original font.
 
 ## Sizes and viewBox conventions
 
-The viewBox is your grid, not a pixel size — an SVG scales to anything. Choose the grid to suit the detail level.
+The viewBox is your grid, not a pixel size — an SVG scales to anything.
+
+**Take the grid from this table rather than inventing one.** Any round number would
+work geometrically, which is exactly why the choice has to be a convention: two marks
+made a month apart should open with the same numbers, so they can be compared, dropped
+into the same sprite, and edited by the same hands.
 
 | Purpose              | viewBox      | Stroke | Notes                                     |
 |----------------------|--------------|--------|-------------------------------------------|
@@ -203,6 +209,20 @@ The viewBox is your grid, not a pixel size — an SVG scales to anything. Choose
 | App icon / logomark  | `0 0 512 512`| —      | Filled shapes, not strokes                 |
 | Wordmark             | `0 0 W 100`  | —      | Height 100, width follows the letterforms  |
 | Illustration         | `0 0 100 100`| —      | Or match the artwork's natural aspect      |
+
+Two rules that keep it consistent:
+
+- **Square unless the artwork is genuinely not square.** A logomark goes in the 512
+  square even when its silhouette is round or wide — centre it and let the margin be
+  margin. Only a wordmark or a deliberately wide/tall composition gets a non-square box.
+- **When redrawing, the reference's pixel size is not your viewBox.** An 886×895 PNG
+  does not make `0 0 886 895` the right grid; it makes 512 the right grid with the
+  artwork fitted into it. Match the *proportions* of what you are copying, not its
+  resolution.
+
+If a piece genuinely does not fit any row — an odd aspect, a diagram — pick the nearest
+row's scale and keep the numbers round. `0 0 512 288` is a considered choice; `0 0 886 895`
+is a leftover from something else.
 
 Always set a `viewBox`. Set `width`/`height` too — they give the document a nominal size for thumbnails and export defaults, and they do not constrain how it scales.
 
