@@ -40,6 +40,7 @@ When cost is part of the tradeoff, frame it comparatively:
 **Exploring / iterating / fast feedback:**
 - **Klein 9B** — fast, low-cost, all-in-one (T2I + I2I + edits).
 - **Z-Image Turbo** — cheapest tier, quick, especially for photorealistic images of people, T2I only. Good for batch.
+- **Nano Banana 2 Lite** — cheapest of the Nano Banana line, 1K only. Good for batch and for drafts you'll finish on Nano Banana 2 or Pro.
 
 **Going for final / hero / production output:**
 - **Flux.2 Max** — top quality from Flux family, premium tier.
@@ -49,7 +50,7 @@ When cost is part of the tradeoff, frame it comparatively:
 
 **Instruction-style edits on a specific image:**
 - **Klein 9B** handles this (no quality penalty), including controlnets and up to 9 reference images.
-- **Nano Banana Edit** or **Nano Banana Pro Edit** — natural-language edit specialists; use when the user describes a surgical change ("remove the car", "change shirt color").
+- **Nano Banana 2 Edit** or **Nano Banana Pro Edit** — natural-language edit specialists; use when the user describes a surgical change ("remove the car", "change shirt color"). Up to 10 reference images (6 on Pro).
 - **Qwen Edit 2511** — low-cost, open-weights, good for reference-guided edits with up to 3 inputs and ControlNet.
 
 ### ComfyUI users
