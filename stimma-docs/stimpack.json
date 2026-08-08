@@ -1,0 +1,13 @@
+{
+  "name": "stimma-docs",
+  "display_name": "Stimma Docs",
+  "description": "Answer questions about Stimma itself — features, setup, ComfyUI onboarding, configuration — from the official documentation",
+  "version": "1",
+  "format": 1,
+  "author": "system",
+  "tags": [
+    "docs",
+    "support",
+    "onboarding"
+  ]
+}
