@@ -166,4 +166,4 @@ a cell, and nothing downstream will catch it.
 | Models | import a different tool per column | N/A — import each tool from `.stimma/tools/` |
 | Prompt phrasing | `prompt` text | N/A — swap the target phrase only |
 
-For LoRA checkpoint sweeps specifically: training step numbers in filenames (2000, 4000, etc.) refer to different `.safetensors` files, not the `weight` parameter. The `weight` parameter (0–2) controls LoRA strength and is a separate dimension.
+For LoRA checkpoint sweeps specifically: training step numbers in filenames (2000, 4000, etc.) refer to different `.safetensors` files, not the `weight` parameter. The `weight` parameter (-10–10) controls LoRA strength and is a separate dimension.
