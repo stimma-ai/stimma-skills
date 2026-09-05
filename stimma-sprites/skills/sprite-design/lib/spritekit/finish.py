@@ -40,17 +40,10 @@ def union_box(frames: list, *, pad: int = 2, alpha_floor: int = 32) -> tuple:
 
 def resize_premultiplied(image, size) -> Image.Image:
     """Resize RGBA without letting transparent pixels tint the edges."""
-    arr = np.asarray(image.convert("RGBA"), dtype=np.float32)
-    arr[:, :, :3] *= arr[:, :, 3:4] / 255.0
-    pm = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
-    # BOX (area average) rather than LANCZOS: Lanczos's negative lobes ring
-    # at hard edges, and the overshoot lands differently every frame, which
-    # shows up as a crawling rim once the sprite animates.
-    pm = pm.resize(size, Image.Resampling.BOX)
-    out = np.asarray(pm, dtype=np.float32)
-    alpha = np.maximum(out[:, :, 3:4], 1e-6) / 255.0
-    out[:, :, :3] = np.clip(out[:, :, :3] / alpha, 0, 255)
-    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA")
+    # Pillow's RGBA resampler already converts to premultiplied RGBa and
+    # back. Manually premultiplying first would apply alpha weighting twice.
+    # BOX avoids ringing from negative-lobed filters at silhouette edges.
+    return image.convert("RGBA").resize(size, Image.Resampling.BOX)
 
 
 def finalize(
