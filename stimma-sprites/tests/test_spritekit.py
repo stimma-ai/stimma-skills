@@ -70,6 +70,25 @@ check(
     all(np.array_equal(np.asarray(a), np.asarray(b)) for a, b in zip(frames, back)),
 )
 
+# WebP merges identical frames. Pin the logical mapping before timing edits.
+hold_path = WORK / "hold.webp"
+held_frames = [frames[0], frames[0], frames[1]]
+save_animation(held_frames, hold_path, fps=10)
+hold_doc = new_doc("Hold")
+hold_entry = add_animation(hold_doc, "idle", hold_path, frame_count=3, fps=10)
+check("merged hold mapping", hold_entry["animation"]["frame_indices"] == [0, 0, 1])
+for meta, ms in zip(hold_entry["frames"], [50, 300, 150]):
+    meta["duration_ms"] = ms
+hold_resolved = resolve_animations(hold_doc, workspace_resolver(WORK))[0]
+check("holds survive timing edits", hold_resolved.durations_ms == [50, 300, 150])
+check("holds preserve logical pixels", all(
+    np.array_equal(np.asarray(a), np.asarray(b)) for a, b in zip(held_frames, hold_resolved.frames)
+) and len(hold_resolved.frames) == 3)
+static_path = WORK / "static.webp"
+save_animation([frames[0]] * 3, static_path, fps=10)
+static_entry = add_animation(hold_doc, "still", static_path, frame_count=3, fps=10)
+check("fully merged hold mapping", static_entry["animation"]["frame_indices"] == [0, 0, 0])
+
 # --- mirror bake -------------------------------------------------------------
 west = mirror_frames(back)
 check(
@@ -454,6 +473,11 @@ small = np.asarray(resize_premultiplied(sharp, (16, 16)))
 edge = small[:, :, 3] > 0
 check("premultiplied resize keeps colour clean", small[:, :, :3][edge].min() >= 200,
       str(small[:, :, :3][edge].min()))
+
+mixed = Image.new("RGBA", (2, 1))
+mixed.putdata([(255, 0, 0, 255), (0, 0, 255, 128)])
+check("resize weights mixed alpha once",
+      resize_premultiplied(mixed, (1, 1)).getpixel((0, 0)) == (170, 0, 85, 192))
 
 # Fringe regression: a DARK-outlined subject on a coloured backdrop. The
 # blend between backdrop and outline moves far in RGB, so a distance key

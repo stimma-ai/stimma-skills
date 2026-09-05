@@ -1,8 +1,9 @@
 """Per-move artifact encoding: frames <-> animated lossless WebP, plus GIF.
 
-One move = one animated WebP, encoded lossless so the doc's frames survive
-round-trips exactly. Per-frame durations are embedded for native playback,
-but the sprite doc's timing metadata stays authoritative.
+One move = one animated WebP with lossless pixels. WebP may merge identical
+consecutive frames into a hold; add_animation pins a logical-to-encoded frame
+mapping in the document so later timing edits preserve every logical frame.
+Embedded durations drive native playback; document timing stays authoritative.
 """
 
 from pathlib import Path

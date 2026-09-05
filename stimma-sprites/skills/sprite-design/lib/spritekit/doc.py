@@ -13,6 +13,10 @@ it. The ``production`` block records the inputs the code path used that
 lineage never sees: style preset, key colour, cleanup profile, frame budget,
 target height, direction scheme, and tool ids.
 
+Animation references may also carry ``frame_indices``: one encoded WebP
+frame index per logical document frame, pinned by add_animation before any
+timing edits. This preserves holds even when WebP merges repeated frames.
+
 Mirrored directions are baked at generation time; ``mirrored_from`` records
 provenance only — consumers never flip.
 """
@@ -199,6 +203,11 @@ def add_animation(
         "frame_count": frame_count,
         "frames": frames,
     }
+    if not isinstance(animation_path, dict):
+        from .encode import load_animation
+
+        _, encoded_durations = load_animation(animation_path)
+        animation["frame_indices"] = sprite_frame_indices(entry, encoded_durations)
     remove_animation(doc, name, direction)
     doc["animations"].append(entry)
     return entry
@@ -362,6 +371,42 @@ class ResolvedAnimation:
         ]
 
 
+def sprite_frame_indices(entry: dict, encoded_durations: list[int]) -> list[int]:
+    """Map logical document frames onto WebP frames (which can merge holds).
+
+    New documents pin this mapping before timing edits. For older documents,
+    recover it from the original timeline only when its boundaries align.
+    """
+    count = entry["frame_count"]
+    mapping = (entry.get("animation") or {}).get("frame_indices")
+    if mapping is not None:
+        if (not isinstance(mapping, list) or len(mapping) != count
+                or any(type(i) is not int or not 0 <= i < len(encoded_durations) for i in mapping)):
+            raise ValueError("animation.frame_indices must map every document frame to an encoded frame")
+        return mapping
+    if len(encoded_durations) == count:
+        return list(range(count))
+    if len(encoded_durations) == 1:
+        return [0] * count
+    base = max(1, round(1000 / float(entry.get("fps") or 12)))
+    durations = [int(m.get("duration_ms") or base) for m in entry["frames"]]
+    mapping = []
+    index = 0
+    elapsed = 0
+    boundary = encoded_durations[0]
+    for duration in durations:
+        if duration <= 0 or elapsed + duration > boundary:
+            raise ValueError("Encoded frame boundaries do not match the document timeline")
+        mapping.append(index)
+        elapsed += duration
+        if elapsed == boundary and index + 1 < len(encoded_durations):
+            index += 1
+            boundary += encoded_durations[index]
+    if elapsed != sum(encoded_durations):
+        raise ValueError("Encoded duration does not match the document timeline")
+    return mapping
+
+
 def resolve_animations(doc: dict, resolver) -> "list[ResolvedAnimation]":
     """Decode every animation's WebP via ``resolver(hash) -> path``.
 
@@ -374,11 +419,8 @@ def resolve_animations(doc: dict, resolver) -> "list[ResolvedAnimation]":
     resolved = []
     for entry in doc["animations"]:
         path = resolver(entry["animation"]["hash"])
-        frames, _ = load_animation(path)
-        if len(frames) != entry["frame_count"]:
-            raise ValueError(
-                f"{entry['name']}: artifact has {len(frames)} frames, doc says {entry['frame_count']}"
-            )
+        frames, durations = load_animation(path)
+        frames = [frames[i] for i in sprite_frame_indices(entry, durations)]
         resolved.append(ResolvedAnimation(entry=entry, frames=frames))
     return resolved
 
