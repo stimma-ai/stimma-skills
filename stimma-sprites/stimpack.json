@@ -1,0 +1,14 @@
+{
+  "name": "stimma-sprites",
+  "display_name": "Stimma Sprites",
+  "description": "Game sprite creation: animated character sprites from a locked reference image, frame cleanup, sprite documents that a later chat can revise, and engine exports (Phaser, Unity, Unreal, Godot, RPG Maker, GameMaker, Defold, libGDX, Cocos2d)",
+  "version": "1",
+  "format": 1,
+  "author": "system",
+  "tags": [
+    "sprites",
+    "game-dev",
+    "pixel-art",
+    "animation"
+  ]
+}
