@@ -48,7 +48,7 @@ for r in stimma.packages.recipes():
     print(r["id"], [(i["name"], i["kind"], i["required"]) for i in r["inputs"]], [p["name"] for p in r["params"]])
 ```
 
-Built in: `app-icons` (one square master ≥1024px, PNG or SVG → iOS asset catalog,
+Built in: `app-icons` (one square master — an SVG, or a raster ≥1024px → iOS asset catalog,
 Android mipmaps, macOS `.icns`, Windows `.ico`, web favicons), `logo` (primary lockup
 plus optional mark, wordmark and stacked → SVG/PDF masters where the source is vector,
 PNGs in full color, one-color black and reversed, social avatars), `key-art-crops` (one
