@@ -135,6 +135,35 @@ Show the deliverable in context on a finalizing cover: the icon on a phone home 
 the logo on a card or a site header, key art in the frame it will run in. That is the
 difference between "here are files" and "here is the work".
 
+## How a cover should read
+
+The page is going to a person who is receiving work, not inspecting a build. Hold to
+these and it will look like a studio sent it.
+
+**Say what it is, not how it was made.** No members, no runs, no hashes, no bundle paths
+in prose. "App icon set · 14 files" is the whole preamble.
+
+**Never claim an affordance the page does not have.** Do not write "drag this into
+Xcode" or "click here to install". Name what a folder contains and stop. The reader can
+see the download buttons.
+
+**Cut the editorial.** Lines like "every size is its own render, so the mark stays
+legible" are the sound of a machine admiring itself. If a fact matters, show it — the
+size row proves legibility better than a sentence about it. If it does not, delete it.
+
+**Show the work in the place it will live.** An icon on a home screen, a logo on a card,
+key art in its frame. One well-made context beats three captions.
+
+**Lead with the work.** The first screen is the piece, large. Files come last and stay
+quiet: a count, one download, and a tree the reader can ignore.
+
+**Let the page breathe, and use one surface.** Space separates sections; hairlines
+separate peers. No cards inside cards, no box around everything. The kit's classes
+already carry this — reuse them rather than restyling the page.
+
+**Numbers are facts, not decoration.** Sizes, counts and bytes go in the mono, tabular
+style the kit provides, never in a sentence.
+
 ## The package's face
 
 Every package shows one square image in the library. A recipe that knows what it
