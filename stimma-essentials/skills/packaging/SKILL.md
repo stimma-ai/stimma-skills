@@ -41,18 +41,19 @@ Judgment goes into parameters: the focal point for crops, the background color b
 iOS icon, the filename convention. The package records them, so a rebuild replays your
 decisions exactly.
 
-Discover what is installed and what each recipe wants before gathering inputs:
+Recipes are discovered, never listed here — what is installed varies by profile, and this
+skill stays the same length whether that is three or fifty. Ask, then read the notes of
+the one you picked:
 
 ```python
 for r in stimma.packages.recipes():
-    print(r["id"], [(i["name"], i["kind"], i["required"]) for i in r["inputs"]], [p["name"] for p in r["params"]])
+    print(r["id"], r["description"], [(i["name"], i["kind"], i["required"]) for i in r["inputs"]])
+print(stimma.packages.guidance("app-icons"))   # only for the one you are about to use
 ```
 
-Built in: `app-icons` (one square master — an SVG, or a raster ≥1024px → iOS asset catalog,
-Android mipmaps, macOS `.icns`, Windows `.ico`, web favicons), `logo` (primary lockup
-plus optional mark, wordmark and stacked → SVG/PDF masters where the source is vector,
-PNGs in full color, one-color black and reversed, social avatars), `key-art-crops` (one
-hero raster → crops at standard aspects around a focal point).
+A recipe's `inputs` tell you what to gather and `params` what you get to decide. Its
+guidance is where the craft lives: what makes a good master, which parameter matters,
+what goes wrong. Fetch it when you commit to a recipe, not before.
 
 ## Building one
 
