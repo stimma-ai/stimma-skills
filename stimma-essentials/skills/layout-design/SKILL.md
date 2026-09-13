@@ -121,3 +121,7 @@ Always specify both width and height. Design your layout to fill the canvas — 
 ## Inline HTML fallback
 
 For very simple one-shot layouts, you can pass `html` directly to `create_layout` instead of using a file. When doing so, the `html` parameter is a JSON string containing raw HTML markup — do NOT entity-encode it. Angle brackets must be literal `<` and `>` characters. But prefer the file-first workflow above for anything you might iterate on.
+
+## Layouts are not covers
+
+A layout is a fixed-canvas artifact: a card, a poster, a social image. When the person wants a browsable, responsive front page for a delivery — a contact sheet, an options board, a handoff page — that is a package cover, which the `packaging` skill covers. Layouts can be members of a package; a package cover is never a layout.
