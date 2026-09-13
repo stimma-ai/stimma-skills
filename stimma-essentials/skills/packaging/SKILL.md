@@ -89,12 +89,31 @@ can't break an Xcode or Android drop-in.
 
 ## The cover
 
-The cover is a responsive web page: any HTML, CSS and classic JavaScript you write, plus
-kit elements wherever the page touches package content. Write it to a workspace file and
-pass it to `set_cover`. Start from a template in this skill's `templates/` folder
-(`options-board.html` for exploring, `delivery.html` for finalizing) and depart from it
-when you have a reason; the templates carry the studio look so every package reads as
-one family.
+Most packages do not need you to write one. A recipe presents its own output — the app
+icon set already shows the icon on a home screen and at every real size — so save without
+a cover and you get a designed page for free. Write one when you are presenting a choice,
+or when the package is going to a client and deserves words.
+
+When you do write it, it is a responsive web page: any HTML, CSS and classic JavaScript,
+plus kit elements wherever the page touches package content. Write it to a workspace file
+and pass the path to `set_cover`. The shape that works:
+
+```html
+<div class="sp-page">
+  <h1 class="sp-title">Three directions for the mark</h1>
+  <p class="sp-sub">Pick one to develop, or name the parts of two you want combined.</p>
+  <div class="sp-section">
+    <stimma-grid>
+      <stimma-media ref="m1" caption="A · Editorial"></stimma-media>
+      <stimma-media ref="m2" caption="B · Brutalist"></stimma-media>
+    </stimma-grid>
+  </div>
+</div>
+```
+
+The kit ships the page styling, so reuse its classes — `sp-page`, `sp-title`, `sp-sub`,
+`sp-section`, `sp-label`, `sp-note` — instead of inventing a look per package. Add your
+own CSS for anything the work itself needs.
 
 Kit elements resolve by ref — a member id (`m1`), a run id (`r1`) or a bundle path from
 the manifest:
