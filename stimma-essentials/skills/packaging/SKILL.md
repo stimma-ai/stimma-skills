@@ -136,14 +136,20 @@ Show the deliverable in context on a finalizing cover: the icon on a phone home 
 the logo on a card or a site header, key art in the frame it will run in. That is the
 difference between "here are files" and "here is the work".
 
-## Parameters are decisions, so make them
+## Packaging is not where design happens
 
-A recipe's parameters are where your judgment goes, and defaults are not
-answers — they are what a recipe does when nobody decided. A colour, a focal
-point, a naming convention: pick each one for this piece of work and say why in
-a sentence when you hand it over. Where a choice can be checked, the recipe
-checks it and refuses with the reason, so read the error rather than working
-around it.
+By the time you are packaging, the creative work is finished. A recipe arranges
+what exists; it does not decide how the work should look. So do not invent
+colours, crops, backgrounds or treatments at this stage — if the deliverable
+needs one, that is design, and it belongs upstream in the master. Make the
+artwork, then package the artwork.
+
+Parameters carry facts about the deliverable: which platforms, which aspect
+ratios, which filename convention, which focal point the artwork already has.
+When a parameter would be a design choice, either the person asked for it and
+you are passing it through, or you should leave it alone and let the recipe do
+the safe, neutral thing. Where a choice can be checked, the recipe checks it
+and refuses with the reason — read the error rather than working around it.
 
 ## How a cover should read
 
