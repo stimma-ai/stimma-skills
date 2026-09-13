@@ -116,6 +116,20 @@ Show the deliverable in context on a finalizing cover: the icon on a phone home 
 the logo on a card or a site header, key art in the frame it will run in. That is the
 difference between "here are files" and "here is the work".
 
+## The package's face
+
+Every package shows one square image in the library. A recipe that knows what it
+made supplies a good one — an icon set shows the icon the way a device draws it.
+Override it whenever you can do better, especially for packages you designed:
+
+```python
+pkg.set_tile("tile.png")     # a workspace path, or image bytes
+```
+
+A designed tile is worth making when the package is a deliverable someone will
+scan a grid for. It is stored outside the deliverable, so the client never
+receives it.
+
 ## When a master changes
 
 If you revise something that belongs to a package, save it as a revision of the existing
