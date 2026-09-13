@@ -136,6 +136,15 @@ Show the deliverable in context on a finalizing cover: the icon on a phone home 
 the logo on a card or a site header, key art in the frame it will run in. That is the
 difference between "here are files" and "here is the work".
 
+## Parameters are decisions, so make them
+
+A recipe's parameters are where your judgment goes, and defaults are not
+answers — they are what a recipe does when nobody decided. A colour, a focal
+point, a naming convention: pick each one for this piece of work and say why in
+a sentence when you hand it over. Where a choice can be checked, the recipe
+checks it and refuses with the reason, so read the error rather than working
+around it.
+
 ## How a cover should read
 
 The page is going to a person who is receiving work, not inspecting a build. Hold to
