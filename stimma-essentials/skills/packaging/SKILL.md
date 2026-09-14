@@ -63,7 +63,7 @@ master = await pkg.add_member(icon_result, role="master")      # ToolResult, med
 await pkg.run("app-icons", {"master": master},
               {"platforms": ["ios", "android", "web"], "background": "#101820", "app_name": "Acme"})
 pkg.add_file("brief.md")                                        # optional loose extras
-pkg.set_cover("cover.html")                                     # optional; see below
+pkg.set_cover("cover.html")                                     # the cover you designed; see below
 media_id = await pkg.save()
 stimma.show(media_id=media_id, role="final")
 ```
@@ -90,51 +90,60 @@ can't break an Xcode or Android drop-in.
 
 ## The cover
 
-Most packages do not need you to write one. A recipe presents its own output — the app
-icon set already shows the icon on a home screen and at every real size — so save without
-a cover and you get a designed page for free. Write one when you are presenting a choice,
-or when the package is going to a client and deserves words.
+The cover is yours. A package is a zip with a designed front page and the work
+inside it; the page is what a person opens, and it is the one thing in the package
+that cannot be a formula. Recipes make files and say in their guidance what those
+files are for; you decide what the person sees first, what sits next to what, and
+what the words are. Always write one before `save()`. Without it the package gets a
+plain auto-generated index — enough to open, wrong to send.
 
-When you do write it, it is a responsive web page: any HTML, CSS and classic JavaScript,
-plus kit elements wherever the page touches package content. Write it to a workspace file
-and pass the path to `set_cover`. The shape that works:
+Start from the template closest to the job and keep its order; replace the refs,
+the words and the facts:
 
-```html
-<div class="sp-page">
-  <h1 class="sp-title">Three directions for the mark</h1>
-  <p class="sp-sub">Pick one to develop, or name the parts of two you want combined.</p>
-  <div class="sp-section">
-    <stimma-grid>
-      <stimma-media ref="m1" caption="A · Editorial"></stimma-media>
-      <stimma-media ref="m2" caption="B · Brutalist"></stimma-media>
-    </stimma-grid>
-  </div>
-</div>
-```
+- `templates/delivery.html` — finalizing, one or more recipe runs: the work in
+  context, at true size, then what is in the box.
+- `templates/collection.html` — finalizing, many things that are not one formula's
+  output: a brand kit, a game's art, a label set. Lead with what ties it together,
+  then group the parts by what the recipient will do with them.
+- `templates/options-board.html` — exploring: a few directions and one question.
 
-The kit ships the page styling, so reuse its classes — `sp-page`, `sp-title`, `sp-sub`,
-`sp-section`, `sp-label`, `sp-note` — instead of inventing a look per package. Add your
-own CSS for anything the work itself needs.
+It is a responsive web page: any HTML, CSS and classic JavaScript, plus kit elements
+wherever the page touches package content. Write it to a workspace file and pass the
+path to `set_cover`. The kit ships the page styling, so reuse its classes — `sp-page`,
+`sp-title`, `sp-sub`, `sp-label`, `sp-note` — and add your own CSS only for what the
+work itself needs.
 
-Kit elements resolve by ref — a member id (`m1`), a run id (`r1`) or a bundle path from
-the manifest:
+Kit elements resolve by ref — a member id (`m1`), a run id (`r1`) or a bundle path
+from the manifest:
 
 ```html
-<stimma-media ref="m1" caption="Primary mark"></stimma-media>
+<stimma-section label="At actual size">…</stimma-section>
+<stimma-media ref="m1" caption="Primary mark" plate></stimma-media>
 <stimma-grid><stimma-media ref="m1"/><stimma-media ref="m2"/></stimma-grid>
+<stimma-sizes><stimma-media ref="app-icons/ios/AppIcon.appiconset/icon-60.png" size="60"/>…</stimma-sizes>
+<stimma-columns><stimma-column title="iOS">…</stimma-column></stimma-columns>
+<stimma-appearance label="On a home screen">
+  <div when="light">…</div><div when="dark">…</div>
+</stimma-appearance>
+<stimma-compare a="m1" b="m2" label-a="Before" label-b="After" mode="slider"></stimma-compare>
 <stimma-files ref="r1"></stimma-files>
-<stimma-compare a="m1" b="app-icons/ios/AppIcon.appiconset/icon-180.png" mode="slider"></stimma-compare>
 ```
+
+`stimma-appearance` shows one of its light/dark children at a time, following the
+system until the reader picks. `stimma-sizes` draws each image at exactly the pixel
+size given. `stimma-files` is a file browser for a run (or the whole package with no
+ref); it opens in place, so put it under the words that say what is in it.
 
 Rules the cover must satisfy, because it has to open from a double-clicked file with
 no network: no external URLs (fonts and images come in as members), no
 `<script type="module">`, unique ids. A cover that breaks a rule is refused with the
-reason; fix it and save again. Without a cover the package gets a plain auto-generated
-one, which is fine for a quick handoff and wrong for a client-facing delivery.
+reason; fix it and save again.
 
-Show the deliverable in context on a finalizing cover: the icon on a phone home screen,
-the logo on a card or a site header, key art in the frame it will run in. That is the
-difference between "here are files" and "here is the work".
+Show the deliverable in context: the icon on a phone home screen, the logo on a card
+or a site header, key art in the frame it will run in, a sprite in a scene. Recipes
+that can render mockups ship them as files (read the recipe's guidance for what is
+there); when none exist, make one. That is the difference between "here are files"
+and "here is the work".
 
 ## Packaging fills no gaps
 

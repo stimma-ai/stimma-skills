@@ -1,0 +1,62 @@
+<!-- Collection: a finalizing-stage cover for a package whose contents are not one
+     formula's output — a brand kit, a game's worth of sprites and backgrounds, a set
+     of labels — possibly several recipe runs plus hand-added files. The job of the
+     page is to show all of it in a way a person can take in at once. Group by what
+     the recipient will do with it, not by how it was made. -->
+<style>
+  .kicker{font-size:12px;letter-spacing:.02em;color:var(--sp-muted);margin:0 0 10px}
+  .lede{max-width:60ch;color:var(--sp-muted);margin:8px 0 0;font-size:15px}
+  .strip{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+  .strip stimma-media{flex:none}
+  .sheet{--sp-cell:160px}
+</style>
+<div class="sp-page">
+  <p class="kicker">Delivery · v2</p>
+  <h1 class="sp-title">Meadow Run · art pack</h1>
+  <p class="lede">Every sprite, tile and background for the first three levels, cut and named the way the engine expects.</p>
+
+  <!-- Lead with the thing that ties it together: a key frame, a lockup, a scene. -->
+  <stimma-section>
+    <stimma-media ref="m1" plate></stimma-media>
+  </stimma-section>
+
+  <!-- Then the parts, grouped by use. A grid per group; captions say what each is. -->
+  <stimma-section label="Characters">
+    <stimma-grid class="sheet">
+      <stimma-media ref="m2" caption="Hero · idle, run, jump" plate></stimma-media>
+      <stimma-media ref="m3" caption="Fox · idle, pounce" plate></stimma-media>
+      <stimma-media ref="m4" caption="Crow · fly" plate></stimma-media>
+    </stimma-grid>
+  </stimma-section>
+
+  <stimma-section label="Tiles and props">
+    <stimma-grid class="sheet">
+      <stimma-media ref="m5" caption="Ground set · 16 tiles" plate></stimma-media>
+      <stimma-media ref="m6" caption="Props · 12" plate></stimma-media>
+    </stimma-grid>
+  </stimma-section>
+
+  <stimma-section label="Backgrounds">
+    <stimma-grid style="--sp-cell:280px">
+      <stimma-media ref="m7" caption="Level 1 · dawn"></stimma-media>
+      <stimma-media ref="m8" caption="Level 2 · noon"></stimma-media>
+      <stimma-media ref="m9" caption="Level 3 · dusk"></stimma-media>
+    </stimma-grid>
+  </stimma-section>
+
+  <!-- Before/after, when a member was derived from another and the difference matters. -->
+  <stimma-section label="Palette pass">
+    <stimma-compare a="m10" b="m11" label-a="Before" label-b="After" mode="slider"></stimma-compare>
+  </stimma-section>
+
+  <!-- What is in the box. One browser per run, and one for the loose files. -->
+  <stimma-section label="Included in this package">
+    <stimma-columns>
+      <stimma-column title="Sprite sheets">Godot and Unity sheets with their metadata, one folder per character.</stimma-column>
+      <stimma-column title="Tiles">A tileset PNG with a .tres and a .tsx beside it.</stimma-column>
+      <stimma-column title="Backgrounds">Full-size PNGs, plus a 2x parallax split for each.</stimma-column>
+    </stimma-columns>
+    <stimma-files ref="r1"></stimma-files>
+    <stimma-files ref="r2"></stimma-files>
+  </stimma-section>
+</div>
