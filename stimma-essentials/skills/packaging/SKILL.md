@@ -92,6 +92,11 @@ requests vectorization, use Vector Design first, inspect the resulting SVG,
 then reuse it across the relevant runs. Do not vectorize an adequate raster
 unless requested or needed for another deliverable.
 
+Honor the person's requested run boundaries. If they ask for separate runs,
+make separate `pkg.run(...)` calls, even when one recipe could produce all the
+files in a single call. Repeating a recipe with the same member is supported;
+do not consolidate those runs just because the source or recipe is shared.
+
 Add as many members and runs as the deliverable needs. Members can be anything
 the library can hold; workspace files are saved with lineage on the way in.
 `new`, `add_file`, `set_cover`, and `set_tile` are synchronous; call them without
@@ -108,10 +113,24 @@ Use Python when a numerical check is needed. Use the manifest's exact paths as c
 refs. A run id identifies a file browser, not a path prefix. These operations
 do not create library items. `set_cover()` validates refs immediately.
 
-Python locals do not persist between calls. Keep the build in a workspace
-Python file and execute it with `run_file` again after writing the cover, using
-the same saved members and parameters; recipe runs are cached.
-Save only the finished package.
+Python locals do not persist between calls. Keep the build in `build_package.py`
+and use `write_file` or `edit_file` to update that file between these steps:
+
+1. Build members and runs, then print the manifest and preview folder. Run it
+   with `run_file`, inspect the outputs, and write `cover.html`.
+2. Add `pkg.set_cover("cover.html")` before the script's preview call. Run it
+   again and inspect the authored cover with `view_image`. Also print
+   `await pkg.preview_pdf()`: it returns `page_count`, the PDF path, and a list
+   of `pages` image paths. View those images with `view_image`. Check that page
+   groups fit, the opening includes its size row, and captions are readable.
+   Fix the cover and repeat this step if the PDF has spillover pages.
+3. Once the cover is ready, append `media_id = await pkg.save()` and
+   `stimma.show(media_id=media_id, role="final")`. Run the same script again.
+
+Reuse the same saved members and parameters; recipe runs are cached. Inspection
+is your own quality check, not a separate approval step. Do not create approval
+marker files, shell commands, or an extra user confirmation to advance these
+steps. Save only the finished package.
 
 ## Names and parameters are decisions
 
@@ -161,7 +180,16 @@ colors (include `--sp-faint` for small size captions), and `@media print` / `@pa
 in both outputs; `@page { background: #123f86; }` can set a distinct PDF ground.
 Use your own section layout when single/pair/stack does not fit. Keep content
 legible, local and portable; inspect the authored cover through `pkg.preview()`
-after custom styling. PDF export applies the print rules automatically.
+after custom styling. Use `preview_pdf()` to inspect the same PDF export rules
+before saving; no shell or separate renderer is needed.
+For custom grids, use explicit print columns, for example
+`@media print { .my-grid { grid-template-columns: repeat(3, 1fr); } }`.
+Responsive `auto-fit` / `auto-fill` grids work in browsers but are not supported
+by the PDF renderer. Keep each landscape page's content within its available
+height; a large image plus captions and prose may need a smaller print image
+or another deliberately grouped page. The kit's single/pair/stack layouts
+already reserve space for a heading and captions.
+
 Resolve refs from the actual manifest, never guessed paths.
 
 The kit vocabulary:

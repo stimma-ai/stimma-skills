@@ -88,7 +88,14 @@ and `layout="single"` for macOS. Place the scene media directly inside;
 do not nest another section or add image margins. The same content becomes a
 responsive HTML section and one landscape PDF page per OS. Keep the opening
 icon overview and “At actual size” row together before these page groups, on
-the opening page. Give contents its own page section. On each mobile OS page, put store and notification examples in
+the opening page. Give contents its own page section.
+
+For the opening actual-size row, choose a few small delivered sizes (such as
+16, 32, 48 and 64 px). Large 192–512 px exports belong in the file browser or
+an intentionally sized overview; putting them at native size here pushes the
+row off the opening PDF page.
+
+On each mobile OS page, put store and notification examples in
 `<details slot="details"><summary>Details</summary>…</details>`, initially closed.
 Inside, use one `stimma-appearance` with light and dark `stimma-grid` children
 marked `when="light"` / `when="dark"`, as in the references. The switch follows
