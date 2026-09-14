@@ -136,20 +136,23 @@ Show the deliverable in context on a finalizing cover: the icon on a phone home 
 the logo on a card or a site header, key art in the frame it will run in. That is the
 difference between "here are files" and "here is the work".
 
-## Packaging is not where design happens
+## Packaging fills no gaps
 
-By the time you are packaging, the creative work is finished. A recipe arranges
-what exists; it does not decide how the work should look. So do not invent
-colours, crops, backgrounds or treatments at this stage — if the deliverable
-needs one, that is design, and it belongs upstream in the master. Make the
-artwork, then package the artwork.
+By the time you are packaging, the creative work is finished and every decision
+has been made. A recipe applies decisions; it does not make them. So when an
+input is missing or a parameter is a choice nobody has made, do not fill the
+gap with a default or a guess — stop and ask, and keep iterating with the person
+until everything is present. Then package once, mechanically.
+
+Ask by showing, not by describing. If the question is "which background", put
+the mark on three or four candidates and show them side by side as a package of
+options; let the person pick; package with the pick. A question with a picture
+attached gets answered in one round. Recipes refuse a gap with a reason and,
+where they can, a suggestion — read the refusal and take it to the person
+rather than working around it.
 
 Parameters carry facts about the deliverable: which platforms, which aspect
-ratios, which filename convention, which focal point the artwork already has.
-When a parameter would be a design choice, either the person asked for it and
-you are passing it through, or you should leave it alone and let the recipe do
-the safe, neutral thing. Where a choice can be checked, the recipe checks it
-and refuses with the reason — read the error rather than working around it.
+ratios, which filename convention. When a parameter is taste, it is theirs.
 
 ## How a cover should read
 
