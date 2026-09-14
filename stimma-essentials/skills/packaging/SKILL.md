@@ -153,6 +153,9 @@ rather than working around it.
 
 Parameters carry facts about the deliverable: which platforms, which aspect
 ratios, which filename convention. When a parameter is taste, it is theirs.
+Names are theirs too: what the app or product is called goes into the
+deliverable and its previews, so ask for it — never derive one from a
+filename, a slug or a prompt.
 
 ## How a cover should read
 
