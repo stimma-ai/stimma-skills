@@ -57,16 +57,32 @@ normal file tools and the path returned by `pkg.preview()` to inspect outputs.
 If a listed preview is absent, check selected platforms and installed guidance;
 do not fabricate a path or silently omit the target.
 
+## Adjust one platform without changing the master
+
+Use the recipe's `<platform>_scale` parameter (ios, android, macos, windows,
+linux or web). `1.0` is the current default fit; `0.9` makes the artwork 10%
+smaller and adds padding. Change only the requested platform and rerun. These
+values affect the delivered files and all their previews together. Enlargement
+that exceeds the canvas or Android safe zone is refused, not silently clipped.
+The platform canvas, macOS outer margin and format dimensions stay fixed.
+Keep the shared SVG unchanged so it can serve other runs in a brand kit.
+
 ## Author the cover
 
 Use `references/app-icons-mixed.html` for multiple platforms, or
 `references/app-icons.html` for iOS alone. The mixed reference assumes all five
 mobile/desktop targets: remove unrequested sections and retain every requested
-one. Include additional runs and members according to the package's scope.
+one. If iOS is absent, use `templates/delivery.html` plus the section patterns
+in this reference; do not inspect the generated auto cover for its internals.
+Include additional runs and members according to the package's scope.
 Replace `APP_NAME`, `RUN_ID`, `RUN_ROOT`, `MACOS_PNG_REF` and `LINUX_PNG_REF`
 using the supplied name and actual manifest. Do not leave placeholder prose.
 
-Group each OS in its own sibling `<stimma-section page>` labelled
+The following is a starting composition. The person's requested colors, logo
+placement, emphasis and grouping take precedence. Author custom CSS and print
+overrides as needed; kit layouts are optional conveniences, not the only layouts.
+
+By default, group each OS in its own sibling `<stimma-section page>` labelled
 **Platform Study · OS**. Use `layout="pair"` for iOS, Android and Linux, `layout="stack"` for Windows,
 and `layout="single"` for macOS. Place the scene media directly inside;
 do not nest another section or add image margins. The same content becomes a

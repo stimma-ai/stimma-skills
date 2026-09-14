@@ -24,6 +24,21 @@ Use the installed recipe for a supported file set instead of implementing its
 formats and sizes yourself. Deliver the saved package; a prepared source image
 or a folder left in the workspace is an intermediate step.
 
+## Workspace operations
+
+Packaging itself needs no shell commands. Use `read_file` for recipe READMEs,
+manifests, SVG source and skill references; `glob` for paths; `view_image` for
+images and cover previews; and `run_code` / `run_file` for Python and the SDK.
+For several text files, use multiple `read_file` calls or a short `run_code`
+loop with `open(path).read()`. Do not use bash, `cd`, `cat`, shell pipelines or
+Python heredocs for these operations: the native tools already do this work
+inside the workspace without a shell permission request.
+
+Use this kit reference and the templates to author the cover. Do not reverse-
+engineer the expanded auto cover, probe installed render libraries, or search
+for another renderer. If a preview reports an unavailable renderer, report that
+specific limitation; do not wander outside the workspace to repair the app.
+
 ## Start with the purpose
 
 For exploration, organize candidates so the person can compare them and answer
@@ -70,6 +85,12 @@ pkg.set_cover("cover.html")
 media_id = await pkg.save()
 stimma.show(media_id=media_id, role="final")
 ```
+
+Keep reusable vector masters as SVG members. A derived raster file set is one
+run, not a replacement for its source or the whole package. When the person
+requests vectorization, use Vector Design first, inspect the resulting SVG,
+then reuse it across the relevant runs. Do not vectorize an adequate raster
+unless requested or needed for another deliverable.
 
 Add as many members and runs as the deliverable needs. Members can be anything
 the library can hold; workspace files are saved with lineage on the way in.
@@ -122,6 +143,10 @@ Start from a template, then adapt its structure to the work:
   to the recipient's uses and include every relevant run and loose member.
 - `templates/options-board.html` — a comparison of directions with a question.
 
+The person's requested design takes precedence over template and recipe cover
+suggestions. You author the composition: change colors, typography, spacing,
+section order and branding placement when requested. Add a corporate logo as a
+member and place it with the kit; retain the small required Stimma footer.
 Templates are starting points. Choose sections and components because they help
 the recipient understand this package. Replace all sample words, refs, and facts;
 omit irrelevant sections and add groups when the work needs them.
@@ -129,7 +154,15 @@ omit irrelevant sections and add groups when the work needs them.
 Write responsive HTML, CSS, and optional classic JavaScript to a workspace file.
 Use kit elements wherever the page touches package content. Reuse the kit's page
 classes (`sp-page`, `sp-title`, `sp-sub`, `sp-label`, `sp-note`); add CSS only for
-what the work needs. Resolve refs from the actual manifest, never guessed paths.
+what the work needs. Kit print CSS is a default placed before authored CSS.
+Use `:root` tokens (`--sp-bg`, `--sp-fg`, `--sp-muted`, `--sp-line`) for shared
+colors, and `@media print` / `@page` for PDF-specific overrides. For example,
+`:root { --sp-bg: #123f86; --sp-fg: #ffffff; }` sets the page background and text
+in both outputs; `@page { background: #123f86; }` can set a distinct PDF ground.
+Use your own section layout when single/pair/stack does not fit. Keep content
+legible, local and portable; inspect the authored cover through `pkg.preview()`
+after custom styling. PDF export applies the print rules automatically.
+Resolve refs from the actual manifest, never guessed paths.
 
 The kit vocabulary:
 
@@ -208,7 +241,10 @@ the kit's tabular number styling.
 The HTML has one closing brand footer; the PDF repeats that footer on every
 slide. The package ZIP also includes a static PDF of the cover. The exporter creates
 it from the authored HTML; do not generate a second cover or run a PDF tool.
-Light and dark examples are both printed. Interactive file browsing remains in
+A recipe may separately produce precisely dimensioned printable files (labels,
+for example). Those are deliverables inside the package, independent of the
+cover PDF.
+Light and dark examples are both printed unless inside an optional details disclosure. Interactive file browsing remains in
 `index.html`, alongside the actual files in the ZIP.
 
 ## The package's face
