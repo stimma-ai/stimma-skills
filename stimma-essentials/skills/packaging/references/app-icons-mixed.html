@@ -22,27 +22,25 @@
     </stimma-grid>
   </stimma-section>
   <!-- Keep each requested platform; refs must come from the actual run manifest. -->
-  <stimma-section label="Platform Study">
-    <div style="margin-top:32px"><h2 class="sp-label">iOS</h2>
-      <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png" style="margin-top:24px"></stimma-media>
-    </div>
-    <div style="margin-top:32px"><h2 class="sp-label">Android</h2>
-      <stimma-media ref="RUN_ROOTpreviews/platform-android-studio.png"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/platform-android.png" style="margin-top:24px"></stimma-media>
-    </div>
-    <div style="margin-top:32px"><h2 class="sp-label">macOS</h2>
-      <stimma-media ref="RUN_ROOTpreviews/platform-macos.png"></stimma-media>
-    </div>
-    <div style="margin-top:32px"><h2 class="sp-label">Windows</h2>
-      <stimma-media ref="RUN_ROOTpreviews/platform-windows-start.png" caption="Start menu"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/platform-windows-taskbar.png" caption="Taskbar" style="margin-top:24px"></stimma-media>
-    </div>
-    <div style="margin-top:32px"><h2 class="sp-label">Linux</h2>
-      <stimma-media ref="RUN_ROOTpreviews/platform-linux.png" caption="Ubuntu Dock"></stimma-media>
-    </div>
+  <stimma-section label="Platform Study · iOS" page layout="pair">
+    <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
+    <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>
   </stimma-section>
-  <stimma-section label="At actual size">
+  <stimma-section label="Platform Study · Android" page layout="pair">
+    <stimma-media ref="RUN_ROOTpreviews/platform-android-studio.png"></stimma-media>
+    <stimma-media ref="RUN_ROOTpreviews/platform-android.png"></stimma-media>
+  </stimma-section>
+  <stimma-section label="Platform Study · macOS" page layout="single">
+    <stimma-media ref="RUN_ROOTpreviews/platform-macos.png"></stimma-media>
+  </stimma-section>
+  <stimma-section label="Platform Study · Windows" page layout="stack">
+    <stimma-media ref="RUN_ROOTpreviews/platform-windows-start.png" caption="Start menu"></stimma-media>
+    <stimma-media ref="RUN_ROOTpreviews/platform-windows-taskbar.png" caption="Taskbar"></stimma-media>
+  </stimma-section>
+  <stimma-section label="Platform Study · Linux" page layout="single">
+    <stimma-media ref="RUN_ROOTpreviews/platform-linux.png"></stimma-media>
+  </stimma-section>
+  <stimma-section label="At actual size" page>
     <stimma-sizes>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-180.png" size="180" caption="180 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-120.png" size="120" caption="120 px"></stimma-media>
@@ -53,7 +51,7 @@
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-20.png" size="20" caption="20 px"></stimma-media>
     </stimma-sizes>
   </stimma-section>
-  <stimma-section label="In iOS">
+  <stimma-section label="In iOS" page>
     <stimma-appearance label="Appearance">
       <div when="light" class="icon-context">
         <stimma-media ref="RUN_ROOTpreviews/app-store-light.png" caption="App Store"></stimma-media>
@@ -69,7 +67,7 @@
       </div>
     </stimma-appearance>
   </stimma-section>
-  <stimma-section label="Files">
+  <stimma-section label="Files" page>
     <stimma-columns>
       <stimma-column title="iOS">AppIcon.appiconset and Contents.json for Xcode.</stimma-column>
       <stimma-column title="Android">Launcher icons, adaptive layers and Play Store icon.</stimma-column>

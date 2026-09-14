@@ -133,7 +133,15 @@ what the work needs. Resolve refs from the actual manifest, never guessed paths.
 
 The kit vocabulary:
 
-- `stimma-section` groups content, with an optional `label`.
+- `stimma-section` groups content, with an optional `label`. Add `page` for a
+  landscape PDF page boundary. `layout="single"` fits one media item;
+  `layout="pair"` places two side by side, stacking on narrow HTML screens.
+  `layout="stack"` fits two wide media items vertically on the same PDF page.
+  These layouts take exactly one or two `stimma-media` children respectively.
+  Keep page groups as siblings, not nested sections. Author the content once:
+  the kit handles responsive HTML and landscape PDF. Split dense groups into
+  additional pages; do not shrink text or crop images to force them onto a page.
+  A page containing one `stimma-appearance` prints each variant on its own page.
 - `stimma-media` shows a member or run file by `ref`, with optional `caption` and
   `plate` attributes.
 - `stimma-grid` groups media for scanning or comparison.

@@ -66,7 +66,15 @@ one. Include additional runs and members according to the package's scope.
 Replace `APP_NAME`, `RUN_ID`, `RUN_ROOT`, `MACOS_PNG_REF` and `LINUX_PNG_REF`
 using the supplied name and actual manifest. Do not leave placeholder prose.
 
-Call the context section **Platform Study**. Show scenes wide and give each
+Group each OS in its own sibling `<stimma-section page>` labelled
+**Platform Study · OS**. Use `layout="pair"` for iOS and Android, `layout="stack"` for Windows,
+and `layout="single"` for macOS and Linux. Place the scene media directly inside;
+do not nest another section or add image margins. The same content becomes a
+responsive HTML section and one landscape PDF page per OS. Keep the opening
+icon overview before these page groups; give sizes, details and contents their
+own page sections. The PDF prints light and dark detail variants separately.
+
+Show scenes wide and give each
 platform a short label. Windows needs both Start and taskbar. Show studio
 and lifestyle scenes for both iOS and Android; do not bring back the old flat
 phone home-screen section.
