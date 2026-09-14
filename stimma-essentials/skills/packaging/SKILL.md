@@ -169,6 +169,11 @@ content. Fix any problems reported when attaching the cover before saving.
 
 Lead with the work. Show how it will be used or how its parts fit together.
 Use previews supplied by recipes where useful; create context where needed.
+When recipe guidance supplies a **Platform Study**, use that name for the context
+section. Include every requested target and inspect its actual outputs in context
+before saving. Recipe guidance links the relevant reference; read it from this
+skill's resource directory. Preview files come from the recipe run, not from a
+separate template installation.
 Keep supporting details subordinate to the work and put file access near the
 words explaining what the recipient receives.
 
