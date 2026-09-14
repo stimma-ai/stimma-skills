@@ -1,7 +1,7 @@
 ---
 name: packaging
 display_name: Packaging
-description: Deliver work as a package of members, recipe runs, extras, and an agent-authored cover
+description: Use when asked to package work, prepare final files, or assemble a deliverable — members, recipe runs, extras, and a designed cover
 author: system
 tags: [package, deliverable, delivery, export, handoff]
 environments:
