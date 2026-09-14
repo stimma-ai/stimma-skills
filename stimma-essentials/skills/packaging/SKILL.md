@@ -1,9 +1,9 @@
 ---
 name: packaging
 display_name: Packaging
-description: Deliver finished work as a package — masters, recipe-built asset sets (app icons, logo kits, key art crops), extras, and a designed cover — instead of loose files
+description: Deliver work as a package of members, recipe runs, extras, and an agent-authored cover
 author: system
-tags: [package, deliverable, delivery, app icons, logo, brand, export, handoff]
+tags: [package, deliverable, delivery, export, handoff]
 environments:
   chat: true
   flow: true
@@ -11,208 +11,168 @@ environments:
 
 # Packaging
 
-You finish creative work the way a studio does: as a package. A package is one library
-item that holds the masters, every derivative a deliverable needs, any loose extras, and a
-cover page that presents it. The person gets a browsable thing they can export as a zip
-or a single HTML file, and Stimma can rebuild it when a master changes.
+A package holds work together: members, any number of recipe runs, loose extras,
+and a designed cover. It is one library item, exportable as a zip or a single
+HTML cover. Its scope comes from what the person needs to receive. One package
+may span many kinds of work; a recipe run is just one contribution to it.
 
-Reach for a package when the request implies a deliverable rather than a picture: a logo,
-app or favicon set, brand assets, a campaign's crops, "the final files", "everything for
-the developer", "package this up". A single image someone asked to see is not a package.
+Reach for a package when the request calls for a coherent deliverable, a set of
+choices, or files to hand on. A single image someone asked to see does not need
+to become a package.
 
-## Two stages, two kinds of package
+## Start with the purpose
 
-- **Exploring.** Candidates are the members, the cover is an options board (a
-  contact-sheet grid of the directions with short captions), and the turn ends with a
-  question about which direction to take. No recipes yet.
-- **Finalizing.** The chosen masters are the members, recipes produce the production
-  trees, the cover shows the work in context with the file index underneath, and the
-  package is shown as the final result.
+For exploration, organize candidates so the person can compare them and answer
+a clear question. For a finished delivery, show the chosen work in context and
+make the contents easy to understand and retrieve. Either can include members,
+recipe runs, and extras as needed. Read the stage from the conversation.
 
-Read which stage the person is in from the conversation. "Give me some logo ideas" is
-exploring. "Finalize the second one" or "make the icons for it" is finalizing.
+## Recipes make files; you design the cover
 
-## Recipes arrange; you create
+A recipe is a deterministic formula: assets with declared roles plus parameters
+in, a file tree out. Gather and prepare its inputs first. Resolve creative
+choices before running it; the recorded parameters make the result rebuildable.
 
-A recipe is deterministic code: assets with declared roles plus parameters in, a file
-tree out. It never generates, so every input it needs must exist first. If the logo kit
-needs a transparent mark and you only have a raster on white, cut it out before packaging.
-Judgment goes into parameters: the focal point for crops, the background color behind an
-iOS icon, the filename convention. The package records them, so a rebuild replays your
-decisions exactly.
-
-Recipes are discovered, never listed here — what is installed varies by profile, and this
-skill stays the same length whether that is three or fifty. Ask, then read the notes of
-the one you picked:
+Discover recipes from the installed set, then fetch guidance for the recipe you
+intend to use:
 
 ```python
-for r in stimma.packages.recipes():
-    print(r["id"], r["description"], [(i["name"], i["kind"], i["required"]) for i in r["inputs"]])
-print(stimma.packages.guidance("app-icons"))   # only for the one you are about to use
+for recipe in stimma.packages.recipes():
+    print(recipe["id"], recipe["description"], recipe["inputs"], recipe["params"])
+# recipe_id is the id you selected from those results.
+print(stimma.packages.guidance(recipe_id))
 ```
 
-A recipe's `inputs` tell you what to gather and `params` what you get to decide. Its
-guidance is where the craft lives: what makes a good master, which parameter matters,
-what goes wrong. Fetch it when you commit to a recipe, not before.
+Recipe-specific requirements, file paths, previews, and cover suggestions belong
+in that recipe's guidance. Use it to understand the output. The recipe never
+emits the cover or decides its composition; you design a page for the whole
+package, including anything that did not come from a recipe.
 
-## Building one
+## Build around the work
+
+The following uses values gathered from the conversation and recipe discovery;
+it does not prescribe a recipe, input role, or parameter set:
 
 ```python
-pkg = stimma.packages.new("Acme app icons")
-master = await pkg.add_member(icon_result, role="master")      # ToolResult, media id, or workspace path
-await pkg.run("app-icons", {"master": master},
-              {"platforms": ["ios", "android", "web"], "background": "#101820", "app_name": "Acme"})
-pkg.add_file("brief.md")                                        # optional loose extras
-pkg.set_cover("cover.html")                                     # the cover you designed; see below
+pkg = stimma.packages.new(package_title)
+member = await pkg.add_member(source)  # ToolResult, media id, or workspace path
+# Optional; repeat for each needed run, mapping its declared roles to members.
+await pkg.run(recipe_id, {input_role: member}, chosen_params)
+# Optional; repeat for loose extras.
+pkg.add_file(extra_path)
+pkg.set_cover("cover.html")
 media_id = await pkg.save()
 stimma.show(media_id=media_id, role="final")
 ```
 
-Members can be anything the library can hold; workspace files are saved with lineage on
-the way in. Several recipe runs can live in one package (a logo kit plus its app icons).
-`save()` writes the bundle and returns its media id; `show(role="final")` is what commits
-it as the deliverable, so leave exploration packages at `role="intermediate"` or show
-them final only once the person has picked.
+Add as many members and runs as the deliverable needs. Members can be anything
+the library can hold; workspace files are saved with lineage on the way in.
+`save()` writes the bundle. Use `show(role="final")` for the completed result
+and `role="intermediate"` for work still being developed.
 
-## Filenames
+## Names and parameters are decisions
 
-People have conventions. Look for one in the profile's instructions and the conversation
-(case, separators, a project code, a prefix) and express it through the recipe's `naming`
-parameter rather than asking again:
+Follow naming conventions already given in the profile or conversation. Use a
+recipe's declared `naming` fields when it supports them. Preserve filenames the
+recipe marks as fixed: the recipient's software may require them.
 
-```python
-{"naming": {"template": "{slug}-{variant}-{color}-{size}", "case": "kebab"}}
-```
-
-Each recipe declares which fields its template may use. Platform-fixed names
-(`Contents.json`, `mipmap-xxhdpi/`, `favicon.ico`) are never renamed, so a convention
-can't break an Xcode or Android drop-in.
+Do not invent missing names, inputs, or creative choices to get a recipe to run.
+Ask for unresolved decisions, using visual alternatives when they help. Respect
+a recipe's refusal and resolve its cause. Names that appear in the deliverable
+must come from the person; never derive them from a filename, slug, or prompt.
 
 ## The cover
 
-The cover is yours. A package is a zip with a designed front page and the work
-inside it; the page is what a person opens, and it is the one thing in the package
-that cannot be a formula. Recipes make files and say in their guidance what those
-files are for; you decide what the person sees first, what sits next to what, and
-what the words are. Always write one before `save()`. Without it the package gets a
-plain auto-generated index — enough to open, wrong to send.
+Always author a cover and attach it with `set_cover` before `save()`. The cover
+is where you decide what the person sees first, how the parts relate, and which
+facts matter. The auto cover is a plain fallback for packaging without an agent.
 
-Start from the template closest to the job and keep its order; replace the refs,
-the words and the facts:
+Start from a template, then adapt its structure to the work:
 
-- `templates/delivery.html` — finalizing, one or more recipe runs: the work in
-  context, at true size, then what is in the box.
-- `templates/collection.html` — finalizing, many things that are not one formula's
-  output: a brand kit, a game's art, a label set. Lead with what ties it together,
-  then group the parts by what the recipient will do with them.
-- `templates/options-board.html` — exploring: a few directions and one question.
+- `templates/delivery.html` — a generic finished delivery: lead work, supporting
+  context, and access to the contents.
+- `templates/collection.html` — a grouped collection example; adapt the groups
+  to the recipient's uses and include every relevant run and loose member.
+- `templates/options-board.html` — a comparison of directions with a question.
 
-It is a responsive web page: any HTML, CSS and classic JavaScript, plus kit elements
-wherever the page touches package content. Write it to a workspace file and pass the
-path to `set_cover`. The kit ships the page styling, so reuse its classes — `sp-page`,
-`sp-title`, `sp-sub`, `sp-label`, `sp-note` — and add your own CSS only for what the
-work itself needs.
+Templates are starting points. Choose sections and components because they help
+the recipient understand this package. Replace all sample words, refs, and facts;
+omit irrelevant sections and add groups when the work needs them.
 
-Kit elements resolve by ref — a member id (`m1`), a run id (`r1`) or a bundle path
-from the manifest:
+Write responsive HTML, CSS, and optional classic JavaScript to a workspace file.
+Use kit elements wherever the page touches package content. Reuse the kit's page
+classes (`sp-page`, `sp-title`, `sp-sub`, `sp-label`, `sp-note`); add CSS only for
+what the work needs. Resolve refs from the actual manifest, never guessed paths.
+
+The kit vocabulary:
+
+- `stimma-section` groups content, with an optional `label`.
+- `stimma-media` shows a member or run file by `ref`, with optional `caption` and
+  `plate` attributes.
+- `stimma-grid` groups media for scanning or comparison.
+- `stimma-sizes` groups media whose `size` attributes specify actual pixel sizes,
+  when viewing at that scale is useful.
+- `stimma-columns` contains `stimma-column` elements with titles and descriptions.
+- `stimma-appearance` switches between children marked `when="light"` and
+  `when="dark"`. It follows the system until the reader chooses, even without
+  scripts. Use it when the work has meaningful appearance variants.
+- `stimma-compare` compares refs `a` and `b`, with `label-a`, `label-b`, and an
+  optional `mode="slider"`.
+- `stimma-files` opens a file browser in place. Give it a run id as `ref`, or omit
+  `ref` for the whole package, including loose files.
+
+A member id (`m1`) or declared bundle path identifies media; a run id (`r1`)
+identifies a run's files. For example:
 
 ```html
-<stimma-section label="At actual size">…</stimma-section>
-<stimma-media ref="m1" caption="Primary mark" plate></stimma-media>
-<stimma-grid><stimma-media ref="m1"/><stimma-media ref="m2"/></stimma-grid>
-<stimma-sizes><stimma-media ref="app-icons/ios/AppIcon.appiconset/icon-60.png" size="60"/>…</stimma-sizes>
-<stimma-columns><stimma-column title="iOS">…</stimma-column></stimma-columns>
-<stimma-appearance label="On a home screen">
-  <div when="light">…</div><div when="dark">…</div>
-</stimma-appearance>
-<stimma-compare a="m1" b="m2" label-a="Before" label-b="After" mode="slider"></stimma-compare>
-<stimma-files ref="r1"></stimma-files>
+<stimma-section label="Included work">
+  <stimma-grid>
+    <stimma-media ref="m1" caption="First item"></stimma-media>
+    <stimma-media ref="m2" caption="Second item"></stimma-media>
+  </stimma-grid>
+</stimma-section>
+<stimma-section label="Files"><stimma-files></stimma-files></stimma-section>
 ```
 
-`stimma-appearance` shows one of its light/dark children at a time, following the
-system until the reader picks. `stimma-sizes` draws each image at exactly the pixel
-size given. `stimma-files` is a file browser for a run (or the whole package with no
-ref); it opens in place, so put it under the words that say what is in it.
-
-Rules the cover must satisfy, because it has to open from a double-clicked file with
-no network: no external URLs (fonts and images come in as members), no
-`<script type="module">`, unique ids. A cover that breaks a rule is refused with the
-reason; fix it and save again.
-
-Show the deliverable in context: the icon on a phone home screen, the logo on a card
-or a site header, key art in the frame it will run in, a sprite in a scene. Recipes
-that can render mockups ship them as files (read the recipe's guidance for what is
-there); when none exist, make one. That is the difference between "here are files"
-and "here is the work".
-
-## Packaging fills no gaps
-
-By the time you are packaging, the creative work is finished and every decision
-has been made. A recipe applies decisions; it does not make them. So when an
-input is missing or a parameter is a choice nobody has made, do not fill the
-gap with a default or a guess — stop and ask, and keep iterating with the person
-until everything is present. Then package once, mechanically.
-
-Ask by showing, not by describing. If the question is "which background", put
-the mark on three or four candidates and show them side by side as a package of
-options; let the person pick; package with the pick. A question with a picture
-attached gets answered in one round. Recipes refuse a gap with a reason and,
-where they can, a suggestion — read the refusal and take it to the person
-rather than working around it.
-
-Parameters carry facts about the deliverable: which platforms, which aspect
-ratios, which filename convention. When a parameter is taste, it is theirs.
-Names are theirs too: what the app or product is called goes into the
-deliverable and its previews, so ask for it — never derive one from a
-filename, a slug or a prompt.
+The cover must open from a double-clicked file without a network: no external
+URLs, no module scripts, and unique ids. Bundle fonts and images as package
+content. Fix any problems reported when attaching the cover before saving.
 
 ## How a cover should read
 
-The page is going to a person who is receiving work, not inspecting a build. Hold to
-these and it will look like a studio sent it.
+Lead with the work. Show how it will be used or how its parts fit together.
+Use previews supplied by recipes where useful; create context where needed.
+Keep supporting details subordinate to the work and put file access near the
+words explaining what the recipient receives.
 
-**Say what it is, not how it was made.** No members, no runs, no hashes, no bundle paths
-in prose. "App icon set · 14 files" is the whole preamble.
+Use the recipient's language. Avoid internal member ids, run ids, hashes, and
+bundle paths in prose. State useful facts about the contents without narrating
+how they were generated. Show a quality the person can judge instead of claiming
+it in a sentence.
 
-**Never claim an affordance the page does not have.** Do not write "drag this into
-Xcode" or "click here to install". Name what a folder contains and stop. The reader can
-see the download buttons.
+Only promise actions the page supports. Do not invent installation, drag, or
+folder-download affordances. Use the existing file browser for access to files.
 
-**Cut the editorial.** Lines like "every size is its own render, so the mark stays
-legible" are the sound of a machine admiring itself. If a fact matters, show it — the
-size row proves legibility better than a sentence about it. If it does not, delete it.
-
-**Show the work in the place it will live.** An icon on a home screen, a logo on a card,
-key art in its frame. One well-made context beats three captions.
-
-**Lead with the work.** The first screen is the piece, large. Files come last and stay
-quiet: a count, one download, and a tree the reader can ignore.
-
-**Let the page breathe, and use one surface.** Space separates sections; hairlines
-separate peers. No cards inside cards, no box around everything. The kit's classes
-already carry this — reuse them rather than restyling the page.
-
-**Numbers are facts, not decoration.** Sizes, counts and bytes go in the mono, tabular
-style the kit provides, never in a sentence.
+Let whitespace, typography, and the shared kit organize the page. Avoid nested
+cards and redundant decoration. Display sizes, counts, and bytes as facts using
+the kit's tabular number styling.
 
 ## The package's face
 
-Every package shows one square image in the library. A recipe that knows what it
-made supplies a good one — an icon set shows the icon the way a device draws it.
-Override it whenever you can do better, especially for packages you designed:
+The library shows one square image for the package. A recipe may supply a tile,
+but choose an image that represents the whole deliverable. For a collection,
+that may require a composition of several members:
 
 ```python
-pkg.set_tile("tile.png")     # a workspace path, or image bytes
+pkg.set_tile("tile.png")  # a workspace path, or image bytes
 ```
 
-A designed tile is worth making when the package is a deliverable someone will
-scan a grid for. It is stored outside the deliverable, so the client never
-receives it.
+The tile is stored outside the deliverable and does not ship to the recipient.
 
-## When a master changes
+## When a member changes
 
-If you revise something that belongs to a package, save it as a revision of the existing
-asset (`show(..., revises=<asset_id>)`), not a new one. The package notices its member
-moved on and offers a rebuild; do the rebuild yourself when you are mid-conversation so
-the person sees a fresh package, not a stale one. The cover carries forward verbatim,
-so if its prose named the old version, refresh it.
+Save revised work as a revision of its existing asset
+(`show(..., revises=<asset_id>)`). Rebuild the package when appropriate so the
+person receives an up-to-date result. Rebuild carries the authored cover forward;
+review its words and composition against the revised contents and refresh it
+when needed.

@@ -1,39 +1,32 @@
-<!-- Delivery: a finalizing-stage cover. The mockup block is where the work is shown in context. -->
-<style>
-  .page{max-width:1200px;margin:0 auto;padding:56px 24px 96px}
-  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--sp-muted);margin:0 0 12px}
-  h1{font-size:clamp(36px,6vw,72px);line-height:.95;letter-spacing:-.03em;margin:0 0 12px;font-weight:700}
-  .lede{max-width:60ch;color:var(--sp-muted);margin:0 0 48px;font-size:18px}
-  .hero{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center}
-  @media (max-width:800px){.hero{grid-template-columns:1fr}}
-  .phone{width:min(320px,100%);margin:0 auto;aspect-ratio:9/19.5;border-radius:40px;background:#000;padding:14px;box-shadow:0 30px 60px #0006}
-  .screen{width:100%;height:100%;border-radius:28px;background:linear-gradient(160deg,#243b55,#141e30);display:grid;place-items:center}
-  .screen stimma-media{width:64px}
-  .screen stimma-media img{border-radius:14px;background:none}
-  .facts{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:14px}
-  .facts dt{color:var(--sp-muted)}
-  .facts dd{margin:0;font-variant-numeric:tabular-nums}
-</style>
-<div class="page">
-  <p class="kicker">Delivery · v1</p>
-  <h1>Acme app icons</h1>
-  <p class="lede">Every platform set below is generated from one master. Drop the iOS folder into an Xcode asset catalog; Android mirrors a res/ directory.</p>
+<!-- Generic delivery starting point. Replace the title, descriptions, captions,
+     and refs using the actual package. Choose a lead that represents the whole
+     deliverable. Adapt or omit supporting sections to suit the recipient's needs;
+     recipe guidance supplies any recipe-specific file paths and preview advice. -->
+<div class="sp-page">
+  <h1 class="sp-title">Package title</h1>
+  <p class="sp-sub">A brief description of what the recipient receives.</p>
 
-  <section class="hero">
-    <div class="phone"><div class="screen"><stimma-media ref="m1"></stimma-media></div></div>
-    <div>
-      <h2 class="sp-h2">The master</h2>
-      <stimma-media ref="m1"></stimma-media>
-      <dl class="facts" style="margin-top:16px">
-        <dt>Master</dt><dd>1024 × 1024 PNG, transparent</dd>
-        <dt>iOS background</dt><dd>#101820</dd>
-        <dt>Platforms</dt><dd>iOS · Android · Web</dd>
-      </dl>
-    </div>
-  </section>
+  <stimma-section>
+    <stimma-media ref="m1" caption="The work and its intended use"></stimma-media>
+  </stimma-section>
 
-  <h2 class="sp-h2">Files</h2>
-  <stimma-files ref="r1"></stimma-files>
+  <!-- Optional supporting views: show context, details, or related work.
+       Add or remove media using refs from the package manifest. -->
+  <stimma-section label="A closer look">
+    <stimma-grid>
+      <stimma-media ref="m2" caption="Supporting view"></stimma-media>
+      <stimma-media ref="m3" caption="Related work"></stimma-media>
+    </stimma-grid>
+  </stimma-section>
 
-  <p class="sp-footer">Rebuilt from the master on request; filenames follow the project convention.</p>
+  <!-- Describe the contents by use. Add groups as needed. The whole-package
+       browser includes every run and loose file; use ref="r1", etc. if separate
+       run browsers better serve the recipient. -->
+  <stimma-section label="Included in this package">
+    <stimma-columns>
+      <stimma-column title="Contents">Describe the work included here.</stimma-column>
+      <stimma-column title="Use">State any facts needed to use the files.</stimma-column>
+    </stimma-columns>
+    <stimma-files></stimma-files>
+  </stimma-section>
 </div>
