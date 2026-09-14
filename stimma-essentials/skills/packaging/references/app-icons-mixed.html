@@ -5,7 +5,6 @@
      the manifest. Keep only requested platforms and include every run. -->
 <style>
   .platform-icons { grid-template-columns: repeat(auto-fit,minmax(96px,1fr)); gap: 24px; }
-  .icon-context { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items: start; }
 </style>
 <div class="sp-page">
   <h1 class="sp-title">APP_NAME</h1>
@@ -25,10 +24,18 @@
   <stimma-section label="Platform Study · iOS" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>
+    <stimma-grid slot="details">
+      <stimma-media ref="RUN_ROOTpreviews/ios-store-light.png" caption="App Store"></stimma-media>
+      <stimma-media ref="RUN_ROOTpreviews/ios-notification-light.png" caption="Notification"></stimma-media>
+    </stimma-grid>
   </stimma-section>
   <stimma-section label="Platform Study · Android" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/platform-android-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/platform-android.png"></stimma-media>
+    <stimma-grid slot="details">
+      <stimma-media ref="RUN_ROOTpreviews/android-store-light.png" caption="Google Play"></stimma-media>
+      <stimma-media ref="RUN_ROOTpreviews/android-notification-light.png" caption="Notification"></stimma-media>
+    </stimma-grid>
   </stimma-section>
   <stimma-section label="Platform Study · macOS" page layout="single">
     <stimma-media ref="RUN_ROOTpreviews/platform-macos.png"></stimma-media>
@@ -50,22 +57,6 @@
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-29.png" size="29" caption="29 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-20.png" size="20" caption="20 px"></stimma-media>
     </stimma-sizes>
-  </stimma-section>
-  <stimma-section label="In iOS" page>
-    <stimma-appearance label="Appearance">
-      <div when="light" class="icon-context">
-        <stimma-media ref="RUN_ROOTpreviews/app-store-light.png" caption="App Store"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/settings-light.png" caption="Settings"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/notification-light.png" caption="Notification"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/spotlight-light.png" caption="Spotlight"></stimma-media>
-      </div>
-      <div when="dark" class="icon-context">
-        <stimma-media ref="RUN_ROOTpreviews/app-store-dark.png" caption="App Store"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/settings-dark.png" caption="Settings"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/notification-dark.png" caption="Notification"></stimma-media>
-        <stimma-media ref="RUN_ROOTpreviews/spotlight-dark.png" caption="Spotlight"></stimma-media>
-      </div>
-    </stimma-appearance>
   </stimma-section>
   <stimma-section label="Files" page>
     <stimma-columns>

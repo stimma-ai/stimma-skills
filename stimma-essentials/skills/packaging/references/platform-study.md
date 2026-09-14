@@ -37,8 +37,8 @@ relative to each run's root, not to the package root:
 
 | Target | Preview files |
 | --- | --- |
-| iOS | `previews/device-studio.png`, `previews/device-lifestyle.png` |
-| Android | `previews/platform-android-studio.png`, `previews/platform-android.png` |
+| iOS | `previews/device-studio.png`, `previews/device-lifestyle.png`; details: `previews/ios-store-light.png`, `previews/ios-notification-light.png` |
+| Android | `previews/platform-android-studio.png`, `previews/platform-android.png`; details: `previews/android-store-light.png`, `previews/android-notification-light.png` |
 | macOS | `previews/platform-macos.png` |
 | Windows | `previews/platform-windows-start.png`, `previews/platform-windows-taskbar.png` |
 | Linux | `previews/platform-linux.png` |
@@ -72,14 +72,18 @@ and `layout="single"` for macOS and Linux. Place the scene media directly inside
 do not nest another section or add image margins. The same content becomes a
 responsive HTML section and one landscape PDF page per OS. Keep the opening
 icon overview before these page groups; give sizes, details and contents their
-own page sections. The PDF prints light and dark detail variants separately.
+own page sections. On each mobile OS page, add a `stimma-grid slot="details"`
+containing its store and notification previews, with short captions. Use the
+light files in the reference; dark variants also ship if that appearance better
+suits the cover. Keep this compact pair on the OS page. Do not add a separate
+“In iOS” section, Settings, Spotlight, or duplicate light/dark detail pages.
 
 Show scenes wide and give each
 platform a short label. Windows needs both Start and taskbar. Show studio
 and lifestyle scenes for both iOS and Android; do not bring back the old flat
 phone home-screen section.
-Localized iOS context rows can use `stimma-appearance` if useful; its light/dark
-switch already fades and works without scripts. Do not add another switch.
+The store and notification examples use neutral sample text, without invented
+ratings, categories or app features. Do not add such claims in captions.
 
 Keep the cover factual: platform names, actual sizes, useful folder descriptions.
 Avoid promotional claims and invented app features or notifications. Actual-size
