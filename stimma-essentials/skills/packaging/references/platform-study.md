@@ -38,7 +38,7 @@ relative to each run's root, not to the package root:
 | Target | Preview files |
 | --- | --- |
 | iOS | `previews/device-studio.png`, `previews/device-lifestyle.png` |
-| Android | `previews/platform-android.png` |
+| Android | `previews/platform-android-studio.png`, `previews/platform-android.png` |
 | macOS | `previews/platform-macos.png` |
 | Windows | `previews/platform-windows-start.png`, `previews/platform-windows-taskbar.png` |
 | Linux | `previews/platform-linux.png` |
@@ -67,8 +67,9 @@ Replace `APP_NAME`, `RUN_ID`, `RUN_ROOT`, `MACOS_PNG_REF` and `LINUX_PNG_REF`
 using the supplied name and actual manifest. Do not leave placeholder prose.
 
 Call the context section **Platform Study**. Show scenes wide and give each
-platform a short label. Windows needs both Start and taskbar. Show iOS studio
-and lifestyle scenes; do not bring back the old flat phone home-screen section.
+platform a short label. Windows needs both Start and taskbar. Show studio
+and lifestyle scenes for both iOS and Android; do not bring back the old flat
+phone home-screen section.
 Localized iOS context rows can use `stimma-appearance` if useful; its light/dark
 switch already fades and works without scripts. Do not add another switch.
 

@@ -189,6 +189,11 @@ Let whitespace, typography, and the shared kit organize the page. Avoid nested
 cards and redundant decoration. Display sizes, counts, and bytes as facts using
 the kit's tabular number styling.
 
+The package ZIP also includes a static PDF of the cover. The exporter creates
+it from the authored HTML; do not generate a second cover or run a PDF tool.
+Light and dark examples are both printed. Interactive file browsing remains in
+`index.html`, alongside the actual files in the ZIP.
+
 ## The package's face
 
 The library shows one square image for the package. A recipe may supply a tile,
