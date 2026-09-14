@@ -3,7 +3,8 @@
 Set the values below from the request and recipe guidance. Use the actual
 source or tool-result path for MASTER; the file is already in the workspace. Run with SAVE=False
 while inspecting the draft and authoring cover.html. Set SAVE=True only after
-reviewing the authored preview. The cover remains your HTML, separate from this
+reviewing the authored preview with view_image on the printed draft folder.
+The rendered page inside that folder is index.html. The cover remains your HTML, separate from this
 file; use one of the app-icons HTML references as its starting point.
 """
 import json

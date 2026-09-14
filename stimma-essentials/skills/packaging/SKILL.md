@@ -80,9 +80,10 @@ and `role="intermediate"` for work still being developed.
 
 Inspect a draft with `await pkg.manifest()` and `await pkg.preview()` before writing
 the cover. The latter returns a workspace folder containing the current cover
-and all files. Inspect pixels with Python in `run_code` or `run_file`; read
-text with `read_file`, find paths with `glob`, and inspect images or the cover
-folder with `view_image`. Use the manifest's exact paths as cover
+and all files, with the rendered cover at `index.html`. Pass the returned
+folder directly to `view_image` to review the cover, and use `view_image` for
+individual images. Read text with `read_file` and find paths with `glob`.
+Use Python when a numerical check is needed. Use the manifest's exact paths as cover
 refs. A run id identifies a file browser, not a path prefix. These operations
 do not create library items. `set_cover()` validates refs immediately.
 
