@@ -5,7 +5,6 @@
      the manifest. Keep only requested platforms and include every run. -->
 <style>
   .platform-icons { grid-template-columns: repeat(auto-fit,minmax(96px,1fr)); gap: 24px; }
-  .icon-home { max-width: 340px; margin-inline: auto; }
   .icon-context { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items: start; }
 </style>
 <div class="sp-page">
@@ -27,12 +26,6 @@
   </stimma-section>
   <stimma-section label="In context">
     <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>
-  </stimma-section>
-  <stimma-section label="Home screen">
-    <stimma-appearance label="Appearance">
-      <div when="light" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-light.png"></stimma-media></div>
-      <div when="dark" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-dark.png"></stimma-media></div>
-    </stimma-appearance>
   </stimma-section>
   <stimma-section label="At actual size">
     <stimma-sizes>
