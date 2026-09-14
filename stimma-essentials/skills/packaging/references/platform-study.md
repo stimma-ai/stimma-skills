@@ -41,7 +41,7 @@ relative to each run's root, not to the package root:
 | Android | `previews/platform-android-studio.png`, `previews/platform-android.png`; details: `previews/android-store-light.png`, `previews/android-notification-light.png` |
 | macOS | `previews/platform-macos.png` |
 | Windows | `previews/platform-windows-start.png`, `previews/platform-windows-taskbar.png` |
-| Linux | `previews/platform-linux.png` |
+| Linux | `previews/platform-linux.png` (Ubuntu), `previews/platform-linux-kde.png` (KDE Plasma) |
 
 Only requested platforms are rendered. Web exports have no supplied context
 scene; show their actual files and useful sizes if requested. Do not invent a
@@ -67,19 +67,20 @@ Replace `APP_NAME`, `RUN_ID`, `RUN_ROOT`, `MACOS_PNG_REF` and `LINUX_PNG_REF`
 using the supplied name and actual manifest. Do not leave placeholder prose.
 
 Group each OS in its own sibling `<stimma-section page>` labelled
-**Platform Study · OS**. Use `layout="pair"` for iOS and Android, `layout="stack"` for Windows,
-and `layout="single"` for macOS and Linux. Place the scene media directly inside;
+**Platform Study · OS**. Use `layout="pair"` for iOS, Android and Linux, `layout="stack"` for Windows,
+and `layout="single"` for macOS. Place the scene media directly inside;
 do not nest another section or add image margins. The same content becomes a
 responsive HTML section and one landscape PDF page per OS. Keep the opening
-icon overview before these page groups; give sizes, details and contents their
-own page sections. On each mobile OS page, add a `stimma-grid slot="details"`
+icon overview and “At actual size” row together before these page groups, on
+the opening page. Give contents its own page section. On each mobile OS page, add a `stimma-grid slot="details"`
 containing its store and notification previews, with short captions. Use the
 light files in the reference; dark variants also ship if that appearance better
 suits the cover. Keep this compact pair on the OS page. Do not add a separate
 “In iOS” section, Settings, Spotlight, or duplicate light/dark detail pages.
 
 Show scenes wide and give each
-platform a short label. Windows needs both Start and taskbar. Show studio
+platform a short label. Windows needs both Start and taskbar. Linux needs
+Ubuntu and KDE Plasma side by side, with those captions. Show studio
 and lifestyle scenes for both iOS and Android; do not bring back the old flat
 phone home-screen section.
 The store and notification examples use neutral sample text, without invented
