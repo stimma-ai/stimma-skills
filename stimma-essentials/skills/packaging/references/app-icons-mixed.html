@@ -1,0 +1,68 @@
+<!-- App-icons recipe reference for a mixed platform package containing iOS.
+     Replace APP_NAME with the supplied app name, RUN_ROOT with the manifest's
+     run root (including its trailing slash), and RUN_ID with that run's id.
+     Replace MACOS_PNG_REF and LINUX_PNG_REF with actual PNG paths from
+     the manifest. Keep only requested platforms and include every run. -->
+<style>
+  .platform-icons { grid-template-columns: repeat(auto-fit,minmax(96px,1fr)); gap: 24px; }
+  .icon-home { max-width: 340px; margin-inline: auto; }
+  .icon-context { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items: start; }
+</style>
+<div class="sp-page">
+  <h1 class="sp-title">APP_NAME</h1>
+  <p class="sp-sub">iOS, Android, macOS, Windows and Linux app icons</p>
+  <!-- Choose each named PNG from pkg.manifest(), honoring custom naming.
+       Remove a platform only when it was not requested. -->
+  <stimma-section label="Platform icons">
+    <stimma-grid class="platform-icons">
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-180.png" size="96" caption="iOS"></stimma-media>
+      <stimma-media ref="RUN_ROOTandroid/mipmap-xxxhdpi/ic_launcher.png" size="96" caption="Android"></stimma-media>
+      <stimma-media ref="MACOS_PNG_REF" size="96" caption="macOS"></stimma-media>
+      <stimma-media ref="RUN_ROOTwindows/icon-256.png" size="96" caption="Windows"></stimma-media>
+      <stimma-media ref="LINUX_PNG_REF" size="96" caption="Linux"></stimma-media>
+    </stimma-grid>
+  </stimma-section>
+  <stimma-section label="Home screen">
+    <stimma-appearance label="Appearance">
+      <div when="light" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-light.png"></stimma-media></div>
+      <div when="dark" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-dark.png"></stimma-media></div>
+    </stimma-appearance>
+  </stimma-section>
+  <stimma-section label="At actual size">
+    <stimma-sizes>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-180.png" size="180" caption="180 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-120.png" size="120" caption="120 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-87.png" size="87" caption="87 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-60.png" size="60" caption="60 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-40.png" size="40" caption="40 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-29.png" size="29" caption="29 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-20.png" size="20" caption="20 px"></stimma-media>
+    </stimma-sizes>
+  </stimma-section>
+  <stimma-section label="In iOS">
+    <stimma-appearance label="Appearance">
+      <div when="light" class="icon-context">
+        <stimma-media ref="RUN_ROOTpreviews/app-store-light.png" caption="App Store"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/settings-light.png" caption="Settings"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/notification-light.png" caption="Notification"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/spotlight-light.png" caption="Spotlight"></stimma-media>
+      </div>
+      <div when="dark" class="icon-context">
+        <stimma-media ref="RUN_ROOTpreviews/app-store-dark.png" caption="App Store"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/settings-dark.png" caption="Settings"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/notification-dark.png" caption="Notification"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/spotlight-dark.png" caption="Spotlight"></stimma-media>
+      </div>
+    </stimma-appearance>
+  </stimma-section>
+  <stimma-section label="Files">
+    <stimma-columns>
+      <stimma-column title="iOS">AppIcon.appiconset and Contents.json for Xcode.</stimma-column>
+      <stimma-column title="Android">Launcher icons, adaptive layers and Play Store icon.</stimma-column>
+      <stimma-column title="macOS">An ICNS file and PNG sizes for the app bundle.</stimma-column>
+      <stimma-column title="Windows">An ICO file and PNG sizes.</stimma-column>
+      <stimma-column title="Linux">PNG sizes in the hicolor icon directory layout.</stimma-column>
+    </stimma-columns>
+    <stimma-files ref="RUN_ID"></stimma-files>
+  </stimma-section>
+</div>

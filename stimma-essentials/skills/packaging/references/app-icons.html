@@ -1,0 +1,50 @@
+<!-- App-icons recipe reference, used only for a package that contains iOS.
+     Replace APP_NAME with the supplied app name, RUN_ROOT with the manifest's
+     run root (including its trailing slash), and RUN_ID with that run's id.
+     For mixed packages, add sections showing each other platform's actual
+     output and file access. Keep only statements supported by the contents. -->
+<style>
+  .icon-home { max-width: 340px; margin-inline: auto; }
+  .icon-context { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); align-items: start; }
+</style>
+<div class="sp-page">
+  <h1 class="sp-title">APP_NAME</h1>
+  <p class="sp-sub">iOS app icons</p>
+  <stimma-section label="Home screen">
+    <stimma-appearance label="Appearance">
+      <div when="light" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-light.png"></stimma-media></div>
+      <div when="dark" class="icon-home"><stimma-media ref="RUN_ROOTpreviews/home-dark.png"></stimma-media></div>
+    </stimma-appearance>
+  </stimma-section>
+  <stimma-section label="At actual size">
+    <stimma-sizes>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-180.png" size="180" caption="180 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-120.png" size="120" caption="120 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-87.png" size="87" caption="87 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-60.png" size="60" caption="60 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-40.png" size="40" caption="40 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-29.png" size="29" caption="29 px"></stimma-media>
+      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-20.png" size="20" caption="20 px"></stimma-media>
+    </stimma-sizes>
+  </stimma-section>
+  <stimma-section label="In iOS">
+    <stimma-appearance label="Appearance">
+      <div when="light" class="icon-context">
+        <stimma-media ref="RUN_ROOTpreviews/app-store-light.png" caption="App Store"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/settings-light.png" caption="Settings"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/notification-light.png" caption="Notification"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/spotlight-light.png" caption="Spotlight"></stimma-media>
+      </div>
+      <div when="dark" class="icon-context">
+        <stimma-media ref="RUN_ROOTpreviews/app-store-dark.png" caption="App Store"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/settings-dark.png" caption="Settings"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/notification-dark.png" caption="Notification"></stimma-media>
+        <stimma-media ref="RUN_ROOTpreviews/spotlight-dark.png" caption="Spotlight"></stimma-media>
+      </div>
+    </stimma-appearance>
+  </stimma-section>
+  <stimma-section label="Files">
+    <p class="sp-note">AppIcon.appiconset includes the iPhone, iPad and App Store sizes and Contents.json for an Xcode asset catalog.</p>
+    <stimma-files ref="RUN_ID"></stimma-files>
+  </stimma-section>
+</div>

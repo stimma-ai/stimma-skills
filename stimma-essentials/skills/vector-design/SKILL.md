@@ -1,6 +1,6 @@
 ---
 author: system
-description: "Designing icons, logos, wordmarks, badges, and monograms as SVG — including redrawing an existing image as clean vector artwork (vectorize, make this vector, convert to SVG, trace)"
+description: "Creating SVG vector artwork: icons, logos, wordmarks, badges, and monograms, or explicitly vectorizing/tracing an image. Placing, resizing, or exporting supplied raster artwork does not require this skill."
 display_name: Vector Design
 name: vector-design
 tags:

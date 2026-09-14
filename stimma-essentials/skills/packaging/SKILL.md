@@ -1,7 +1,7 @@
 ---
 name: packaging
 display_name: Packaging
-description: Use when asked to package work, prepare final files, or assemble a deliverable — members, recipe runs, extras, and a designed cover
+description: Assemble requested packages and ready-to-use file sets from supplied or generated work. Discover recipe requirements before preparing inputs, author a cover, and save the package.
 author: system
 tags: [package, deliverable, delivery, export, handoff]
 environments:
@@ -20,6 +20,10 @@ Reach for a package when the request calls for a coherent deliverable, a set of
 choices, or files to hand on. A single image someone asked to see does not need
 to become a package.
 
+Use the installed recipe for a supported file set instead of implementing its
+formats and sizes yourself. Deliver the saved package; a prepared source image
+or a folder left in the workspace is an intermediate step.
+
 ## Start with the purpose
 
 For exploration, organize candidates so the person can compare them and answer
@@ -37,10 +41,10 @@ Discover recipes from the installed set, then fetch guidance for the recipe you
 intend to use:
 
 ```python
-for recipe in stimma.packages.recipes():
+for recipe in await stimma.packages.recipes():
     print(recipe["id"], recipe["description"], recipe["inputs"], recipe["params"])
 # recipe_id is the id you selected from those results.
-print(stimma.packages.guidance(recipe_id))
+print(await stimma.packages.guidance(recipe_id))
 ```
 
 Recipe-specific requirements, file paths, previews, and cover suggestions belong
@@ -60,6 +64,8 @@ member = await pkg.add_member(source)  # ToolResult, media id, or workspace path
 await pkg.run(recipe_id, {input_role: member}, chosen_params)
 # Optional; repeat for loose extras.
 pkg.add_file(extra_path)
+print(await pkg.manifest())        # actual member ids, run roots and file paths
+print(await pkg.preview())  # workspace folder: inspect outputs before designing
 pkg.set_cover("cover.html")
 media_id = await pkg.save()
 stimma.show(media_id=media_id, role="final")
@@ -67,8 +73,23 @@ stimma.show(media_id=media_id, role="final")
 
 Add as many members and runs as the deliverable needs. Members can be anything
 the library can hold; workspace files are saved with lineage on the way in.
-`save()` writes the bundle. Use `show(role="final")` for the completed result
+`new`, `add_file`, `set_cover`, and `set_tile` are synchronous; call them without
+`await`. The reads, member imports, recipe runs, previews, and saves shown above
+are asynchronous. `save()` writes the bundle. Use `show(role="final")` for the completed result
 and `role="intermediate"` for work still being developed.
+
+Inspect a draft with `await pkg.manifest()` and `await pkg.preview()` before writing
+the cover. The latter returns a workspace folder containing the current cover
+and all files. Inspect pixels with Python in `run_code` or `run_file`; read
+text with `read_file`, find paths with `glob`, and inspect images or the cover
+folder with `view_image`. Use the manifest's exact paths as cover
+refs. A run id identifies a file browser, not a path prefix. These operations
+do not create library items. `set_cover()` validates refs immediately.
+
+Python locals do not persist between calls. Keep the build in a workspace
+Python file and execute it with `run_file` again after writing the cover, using
+the same saved members and parameters; recipe runs are cached.
+Save only the finished package.
 
 ## Names and parameters are decisions
 
@@ -161,7 +182,9 @@ the kit's tabular number styling.
 
 The library shows one square image for the package. A recipe may supply a tile,
 but choose an image that represents the whole deliverable. For a collection,
-that may require a composition of several members:
+that may require a composition of several members. Inspect the existing tile
+at the manifest's `cover_image` path inside the folder returned by `preview()`.
+Keep it when it represents the package well; use `set_tile` to replace it:
 
 ```python
 pkg.set_tile("tile.png")  # a workspace path, or image bytes
