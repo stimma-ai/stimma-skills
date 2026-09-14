@@ -20,10 +20,19 @@
   <stimma-section label="Platform Study · iOS" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>
-    <stimma-grid slot="details">
-      <stimma-media ref="RUN_ROOTpreviews/ios-store-light.png" caption="App Store"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/ios-notification-light.png" caption="Notification"></stimma-media>
-    </stimma-grid>
+    <details slot="details">
+      <summary>Details</summary>
+      <stimma-appearance label="Appearance">
+        <stimma-grid when="light">
+          <stimma-media ref="RUN_ROOTpreviews/ios-store-light.png" caption="App Store"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/ios-notification-light.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+        <stimma-grid when="dark">
+          <stimma-media ref="RUN_ROOTpreviews/ios-store-dark.png" caption="App Store"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/ios-notification-dark.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+      </stimma-appearance>
+    </details>
   </stimma-section>
   <stimma-section label="Files" page>
     <p class="sp-note">AppIcon.appiconset includes the iPhone, iPad and App Store sizes and Contents.json for an Xcode asset catalog.</p>

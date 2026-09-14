@@ -145,6 +145,11 @@ The kit vocabulary:
   Add one `<stimma-grid slot="details">` with up to two supporting media items
   inside a section to keep small details beneath its main images on the same
   PDF page. The details grid stacks on narrow HTML screens.
+  For optional HTML-only details, use native `<details slot="details">` with a
+  `<summary>Details</summary>` inside the section. It starts closed and works
+  without scripts. Put an appearance switch and grids inside when useful.
+  The PDF omits this disclosure and gives the main images the full page;
+  its appearance variants do not create extra PDF pages.
 - `stimma-media` shows a member or run file by `ref`, with optional `caption` and
   `plate` attributes.
 - `stimma-grid` groups media for scanning or comparison.

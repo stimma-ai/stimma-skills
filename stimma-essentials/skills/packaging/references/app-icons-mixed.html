@@ -35,18 +35,36 @@
   <stimma-section label="Platform Study · iOS" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>
-    <stimma-grid slot="details">
-      <stimma-media ref="RUN_ROOTpreviews/ios-store-light.png" caption="App Store"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/ios-notification-light.png" caption="Notification"></stimma-media>
-    </stimma-grid>
+    <details slot="details">
+      <summary>Details</summary>
+      <stimma-appearance label="Appearance">
+        <stimma-grid when="light">
+          <stimma-media ref="RUN_ROOTpreviews/ios-store-light.png" caption="App Store"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/ios-notification-light.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+        <stimma-grid when="dark">
+          <stimma-media ref="RUN_ROOTpreviews/ios-store-dark.png" caption="App Store"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/ios-notification-dark.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+      </stimma-appearance>
+    </details>
   </stimma-section>
   <stimma-section label="Platform Study · Android" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/platform-android-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/platform-android.png"></stimma-media>
-    <stimma-grid slot="details">
-      <stimma-media ref="RUN_ROOTpreviews/android-store-light.png" caption="Google Play"></stimma-media>
-      <stimma-media ref="RUN_ROOTpreviews/android-notification-light.png" caption="Notification"></stimma-media>
-    </stimma-grid>
+    <details slot="details">
+      <summary>Details</summary>
+      <stimma-appearance label="Appearance">
+        <stimma-grid when="light">
+          <stimma-media ref="RUN_ROOTpreviews/android-store-light.png" caption="Google Play"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/android-notification-light.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+        <stimma-grid when="dark">
+          <stimma-media ref="RUN_ROOTpreviews/android-store-dark.png" caption="Google Play"></stimma-media>
+          <stimma-media ref="RUN_ROOTpreviews/android-notification-dark.png" caption="Notification"></stimma-media>
+        </stimma-grid>
+      </stimma-appearance>
+    </details>
   </stimma-section>
   <stimma-section label="Platform Study · macOS" page layout="single">
     <stimma-media ref="RUN_ROOTpreviews/platform-macos.png"></stimma-media>

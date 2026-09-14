@@ -72,11 +72,13 @@ and `layout="single"` for macOS. Place the scene media directly inside;
 do not nest another section or add image margins. The same content becomes a
 responsive HTML section and one landscape PDF page per OS. Keep the opening
 icon overview and “At actual size” row together before these page groups, on
-the opening page. Give contents its own page section. On each mobile OS page, add a `stimma-grid slot="details"`
-containing its store and notification previews, with short captions. Use the
-light files in the reference; dark variants also ship if that appearance better
-suits the cover. Keep this compact pair on the OS page. Do not add a separate
-“In iOS” section, Settings, Spotlight, or duplicate light/dark detail pages.
+the opening page. Give contents its own page section. On each mobile OS page, put store and notification examples in
+`<details slot="details"><summary>Details</summary>…</details>`, initially closed.
+Inside, use one `stimma-appearance` with light and dark `stimma-grid` children
+marked `when="light"` / `when="dark"`, as in the references. The switch follows
+system appearance until chosen and fades between variants. The PDF omits the
+entire disclosure so the two phone scenes occupy the full OS slide. Do not add
+separate detail pages, an “In iOS” section, Settings or Spotlight.
 
 Show scenes wide and give each
 platform a short label. Windows needs both Start and taskbar. Linux needs
