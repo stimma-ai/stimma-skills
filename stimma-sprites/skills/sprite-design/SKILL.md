@@ -241,6 +241,11 @@ weapon origins, and explains mirroring and background tiling. Inspect the
 HTML at phone/desktop widths and every PDF page. Deliver the package with its
 HTML/PDF guide and ZIP, not a workspace folder or a sprite document alone.
 
+Compute tile-count and scale labels from the final pixel dimensions and logical
+tile size. Cross-check prose in `usage` and the guide against those numbers;
+copying an earlier caption does not validate it. For example, a 256×64 slab at
+64px tiles is four tiles wide and one high.
+
 Check the inventory's paths against the final manifest, including folder levels;
 a guessed glob such as `frames/*.png` is wrong when images live in animation
 subfolders. A native `.stimmasprite.json` contains library hash references and
