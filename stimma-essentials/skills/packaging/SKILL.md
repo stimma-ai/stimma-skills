@@ -360,6 +360,13 @@ pkg.set_tile("tile.png")  # a workspace path, or image bytes
 
 The tile is stored outside the deliverable and does not ship to the recipient.
 
+A folder obtained with `library.get` is an input copy of an earlier package.
+`pkg.save()` writes a new managed bundle from the members, runs and extras you
+explicitly added. Editing or deleting that old input folder does not revise the
+saved result. Inspect the new draft via `pkg.preview()` or retrieve the returned
+media id; fix the builder inputs and save a revision when needed. Do not delete
+source folders or all previews as a speculative packaging recovery step.
+
 ## When a member changes
 
 Save revised work as a revision of its existing asset. For a package update,
