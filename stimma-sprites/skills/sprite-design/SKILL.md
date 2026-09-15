@@ -197,6 +197,30 @@ manual Unity import guidance. Optional Godot 4 `.tres` resources encode full
 cycles. Partial-loop animations remain available in the neutral handoff.
 Unity JSON is not a native import format; do not claim a tested Unity plugin.
 
+### Static assets need registration too
+
+Do not put untouched 1024px staging canvases into a game-ready props run and
+leave the coding agent to discover each object's crop and ground offset. Keep
+those images as labeled sources when useful. Prepare the actual runtime PNGs
+with `finalize([cutout], height=chosen_game_height, square=False)`; this existing
+helper crops the static content and resizes with premultiplied alpha. Separate
+unrelated sizes into their own source archives/runs. For an intentionally padded
+static canvas, specify its measured anchor and numeric display dimensions.
+Use a consistent logical game scale for actors, pickups, projectiles and tiles;
+viewport zoom is a game choice, not a different scale for each undocumented item.
+
+A floor-standing pod or beacon needs a ground contact point. A floating platform
+needs its top collision surface in frame pixels (x, y, width), not a vague height
+above the ground. A projectile needs a center or tip anchor. Use those same
+values in the proof scene. Never quietly crop or reposition only the proof while
+shipping differently registered files. Opaque backdrops cannot form transparent
+parallax layers: describe them as alternative scenes or provide an actual
+transparent foreground. Claim seamless repetition only after inspecting the join.
+
+For damageable props and enemies, choose a small useful response: a broken
+state, hit/impact animation, or an explicitly documented reuse of a supplied
+effect. Avoid promising a broken state that has no delivered file.
+
 Before authoring the guide, make a small **handoff proof from the package preview files**:
 place the hero and enemy on a ground line at their documented pivots, switch
 idle/run/airborne/shoot/hit states without moving that pivot, emit the separate
@@ -209,7 +233,8 @@ trajectory or discover feet. If a move drifts internally, choose held poses or
 regenerate it before finalizing. Do not declare a guide caption true unless this
 proof actually demonstrates it.
 
-Author a compact visual guide with the shared kit, actual in-game asset scale,
+Author a compact visual guide with the shared kit (usually 4–6 pages for a small
+level kit; group related assets rather than giving every item a page), actual in-game asset scale,
 selected animation examples, and a files index. Add a short game inventory
 that maps mechanics to **actual delivered paths**, identifies collision and
 weapon origins, and explains mirroring and background tiling. Inspect the
