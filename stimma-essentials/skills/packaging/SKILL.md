@@ -62,9 +62,10 @@ Discover recipes from the installed set, then fetch guidance for the recipe you
 intend to use:
 
 ```python
-for recipe in await stimma.packages.recipes():
-    print(recipe["id"], recipe["description"], recipe["inputs"], recipe["params"])
+recipes = {r["id"]: r for r in await stimma.packages.recipes()}
+print([(r["id"], r["description"]) for r in recipes.values()])
 # recipe_id is the id you selected from those results.
+print(recipes[recipe_id])  # roles and parameters for this recipe only
 print(await stimma.packages.guidance(recipe_id))
 ```
 
@@ -110,6 +111,13 @@ the library can hold; workspace files are saved with lineage on the way in.
 are asynchronous. `save()` writes the bundle. Use `show(role="final")` for the completed result
 and `role="intermediate"` for work still being developed.
 
+Keep the member and run IDs returned by these calls in named Python variables.
+Bind those values into your authored HTML (an f-string or named placeholders)
+rather than manually numbering `m1`, `m2`, etc. Adding another font or treatment
+then won't shift unrelated artwork to the wrong place. For example, a chosen
+font returned as `heading_font` goes in `ref="{heading_font}"` on its
+`stimma-type`; the label alone does not select a font.
+
 Inspect a draft with `await pkg.manifest()` and `await pkg.preview()` before writing
 the cover. The latter returns a workspace folder containing the current cover
 and all files, with the rendered cover at `index.html`. Pass the returned
@@ -121,6 +129,7 @@ do not create library items. `set_cover()` validates refs immediately.
 
 Python locals do not persist between calls. Keep the build in `build_package.py`
 and use `write_file` or `edit_file` to update that file between these steps:
+Calls on `pkg` belong in that script too; a later `run_code` call has no `pkg`.
 
 1. Build members and runs, then print the manifest and preview folder. Run it
    with `run_file`, inspect the outputs, and write `cover.html`.
@@ -252,8 +261,13 @@ The kit vocabulary:
   The PDF omits this disclosure and gives the main images the full page;
   its appearance variants do not create extra PDF pages.
 - `stimma-media` shows a member or run file by `ref`, with optional `caption` and
-  `plate` attributes.
-- `stimma-grid` groups media for scanning or comparison.
+  `plate` attributes. Bare `plate` is a subtle surface, not automatic contrast.
+  Set `style="--sp-plate:#f4f4f5"` with `plate` for dark artwork that needs a
+  light surface, or choose another appropriate surface explicitly.
+- `stimma-grid` groups media or other content. Optional `columns="2"` creates
+  two equal columns on desktop and in PDF, stacking on phones. This can hold
+  arbitrary authored groups, such as palette and typography, without a media
+  page preset. Custom CSS can override its composition.
 - `stimma-sizes` groups media whose `size` attributes specify actual pixel sizes,
   when viewing at that scale is useful.
 - `stimma-columns` contains `stimma-column` elements with titles and descriptions.
@@ -338,8 +352,12 @@ The tile is stored outside the deliverable and does not ship to the recipient.
 
 ## When a member changes
 
-Save revised work as a revision of its existing asset
-(`show(..., revises=<asset_id>)`). Rebuild the package when appropriate so the
+Save revised work as a revision of its existing asset. For a package update,
+have the builder save and print the new media id without `stimma.show()`; then
+use the native `show` tool with `media_id`, `role="final"`,
+`revises=<existing asset_id>` and a short `revision_note`. The native tool's
+revision arguments are not arguments to the Python SDK's `stimma.show()`.
+Rebuild the package when appropriate so the
 person receives an up-to-date result. Rebuild carries the authored cover forward;
 review its words and composition against the revised contents and refresh it
 when needed.

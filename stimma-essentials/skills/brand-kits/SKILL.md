@@ -8,186 +8,170 @@ environments:
   chat: true
 provides:
   - brand_typography
+  - brand_fonts
 ---
 
 # Brand kits
 
-Help the owner launch their next few things and make another matching thing
-themselves. A brand kit is a creative project that can contain alternatives,
-prepared artwork, useful exports, applications, and a short visual guide.
-Invoke **Packaging** for the package API, authored HTML cover and PDF inspection.
-Use **Vector Design**, image tools, and other skills where the artwork needs them.
+Make an identity the owner can launch with and use again. Take responsibility
+for the files and presentation: the conversation is about their business and
+design preferences, not how to build a package or fix a PDF. Invoke **Packaging**
+for assembly and its HTML/PDF kit. Use other creative tools when needed.
+Give a brief design intent, then work through tools. Return to the conversation
+for a meaningful creative choice or the finished result; don't narrate recipe
+discovery, font setup, file bookkeeping or each QA step. Use `run_code` for Python work and `write_file`/`run_file` for
+reusable build scripts. These native workspace tools handle SVG composition,
+fonts and packaging without asking the owner to authorize shell commands.
 
-## Understand the business and the next use
+## Work like a designer helping a small business
 
-Start with what the person has supplied: the actual business name, offering,
-audience, existing artwork, preferences, and immediate uses. Ask for missing
-consequential decisions together, briefly. Reuse answers already given. An
-undecided name can remain an explicit placeholder during visual exploration;
-developing names, positioning, slogans, claims, and business stories requires
-the person's request or agreement. Sample copy must be recognizable as sample
-copy, not a claimed fact about the business.
+Use the supplied name, offering, audience, artwork and immediate uses. Ask only
+for missing decisions that materially affect the result, together and briefly.
+A short brief with a name, purpose and permission to choose is enough to start.
+Choose sensible visual details and useful formats; explain the few decisions
+that matter when showing the result. Ask about an editing tool if compatibility
+is consequential, rather than making every owner complete a questionnaire.
+Names, positioning, slogans and business claims require the owner's input or
+explicit delegation. Mark illustrative application copy as sample copy.
+For unprovided product facts, use editable placeholders: a care card can say
+“Add your tested care instructions here” rather than inventing dishwasher,
+microwave or food-safety claims. A fictional demo still needs this distinction.
 
-Apps and software startups are first-class audiences. Their useful surfaces
-include a product header, onboarding, a launch graphic, a website, and an app
-icon. For makers, a shop banner, care card, sign, sticker, or price card may
-matter more. Ask what they will actually use and in which editing tools.
+When asked to choose a direction and package it, do that in one delivery.
+When asked to explore, show two or three meaningfully different systems and
+recommend one with concrete tradeoffs. Compare the same uses, such as an app
+screen or shop banner, so the choice is understandable. Save both alternatives
+in one package. Ask a creative question, not permission to run exports.
 
-## Start where the artwork is
+Feedback such as “B's symbol with A's warmth” is a design pass: reconcile
+geometry, spacing, type and color into one system. Preserve the original
+candidates and revise the package. Label candidates, selected-for-refinement
+work and approved work accurately; choosing a concept isn't approval of later
+changes. A brief decision note is enough when useful. The package manifest
+already records frozen files, hashes and runs; don't duplicate it in a hand-
+maintained approval ledger. Link relevant files using actual manifest refs.
 
-- **SVG:** preserve the original bytes in the package. Inspect the mark at its
-  natural aspect ratio and at useful sizes. Check lettering, embedded images,
-  external dependencies, and whether it is genuinely vector artwork. Develop
-  around an existing identity unless the person wants it changed.
-  Library import can normalize SVG XML. For a supplied source whose exact bytes
-  matter, also include it unchanged with `pkg.add_file(source, name="original.svg")`
-  and compare its hash. Distinguish this original from normalized working
-  members and intentionally edited artwork; don't claim raw-byte equality
-  without checking it. Existing library members keep their frozen source bytes.
-- **Raster:** inspect resolution, background, and edges. Keep an adequate
-  raster for its intended use; vectorize when requested or needed for scalable
-  output. Compare any trace/redraw with the original before using it as a master.
-- **App icon:** preserve it. A square icon may be a side asset in a wider
-  identity, not the only logo. Separating its symbol, adding a wordmark, and
-  extending its colors/type are creative decisions. Reuse its master for a
-  separate app-icons run when needed.
-- **Rough idea or no artwork:** explore coherent directions using generation,
-  drawing, typography, and composition. A strong wordmark can be enough;
-  there is no obligation to invent a mascot or a symbol.
+## Start with what they have
 
-One-color, reversed, compact and wide versions are prepared artwork. Inspect
-them for negative space and legibility. Making every pixel black is often not
-a usable one-color mark. Keep originals and changed versions distinguishable.
+- **SVG:** keep the supplied master and natural aspect ratio. Library import
+  may normalize XML; include the untouched source as an extra with
+  `pkg.add_file(source, name="original.svg")` when preserving supplied bytes.
+  Develop around the existing identity unless asked to change it.
+- **Raster:** inspect resolution, edges and background. Preserve the original;
+  vectorize if useful for scalable delivery. Compare the trace or redraw with
+  the original before using it. Describe an intentional redraw honestly.
+- **App icon:** preserve it, then consider a wider wordmark and complementary
+  type/color system. An icon export can be a side run from the same master.
+- **Idea or blank slate:** use generation, drawing and typography to explore.
+  A strong wordmark can be sufficient. Only add a symbol when it helps.
 
-For a wordmark set in a chosen font, the bundled helper prepares actual glyph
-outlines directly in `run_code`; no shell or font-tool installation is needed:
+Prepared monochrome, reversed, wide or compact versions are design work.
+Inspect their negative space and intended backgrounds before exporting them.
+`create_svg(file="artwork.svg")` saves authored vector artwork; it is a native
+tool, not an STP catalog entry. Use `stimma.rasterize_svg` when pixels are needed.
+
+## Typography without setup work
+
+Choose fonts for this business. Use supplied files when available. Otherwise,
+fetch a chosen Google Fonts family and its license directly into the workspace;
+there is no need to inspect the owner's machine or install fonts system-wide:
 
 ```python
+from brand_fonts import fetch_family, font_face
 from brand_typography import outline_text
-svg = outline_text("The supplied name", "fonts/chosen.ttf",
-                   font_size=120, tracking=1, fill="#172334", padding=8)
-open("wordmark.svg", "w").write(svg)
+family = fetch_family("Space Grotesk")  # agent-selected example, not a default
+print(family)  # actual font paths, weights, axes, license path and source
+font = family["fonts"][0]["path"]  # choose the actual style from these rows
+css = font_face(font, family="Brand Heading")
+svg = outline_text("The supplied name", font, font_size=120, fill="#172334")
 ```
 
+`fetch_family(family, dest="fonts")` downloads open font files plus their license
+from the official Google Fonts repository and reuses a complete local copy.
+It returns `{family, fonts:[{path,family,style,weight,css_style,axes}], license, source}`.
+Read the license and bundle the chosen fonts and license with the kit.
+`font_face(path, family=None)` returns data-embedded `@font-face` CSS with the
+actual weight/range and style; use that same family name in editable HTML.
+Write the returned CSS into the artwork; don't print its large embedded font data.
+`describe_font(path)` reads this metadata for a supplied font. No network is
+needed to embed supplied/local files. A failed download is a concrete font
+availability issue, not a reason to search unrelated folders.
+
 `outline_text(text, font_path, *, font_size=120, tracking=0, fill="#172334",
-padding=8, axes=None) -> str` accepts a local TTF/OTF/WOFF/WOFF2 and returns
-self-contained SVG. Sizes/spacing are SVG units; optional variable-font axes
-such as `axes={"wght": 600}` affect only the in-memory outline, not the original
-font. It supports single-line Latin text with kerning, without ligatures;
-complex scripts fail explicitly and need a shaping workflow. Missing glyphs
-also fail rather than silently substituting. Save/inspect with Vector Design
-tools and adjust spacing visually. Font choice and composition remain yours.
+padding=8, axes=None) -> str` makes portable SVG lettering with actual glyphs
+and kerning. Optional variable axes such as `{"wght":600}` affect outlines only.
+It supports single-line Latin text without ligatures; unsupported scripts or
+missing glyphs fail explicitly and need a shaping workflow. Inspect spacing.
+The returned SVG already has a zero-origin viewBox and padded bounds; use it
+directly or place it in a lockup without re-normalizing its glyph coordinates.
+Keep live text in editable application sources; outline logo delivery artwork.
 
-## Explore and choose
+## A small, usable delivery
 
-Adapt the amount of exploration to the brief. When the direction is open,
-two or three substantially different answers are usually enough. Compare
-systems—artwork, type, color and one relevant application—not just hue swaps.
-Show comparable applications and enough detail to judge each fairly. Give a
-recommendation with concrete tradeoffs, such as small-size clarity, fitting a
-long name, product imagery, or one-ink reproduction.
+Include what helps the next use, usually:
 
-Read feedback as design intent. Combining elements from directions is another
-design pass: reconcile stroke weight, geometry, spacing, typographic character
-and color relationships rather than pasting mismatched ingredients together.
-Check revised artwork against the brief and the real use. A selected direction
-can still have unresolved typography or color choices.
+- A primary logo and the few background/size variations it needs; vector
+  masters where available, plus practical raster exports.
+- A small palette with roles and checked text/background pairs.
+- Actual type specimens with family, weight, hierarchy and brief use guidance.
+- One or two useful applications, including an editable source and usable
+  export. Apps/startups might need onboarding, a product header or launch
+  graphic; shops/makers might need a banner, care card or sign. Photorealistic
+  mockups alone aren't editable assets. Keep live copy, embed fonts/images,
+  render at the authored dimensions, and inspect the final export.
+- A concise visual guide and useful file access. A short README may explain
+  editing or production details; write paths from the assembled manifest.
 
-For a completed exploration round, save and show a polished options package
-and ask the decision that moves it forward. It is a complete deliverable for
-that round even though the identity is not approved. When the user has already
-delegated design choices, make and explain them; don't add approval rituals.
+Avoid inflating the job with unused stationery, elaborate strategy documents,
+platform icon sets nobody requested, or a long account of how the tools worked.
+For print work, keep the production document's dimensions separate from the
+visual guide. A care card's editable text and print size matter more than
+multiple decorative mockups.
 
-## Keep decisions honest as the package evolves
+## Deliver without packaging back-and-forth
 
-Use one package for related directions, multiple recipe runs and extras.
-Distinguish **candidate**, **selected for refinement**, **approved for use**,
-and **archived** in captions and in PDF-visible prose. Several alternatives
-may be intended deliverables. A recommendation or selecting a direction does
-not by itself mean the owner approved every detail.
+Read `.stimma/skills/stimma-essentials/skills/brand-kits/references/presentation.md`
+before composing the guide. It shows how to
+use the shared components for readable pages while keeping your design freedom.
+Use `await stimma.packages.recipes()` to discover `logo-exports` and
+`palette-exports`, then `await stimma.packages.guidance(recipe_id)` for their
+exact inputs. These are package recipes, not tools in the STP catalog. The first
+exports one prepared treatment; the second writes chosen color values and
+checks supplied contrast pairs. Repeat runs as needed; recipes don't design.
+Use `await stimma.rasterize_layout(layout_media_id, out="application.png")`
+for an authored application's PNG. Export the editable source with
+`await stimma.export_layout_html(layout_media_id, out="application.html")`
+and include that returned file. This uses the app's HTML exporter to embed the
+actual fonts and images; raw workspace HTML may have broken refs after delivery.
 
-Keep a short `decisions.json` or `decisions.txt` extra when multiple directions
-or rounds make it useful. Record each direction, its member/run refs and frozen
-hashes from the actual manifest, status, what the person decided or delegated,
-and remaining questions. This is a design record, not an approval mechanism.
-Do not fabricate an approval or require marker files to continue working.
-Use descriptive run labels and file names so a ZIP opened without its cover
-still distinguishes candidates from delivery artwork.
+Author the complete guide with the kit's page groups and typography defaults:
 
-Revisions preserve history. Revise the existing artwork asset for refinement;
-keep a new alternative separate. Rebuild dependent runs, then refresh the cover
-and decision record. Approval attaches to the version reviewed, not to new
-bytes produced later. Keep the old approval identifiable and describe the
-changed version accurately. Put selected delivery files first and retained
-exploration in clearly labeled sections. Essential status belongs in the PDF,
-not only a collapsed HTML disclosure.
+- Put real artwork on the opening page, with its title and brief explanation.
+  Avoid a title-only opening or a mostly empty contents/closing page. Group
+  short color/type/use notes into a considered composition instead of giving
+  every heading a whole PDF page.
+  `stimma-grid columns="2"` can pair palette and typography on one page;
+  its content groups stack on phones.
+- A dark transparent logo needs a light surface: use, for example,
+  `<stimma-media ref="actual-ref" plate style="--sp-plate:#f4f4f5">`.
+  Bare `plate` is a subtle dark surface, not a contrasting logo background.
+  Choose the artwork surface deliberately; don't recolor the guide to fix it.
+- Show actual font specimens at useful scale and applications with readable
+  detail. Notes belong beside their subject, not on a spill page.
+  On phones, palette names, whole hex values and roles must remain readable.
+  Kit swatches in a responsive grid handle this; a custom row also needs a
+  narrow-screen layout. An overflow-hidden box with clipped text fails review
+  even when the page itself has no horizontal scrollbar.
+- File navigation already comes from `stimma-files`. Don't invent a directory
+  tree in a README. If editing instructions need a filename, obtain it from
+  `await pkg.manifest()` after adding that file; workspace and ZIP paths differ.
 
-## A small, useful delivery
+The guide defaults to neutral #0d0d0e
+with #ededee text; artwork may have its own surfaces. Honor explicit custom
+cover colors, type, composition and corporate-logo placement.
 
-Usually include:
-
-- The main mark or wordmark and only the prepared variations needed for actual
-  backgrounds, scales, and reproduction. Preserve vector masters.
-- A small palette with named roles and useful foreground/background pairs.
-  Check ordinary text contrast; keep a vivid accent for decoration if it is
-  unsuitable for small text. A palette is not automatically a UI design system.
-- One family or a complementary type pair: names, exact weights, heading/body
-  examples, fallback and installation/use instructions. Use fonts the owner
-  can obtain and edit with; bundle font files and license text when permitted.
-  Keep editable lettering source where useful and outlined logo delivery where
-  portability matters. Identify actual fonts, not a guess from generated text.
-- One or two relevant applications. For a launch delivery, make at least one
-  useful asset, not only a photorealistic mockup. Include editable source where
-  practical and say how to change it. Label mockups and sample copy clearly.
-  Ensure the delivered source resolves its images and actual fonts offline;
-  naming a CSS font family alone does not load the bundled font. Re-render
-  after adding those dependencies so the source and image export agree.
-- A short visual guide and a file index explaining which file to use where.
-  Keep print production dimensions separate from the cover PDF.
-  Write the index from the actual manifest after assembly: workspace folders
-  such as `fonts/` or `applications/` may become `members/` or `extras/` in the
-  ZIP. Check README paths too. A self-contained HTML application can open
-  without installing its embedded fonts; installation is for other editors.
-
-Add patterns, photography examples, voice guidance, packaging, or more templates
-when useful. Avoid filling a kit with unused stationery, abstract brand
-archetypes, invented construction geometry, or unsupported business claims.
-
-## Production and presentation
-
-Discover installed recipes before preparing inputs. **logo-exports** exports
-one prepared treatment without redesigning it; repeat for other variants.
-**palette-exports** serializes chosen colors and can check supplied contrast
-pairs. Their guidance describes inputs and files. App icons can be another run
-from the same master. Creative application layouts and editable sources can
-be members or extras; they do not need a deterministic recipe just to belong.
-For an editable application made with `create_layout`, export its authored
-canvas with `await stimma.rasterize_layout(media_id, out="application.png")`.
-Keep its editable source and assets as well as the PNG; don't search render
-caches. Use `view_image` to inspect the layout or exported PNG.
-
-Author the cover for this business and this stage. It may lead with an
-application, a wide wordmark, an options comparison, or a restrained opening.
-The cover is the whole visual guide, not only its opening sheet. A contents list
-does not substitute for showing the actual identity, readable palette/type
-specimens and relevant applications. Use responsive sections, not a fixed canvas
-with clipped overflow; fit PDF pages with `stimma-section` boundaries. Choose
-the amount of detail the kit needs, rather than a mandatory page count.
-Use the kit's typography, spacing, hierarchy and footer for a coherent feel.
-The default HTML and PDF ground is exactly `#0d0d0e`, text `#ededee`, unless
-the person explicitly requests another cover color. Artwork/application
-surfaces can have their own colors. Respect requested custom typography,
-composition and corporate-logo placement; templates are starting points.
-
-Use `stimma-media` for artwork, `stimma-grid`/`stimma-compare` for comparisons,
-and `stimma-files` for file access. The small reusable `stimma-swatch` and
-`stimma-type` elements are documented in `references/presentation.md`.
-They do not determine your layout. Do not build a fixed cover generator.
-
-Inspect the actual files, the responsive HTML and every PDF page using the
-Packaging preview APIs. Verify spelling, artwork proportions, legible type,
-working color pairs, coherent applications, accurate statuses, local fonts,
-and easy access to the right files. The PDF is a visual guide; the ZIP holds
-the usable originals and derivatives. The renderer supplies the required
-“Made with Stimma” footer; production files and README text have no extra
-Stimma branding.
+Check the actual HTML and PDF yourself through Packaging previews, correct
+concrete defects, then save/show the completed package for this round. Routine
+QA and export are your job; the owner should only need to discuss the design.
+The exporter supplies the required “Made with Stimma” footer. README and
+production files carry no extra Stimma branding.

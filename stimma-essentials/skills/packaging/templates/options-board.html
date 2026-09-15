@@ -1,42 +1,15 @@
-<!-- Options board: an exploring-stage cover. Replace the refs and captions; keep the rhythm. -->
-<style>
-  .board{max-width:1200px;margin:0 auto;padding:56px 24px 96px}
-  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--sp-muted);margin:0 0 12px}
-  h1{font-size:clamp(36px,6vw,72px);line-height:.95;letter-spacing:-.03em;margin:0 0 12px;font-weight:700}
-  .lede{max-width:60ch;color:var(--sp-muted);margin:0 0 48px;font-size:18px}
-  stimma-grid{--sp-cell:300px}
-  .dir{display:grid;gap:8px}
-  .dir h2{font-size:18px;margin:0;letter-spacing:-.01em}
-  .dir p{margin:0;color:var(--sp-muted);font-size:14px;line-height:1.45}
-  .swatches{display:flex;gap:6px}
-  .swatches span{width:20px;height:20px;border-radius:4px;border:1px solid var(--sp-line)}
-  .ask{margin-top:64px;padding:24px;border:1px solid var(--sp-line);border-radius:8px;font-size:18px}
-</style>
-<div class="board">
-  <p class="kicker">Options · Round 1</p>
-  <h1>Three directions for the mark</h1>
-  <p class="lede">Each direction is a different answer to the same brief. Pick one to develop, or name the parts of two you want combined.</p>
-
-  <stimma-grid>
-    <div class="dir">
-      <stimma-media ref="m1"></stimma-media>
-      <h2>A · Editorial</h2>
-      <p>Tight grotesk, one accent, lots of air. Reads as a publication.</p>
-      <div class="swatches"><span style="background:#1a1a1a"></span><span style="background:#faf9f7"></span><span style="background:#d7263d"></span></div>
-    </div>
-    <div class="dir">
-      <stimma-media ref="m2"></stimma-media>
-      <h2>B · Brutalist</h2>
-      <p>Monospace, hard rules, no ornament. Reads as infrastructure.</p>
-      <div class="swatches"><span style="background:#0a0a0a"></span><span style="background:#e6e6e6"></span><span style="background:#ffd400"></span></div>
-    </div>
-    <div class="dir">
-      <stimma-media ref="m3"></stimma-media>
-      <h2>C · Playful</h2>
-      <p>Rounded forms, two-tone, generous scale. Reads as consumer.</p>
-      <div class="swatches"><span style="background:#2b2d42"></span><span style="background:#8d99ae"></span><span style="background:#ef233c"></span></div>
-    </div>
-  </stimma-grid>
-
-  <div class="ask">Which direction should we develop? Feedback on any of them changes the next round.</div>
+<!-- Optional two-direction comparison. Use real refs and relevant tradeoffs.
+     Add separate application/type pages when needed for a fair comparison.
+     This is authored HTML, not a required structure or approval interface. -->
+<div class="sp-page">
+  <stimma-section page layout="pair" label="Two directions for the supplied name">
+    <stimma-media ref="m1" caption="Direction A · what makes it distinctive"></stimma-media>
+    <stimma-media ref="m2" caption="Direction B · what makes it distinctive"></stimma-media>
+    <p class="sp-note">Both are candidates. Explain the recommendation and the creative choice.</p>
+  </stimma-section>
+  <stimma-section page layout="pair" label="The same use, two approaches">
+    <stimma-media ref="m3" caption="Direction A application"></stimma-media>
+    <stimma-media ref="m4" caption="Direction B application"></stimma-media>
+  </stimma-section>
+  <stimma-files></stimma-files>
 </div>

@@ -84,6 +84,8 @@ def outline_text(text: str, font_path: str, *, font_size: float = 120,
         top = min(b[1] for b in bounds) - padding
         width = max(b[2] for b in bounds) + padding - left
         height = max(b[3] for b in bounds) + padding - top
+        # A zero-origin canvas composes directly beside a mark. Keep the glyph
+        # baseline translation inside the SVG so callers needn't normalize it.
         return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.6f}" height="{height:.6f}" '
-                f'viewBox="{left:.6f} {top:.6f} {width:.6f} {height:.6f}" role="img" aria-label="{escape(text, quote=True)}">'
-                f'<g fill="{fill}">{"".join(paths)}</g></svg>')
+                f'viewBox="0 0 {width:.6f} {height:.6f}" role="img" aria-label="{escape(text, quote=True)}">'
+                f'<g fill="{fill}" transform="translate({-left:.6f} {-top:.6f})">{"".join(paths)}</g></svg>')

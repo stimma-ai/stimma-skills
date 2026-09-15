@@ -25,6 +25,8 @@ def test_real_outlines_and_escaped_name_preserve_font(font):
     assert len(root.findall(".//{http://www.w3.org/2000/svg}path")) == 16
     assert not root.findall(".//{http://www.w3.org/2000/svg}text")
     assert root.attrib["aria-label"] == "Tandem & Relaydesk"
+    assert root.attrib["viewBox"].split()[:2] == ["0", "0"]
+    assert root.find("{http://www.w3.org/2000/svg}g").attrib["transform"].startswith("translate(")
     assert float(root.attrib["width"]) > float(root.attrib["height"]) * 5
     assert font.read_bytes() == before
     assert outline_text("Tandem & Relaydesk", str(font), tracking=1) == svg

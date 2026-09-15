@@ -80,7 +80,8 @@ after fonts load; a fallback can look plausible while showing the wrong type.
 
 ## Working with images
 
-- Always `object-fit: cover` on image containers — never let images distort or show empty space.
+- Use `object-fit: cover` for edge-to-edge photography. Use `contain` for logos
+  and artwork whose whole shape must remain visible. Never distort either.
 - Gradient overlays for text legibility: `background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)` over the bottom of an image.
 - Reference workspace files only: `<img src="filename.png">`. Call `library(action="get")` first if you need to pull from the library.
 - Don't guess filenames. Don't use absolute paths. Don't reference prior `render_*.png` outputs as source images.
@@ -107,7 +108,10 @@ This avoids re-sending the full HTML on every render — you write it once and p
 When a delivery also needs a PNG, use
 `await stimma.rasterize_layout(media_id, out="application.png")` in `run_code`.
 It uses the same browser renderer at the layout's authored canvas dimensions.
-Keep the editable layout/source alongside the exported image. There is no need
+For portable editable HTML, use
+`await stimma.export_layout_html(media_id, out="application.html")` and include
+that file alongside the PNG. It embeds the bundle's actual fonts and images;
+copying raw workspace HTML alone can leave broken resource paths. There is no need
 to search internal caches or install another renderer.
 
 ## Canvas sizes
@@ -116,17 +120,28 @@ to search internal caches or install another renderer.
 
 | Format              | Width | Height | Notes                          |
 |---------------------|-------|--------|--------------------------------|
-| Business card       | 700   | 400    | 3.5x2" at 2x                  |
+| Business card preview | 700 | 400    | 3.5:2 aspect ratio             |
 | Social card / OG    | 1200  | 630    | Standard OG image              |
 | Instagram square    | 1080  | 1080   |                                |
 | Instagram story     | 1080  | 1920   | 9:16                           |
 | Poster (portrait)   | 900   | 1600   | 9:16                           |
 | Poster (landscape)  | 1600  | 900    | 16:9                           |
-| Letter / A4         | 850   | 1100   | Standard document              |
+| US Letter preview   | 850   | 1100   | 8.5:11 aspect ratio            |
+| A4 preview          | 794   | 1123   | 210:297 aspect ratio           |
+| A5 preview          | 560   | 794    | 148:210 aspect ratio           |
 | Wide banner         | 1200  | 400    |                                |
 | Album / CD cover    | 1000  | 1000   |                                |
 
 Always specify both width and height. Design your layout to fill the canvas — use background colors, padding, and positioning to make the content occupy the full artboard.
+
+Pixel dimensions alone do not define a print size. For printable HTML, declare
+the intended dimensions in CSS, including `@page`, margins and print rules,
+and give the owner the actual intended size. For example, an A5 source uses
+`@page { size:148mm 210mm; margin:0 }` with a matching print canvas. Inspect that
+source at its production size. The PNG from `rasterize_layout` has the authored
+pixel dimensions above; call it a preview unless its resolution is sufficient
+at the stated print size. Don't call a screen preview “print-ready,” and don't
+apply package-guide dimensions or its footer to the production artwork.
 
 ## create_layout constraints
 

@@ -1,32 +1,18 @@
-<!-- Generic delivery starting point. Replace the title, descriptions, captions,
-     and refs using the actual package. Choose a lead that represents the whole
-     deliverable. Adapt or omit supporting sections to suit the recipient's needs;
-     recipe guidance supplies any recipe-specific file paths and preview advice. -->
+<!-- Optional composition example. Replace every label/ref with the actual work.
+     Each page group travels together in PDF; the kit handles phone stacking.
+     Add, omit, reorder or design other sections to suit the delivery. -->
 <div class="sp-page">
-  <h1 class="sp-title">Package title</h1>
-  <p class="sp-sub">A brief description of what the recipient receives.</p>
-
-  <stimma-section>
-    <stimma-media ref="m1" caption="The work and its intended use"></stimma-media>
+  <stimma-section page layout="single" label="Package title">
+    <stimma-media ref="m1" caption="The lead work and its intended use"></stimma-media>
+    <p class="sp-note">A short explanation of what the recipient receives.</p>
   </stimma-section>
 
-  <!-- Optional supporting views: show context, details, or related work.
-       Add or remove media using refs from the package manifest. -->
-  <stimma-section label="A closer look">
-    <stimma-grid>
-      <stimma-media ref="m2" caption="Supporting view"></stimma-media>
-      <stimma-media ref="m3" caption="Related work"></stimma-media>
-    </stimma-grid>
+  <stimma-section page layout="pair" label="Supporting work">
+    <stimma-media ref="m2" caption="First supporting view"></stimma-media>
+    <stimma-media ref="m3" caption="Second supporting view"></stimma-media>
   </stimma-section>
 
-  <!-- Describe the contents by use. Add groups as needed. The whole-package
-       browser includes every run and loose file; use ref="r1", etc. if separate
-       run browsers better serve the recipient. -->
-  <stimma-section label="Included in this package">
-    <stimma-columns>
-      <stimma-column title="Contents">Describe the work included here.</stimma-column>
-      <stimma-column title="Use">State any facts needed to use the files.</stimma-column>
-    </stimma-columns>
-    <stimma-files></stimma-files>
-  </stimma-section>
+  <!-- Put short use notes beside their subject above. File access needs no
+       separate PDF contents slide. -->
+  <stimma-files></stimma-files>
 </div>
