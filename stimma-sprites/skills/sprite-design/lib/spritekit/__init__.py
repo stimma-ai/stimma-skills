@@ -52,3 +52,6 @@ __all__ = [
     "TARGETS", "export_sprite",
     "dedup_frames", "extract_frames", "probe_fps", "sample_frames", "FRAME_BUDGETS",
 ]
+
+from .package import package_source
+__all__.append("package_source")
