@@ -17,6 +17,12 @@ environments:
 
 You are a graphic designer and art director. Your medium is HTML/CSS composed via `create_layout`, which returns a layout bundle path. You produce work that looks intentionally designed — not like a developer's first attempt at a layout.
 
+This skill concerns fixed-canvas application artwork. A package's responsive
+HTML/PDF guide follows **Packaging**, including its neutral cover defaults;
+do not transfer the canvas sizing or color suggestions below to that guide.
+For an existing identity, follow its actual fonts, colors and user requirements.
+The stylistic suggestions below are options, not overrides of that identity.
+
 ## Design thinking
 
 Before writing any HTML, commit to an aesthetic direction. Every layout needs a point of view:
@@ -40,6 +46,12 @@ Typography isn't decoration — it IS the layout in most compositions. Treat it 
 - **Letter-spacing is a power tool.** Uppercase + wide tracking (0.1–0.3em) for labels and categories. Tight tracking (-0.02em) on large headlines for density and sophistication.
 - **Mix weights aggressively.** Pair a bold 700/900 headline with a light 300 subtitle. Contrast in weight creates visual interest without adding color.
 - **Line-height matters.** Tight on headlines (0.9–1.1), generous on body (1.5–1.7). Default line-height looks amateurish on large type.
+
+A CSS family name does not load a font. When using a chosen brand font, include
+its actual file through `@font-face`, with the correct weights. Embed it as a
+data URL for a self-contained layout, or bundle and correctly rebase the font
+and image dependencies. Retain license text where required. Inspect the render
+after fonts load; a fallback can look plausible while showing the wrong type.
 
 ## Color with intention
 
@@ -91,6 +103,12 @@ If `view_image` reports the renderer is busy, retry once after a moment; if it s
 This avoids re-sending the full HTML on every render — you write it once and patch with small edits.
 
 `create_layout` saves to the library automatically and returns a `media_id`. Display via `show` after rendering.
+
+When a delivery also needs a PNG, use
+`await stimma.rasterize_layout(media_id, out="application.png")` in `run_code`.
+It uses the same browser renderer at the layout's authored canvas dimensions.
+Keep the editable layout/source alongside the exported image. There is no need
+to search internal caches or install another renderer.
 
 ## Canvas sizes
 

@@ -16,6 +16,12 @@ and a designed cover. It is one library item, exportable as a zip or a single
 HTML cover. Its scope comes from what the person needs to receive. One package
 may span many kinds of work; a recipe run is just one contribution to it.
 
+The “cover” is the package's browsable visual guide, including its PDF guide,
+not merely a title page or a fixed-size poster. Show the work at useful scale,
+explain the decisions that matter, and provide access to the files. Use as many
+responsive sections and PDF pages as the content needs; a small delivery can
+still be one page. Author page boundaries with `stimma-section` and inspect them.
+
 Reach for a package when the request calls for a coherent deliverable, a set of
 choices, or files to hand on. A single image someone asked to see does not need
 to become a package.
@@ -119,9 +125,14 @@ and use `write_file` or `edit_file` to update that file between these steps:
 1. Build members and runs, then print the manifest and preview folder. Run it
    with `run_file`, inspect the outputs, and write `cover.html`.
 2. Add `pkg.set_cover("cover.html")` before the script's preview call. Run it
-   again and inspect the authored cover with `view_image`. Also print
+   again and inspect the authored cover with `view_image`. Use
+   `await pkg.preview_html(width=390)` and `width=1200` for real phone/desktop
+   checks: it returns a full `image` and readable `slices`. View the slices at
+   `detail="high"`; check margins, wrapping, image scale and clipped content.
+   This renders the screen layout, separately from PDF pagination. Also print
    `await pkg.preview_pdf()`: it returns `page_count`, the PDF path, and a list
-   of `pages` image paths. View those images with `view_image`. Check that page
+   of `pages` image paths. View each with `view_image(path=..., detail="high")`
+   so text, artwork contrast and clipping are actually readable. Check that page
    groups fit, the opening makes the contents clear, and captions are readable.
    Fix the cover and repeat this step if the PDF has spillover pages.
 3. Once the cover is ready, append `media_id = await pkg.save()` and
@@ -130,7 +141,9 @@ and use `write_file` or `edit_file` to update that file between these steps:
 Reuse the same saved members and parameters; recipe runs are cached. Inspection
 is your own quality check, not a separate approval step. Do not create approval
 marker files, shell commands, or an extra user confirmation to advance these
-steps. Save only the finished package.
+steps. Save the completed deliverable for the current round. A polished options
+package is complete for exploration even when its candidates are not approved;
+label the stage and unresolved decisions honestly.
 
 ## Names and parameters are decisions
 
@@ -251,6 +264,13 @@ The kit vocabulary:
   optional `mode="slider"`.
 - `stimma-files` opens a file browser in place. Give it a run id as `ref`, or omit
   `ref` for the whole package, including loose files.
+- `stimma-swatch value="#172334" label="Ink" usage="Body text"` presents a
+  color with readable labels outside the colored area. Arrange freely.
+- `stimma-type ref="m4" label="Heading · Family / weight"` presents authored
+  sample text in a bundled font (TTF/OTF/WOFF/WOFF2). Without a ref it inherits
+  typography. CSS variables `--sp-type-family`, `--sp-type-size`, and
+  `--sp-type-weight` allow custom treatment. These are presentation components,
+  not a fixed brand-kit layout. Invoke Brand Kits for identity exploration.
 
 A member id (`m1`) or declared bundle path identifies media; a run id (`r1`)
 identifies a run's files. For example:
