@@ -99,6 +99,7 @@ belong to brand-mark recipes, not this app-icon cover. Default both HTML and PDF
 choose brown or another artwork-derived tint. A warm-white icon background
 does not change the cover or PDF background. Give contents its own page section.
 
+During PDF inspection, check that the opening includes its actual-size row.
 For the opening actual-size row, choose a few small delivered sizes (such as
 16, 32, 48 and 64 px). Large 192–512 px exports belong in the file browser or
 an intentionally sized overview; putting them at native size here pushes the

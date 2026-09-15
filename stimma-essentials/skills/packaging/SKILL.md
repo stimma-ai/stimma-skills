@@ -122,7 +122,7 @@ and use `write_file` or `edit_file` to update that file between these steps:
    again and inspect the authored cover with `view_image`. Also print
    `await pkg.preview_pdf()`: it returns `page_count`, the PDF path, and a list
    of `pages` image paths. View those images with `view_image`. Check that page
-   groups fit, the opening includes its size row, and captions are readable.
+   groups fit, the opening makes the contents clear, and captions are readable.
    Fix the cover and repeat this step if the PDF has spillover pages.
 3. Once the cover is ready, append `media_id = await pkg.save()` and
    `stimma.show(media_id=media_id, role="final")`. Run the same script again.
@@ -205,6 +205,18 @@ height; a large image plus captions and prose may need a smaller print image
 or another deliberately grouped page. The kit's single/pair/stack layouts
 already reserve space for a heading and captions.
 
+Keep the shared studio feel through the kit's typography, generous margins,
+clear hierarchy, neutral default ground, and required footer. Choose page
+compositions for the work: a logo lockup, animation frames, and a print sheet
+need different arrangements. Size rows, device scenes, and platform groupings
+are recipe-specific choices, not requirements for every package.
+
+The cover PDF is a visual guide to the package. Recipe-produced documents are
+separate deliverables: preserve their required dimensions, scale, margins,
+and colors. Do not apply the cover's landscape page format, background, or
+footer to a production file such as a printable label sheet. Include essential
+usage instructions in PDF-visible content, not only in HTML disclosures.
+
 Resolve refs from the actual manifest, never guessed paths.
 
 The kit vocabulary:
@@ -261,10 +273,10 @@ content. Fix any problems reported when attaching the cover before saving.
 
 Lead with the work. Show how it will be used or how its parts fit together.
 Use previews supplied by recipes where useful; create context where needed.
-When recipe guidance supplies a **Platform Study**, use that name for the context
-section. Include every requested target and inspect its actual outputs in context
-before saving. Recipe guidance links the relevant reference; read it from this
-skill's resource directory. Preview files come from the recipe run, not from a
+Choose context and comparisons appropriate to the deliverable, following the
+recipe guidance and the person's request. Inspect the actual outputs before
+saving. Recipe guidance links the relevant reference; read it from this skill's
+resource directory. Preview files come from the recipe run, not from a
 separate template installation.
 Keep supporting details subordinate to the work and put file access near the
 words explaining what the recipient receives.
