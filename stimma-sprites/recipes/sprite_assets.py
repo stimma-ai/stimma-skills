@@ -34,7 +34,8 @@ actual final assets, representative frames at game scale, and the chosen animati
 Animation strips are images: use readable crops/contact sheets rather than shrinking a
 very wide atlas onto a PDF page. Show alpha against a neutral background. Identify drafts
 versus selected work. Include a short game-facing inventory linking actual run paths,
-collision/weapon placement notes and which direction may be mirrored. Describe unresolved
+collision/weapon placement notes and which direction may be mirrored. Use spritekit.registration_sheet
+to inspect those coordinates on final frames before claiming they match the artwork. Describe unresolved
 visual or import limitations honestly. The recipe supplies data and README, never cover HTML.""",
 )
 def build(b: Build) -> None:

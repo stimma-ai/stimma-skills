@@ -21,7 +21,7 @@ TARGETS = ("atlas", "godot", "rpgmaker", "gamemaker", "gif")
 def export_atlas(
     animations: list, out_dir: "str | Path", base_name: str, *, padding: int = 0
 ) -> list[Path]:
-    """Sheet PNG + TexturePacker-style JSON atlas (Phaser/Unity lingua franca).
+    """Sheet PNG + TexturePacker-style JSON atlas (not a native Unity importer).
 
     Frame keys are ``<name>[_<direction>]/<index>``; animations also land in
     meta.frameTags (Aseprite convention) with from/to frame spans.

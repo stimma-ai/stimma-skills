@@ -55,3 +55,6 @@ __all__ = [
 
 from .package import package_source
 __all__.append("package_source")
+
+from .review import registration_sheet
+__all__.append("registration_sheet")

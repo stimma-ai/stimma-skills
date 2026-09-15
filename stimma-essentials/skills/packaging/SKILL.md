@@ -353,10 +353,11 @@ The tile is stored outside the deliverable and does not ship to the recipient.
 ## When a member changes
 
 Save revised work as a revision of its existing asset. For a package update,
-have the builder save and print the new media id without `stimma.show()`; then
-use the native `show` tool with `media_id`, `role="final"`,
-`revises=<existing asset_id>` and a short `revision_note`. The native tool's
-revision arguments are not arguments to the Python SDK's `stimma.show()`.
+save the new media, then call `stimma.show(media_id=new_media_id, role="final",
+revises=existing_asset_id, revision_note="What changed")`. The native `show` tool
+accepts the same revision arguments. The display receipt returns the asset id;
+retain it for the next update. Rebuilding the same title creates new media, so
+explicitly identify the existing asset when displaying a revision.
 Rebuild the package when appropriate so the
 person receives an up-to-date result. Rebuild carries the authored cover forward;
 review its words and composition against the revised contents and refresh it

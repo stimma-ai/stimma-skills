@@ -61,7 +61,7 @@ Keep `key` for the whole character: every move must share one backdrop. `key["ma
 
 ## Step 2 — moveset and directions
 
-Offer the moveset as a menu (table below) plus free-text custom moves. One question decides scope:
+Choose the moveset from the agreed mechanics; use the menu below as examples, not a required checklist. Ask only when the game leaves its view or scope unresolved:
 
 - **Side-scroller** — one direction (east profile), each move generated once.
 - **4-way / 8-way (top-down or isometric)** — each directional move is generated per facing. Generate the east side plus north and south; bake the west side by mirroring (`spritekit.mirror_frames`), so 8-way costs 5 generations per move.
@@ -78,7 +78,7 @@ For each move, build the video prompt from three parts:
 
 Condition on `"anchor_padded.png"` from Step 1 — **never the raw base**. The video model fills its output aspect by scaling and cropping, so a portrait base fed to a square video loses the head and feet; even at a matching aspect, zero margin means any scale wobble clips the extremities. That anchor is already padded to the video's aspect and staged on the chosen key colour, so decide `width`/`height` before building it. And when the model accepts two conditioning images, pass it **twice** (`input_images=["anchor_padded.png", "anchor_padded.png"]`): the end-frame lock is your strongest defense against scale creep and pose wander, stronger than any prompt sentence. Only fall back to the single-image + "ends in the starting pose" prompt when the tool truly takes one image. When the model supports end-frame conditioning, pass the (padded) base as **both first and last frame** (`input_images=[base, base]`) so the cycle closes cleanly; when it only takes a first frame, add "the clip ends in exactly the starting pose" to the prompt and check first/last frame agreement after extraction.
 
-Discover the image-to-video task and use the requested model when available. Request a short clip: 2–3 seconds holds a whole cycle, and a 25-frame budget sampled across it plays as ~2 seconds at 12 fps. Never generate a 5-second clip when 2 seconds will do — it costs more and drifts more.
+Discover the image-to-video task and use the requested model when available. Request a short clip for locomotion: 2–3 seconds is usually enough. Choose the useful cycle within it, then its frame count and playback speed. Held gameplay poses do not need a takeoff-to-landing movie.
 
 Then process in `run_code`:
 
@@ -164,15 +164,29 @@ optional `direction`, `fps` (12), `loop` (`loop`, `once`, `pingpong`),
 `durations_ms`, inclusive `loop_start/end`, and `mirrored_from`. A static asset
 is one frame with `loop="once"`; separate backgrounds from transparent props.
 It validates the shared canvas and writes a deterministic source archive.
+Unrelated static props need not share a large padded canvas: use a separate source/run per differently sized prop, or deliberately register a set at its intended relative scale. A generated sheet with approximate cells is concept artwork until you extract and review usable tiles. Deliver the prepared tiles as PNGs with their exact tile roles and repeat rules; do not substitute the whole concept sheet for a ground tile.
+
 `usage` holds game-facing notes such as mirror safety, collision boxes,
 projectile attachment points, display size, tile size and repeat axes. Use
 numeric rectangles (`collision_box: {x,y,w,h}`) and named points
 (`attachments: {muzzle: {x,y}}`) in frame pixels instead of approximate prose.
 Measure them on the final frames, not the original reference. Frame content
 bounds are included in `asset.json` to assist inspection; wings and effects
-are not the body collision box. Put a pivot marker, collision rectangle and
-muzzle point over representative frames, flip the preview around that pivot,
-and inspect placement. Give useful gameplay display dimensions so a coding
+are not the body collision box. Use `registration_sheet` to inspect those authored coordinates on representative
+final frames (include the firing pose). It draws the pivot, collider and named
+attachment points, with optional mirroring around the same pivot:
+
+```python
+from spritekit import registration_sheet
+registration_sheet([idle_frames[0], shoot_frames[len(shoot_frames)//2]],
+    labels=["idle", "firing"], anchor=(0.5, 1.0),
+    collision_box=body_box, attachments={"muzzle": muzzle}, mirror=True,
+    background="#ededee").save("placement-check.png")
+```
+
+Inspect that image at high detail, and use a dark background for the other matte
+check. The helper draws your decisions; it does not locate the body or weapon.
+Move an incorrect marker by measuring the artwork before packaging. Give useful gameplay display dimensions so a coding
 agent does not have to invent the relative scale of a character and a tile. These are creative
 choices to inspect, not guesses made by the exporter. Values in pixels use
 x-right/y-down coordinates from the frame's top-left. Keep frame lists until
@@ -182,6 +196,18 @@ The recipe supplies individual PNG frames, a sheet/atlas, `asset.json`, and
 manual Unity import guidance. Optional Godot 4 `.tres` resources encode full
 cycles. Partial-loop animations remain available in the neutral handoff.
 Unity JSON is not a native import format; do not claim a tested Unity plugin.
+
+Before authoring the guide, make a small **handoff proof from the package preview files**:
+place the hero and enemy on a ground line at their documented pivots, switch
+idle/run/airborne/shoot/hit states without moving that pivot, emit the separate
+projectile from the documented muzzle, and arrange the prepared terrain into a
+short ground section and floating platform. This catches bad registration that
+same-size canvases and clean alpha cannot. Inspect at gameplay scale and enlarged.
+A scene generated by an image model is art direction, not this proof. A union crop
+in `finalize_moves` preserves existing registration; it cannot remove a jumping
+trajectory or discover feet. If a move drifts internally, choose held poses or
+regenerate it before finalizing. Do not declare a guide caption true unless this
+proof actually demonstrates it.
 
 Author a compact visual guide with the shared kit, actual in-game asset scale,
 selected animation examples, and a files index. Add a short game inventory
@@ -217,10 +243,10 @@ Fragments are appended to every character and video prompt for the sprite. The p
 | idle | standing at rest, gentle breathing, slight weight shifts |
 | walk | relaxed walking in place |
 | run | sprinting in place, arms pumping |
-| jump | crouching, leaping straight up, landing on the same spot |
+| jump / fall | separate held rising and falling poses, registered to the same body position; physics supplies the trajectory |
 | attack | quick melee swing and return to guard |
 | heavy attack | slow overhead wind-up into a heavy downward strike |
-| shoot | drawing a bow to full anchor and loosing |
+| shoot | brief weapon recoil with fixed body position; no travelling projectile baked into the character frames |
 | cast | raising both hands as gathered energy swirls between them |
 | block | bracing low behind a raised guard |
 | dodge | tucking into a fast roll on the spot |

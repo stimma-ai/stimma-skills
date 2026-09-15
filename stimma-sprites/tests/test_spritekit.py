@@ -567,4 +567,17 @@ check("shared moves same size", moves["idle"][0].size == moves["reach"][0].size)
 check("shared moves feet registered", moves["idle"][0].getbbox()[3] == moves["reach"][0].getbbox()[3])
 check("shared moves body position", moves["idle"][0].getbbox()[0] == moves["reach"][0].getbbox()[0])
 
+# Off-centre pivots reflect both pixels and authored geometry around one origin.
+from spritekit import registration_sheet
+probe = Image.new("RGBA", (20, 10))
+probe.putpixel((1, 1), (255, 0, 0, 255))
+original = probe.tobytes()
+review = registration_sheet([probe], anchor=(0.25, 1), mirror=True, scale=4,
+                            columns=2, labels=["pose"])
+# Each cell is 160 wide; pivot x=80 (or 240), source pixel centre moves
+# from x=66 to x=254 under reflection around its own pivot.
+check("review off-centre original", review.getpixel((66, 54)) == (255, 0, 0))
+check("review off-centre mirrored", review.getpixel((254, 54)) == (255, 0, 0))
+check("review preserves source", probe.tobytes() == original)
+
 print(f"ALL {len(passed)} CHECKS PASSED")
