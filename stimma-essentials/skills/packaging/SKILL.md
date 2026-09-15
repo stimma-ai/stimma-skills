@@ -162,6 +162,11 @@ Start from a template, then adapt its structure to the work:
   to the recipient's uses and include every relevant run and loose member.
 - `templates/options-board.html` — a comparison of directions with a question.
 
+Default to a dark cover unless the person requests another cover theme. An
+asset's requested background color does not choose the cover theme. For custom
+light covers, set a coherent text and background palette; inspect file controls
+as well as artwork.
+
 The person's requested design takes precedence over template and recipe cover
 suggestions. You author the composition: change colors, typography, spacing,
 section order and branding placement when requested. Add a corporate logo as a

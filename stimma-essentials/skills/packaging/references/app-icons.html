@@ -3,20 +3,29 @@
      run root (including its trailing slash), and RUN_ID with that run's id.
      For mixed packages, add sections showing each other platform's actual
      output and file access. Keep only statements supported by the contents. -->
+<style>
+  .icon-opening { text-align: center; }
+  .icon-opening stimma-sizes { justify-content: center; }
+  .icon-hero { margin: 28px 0; }
+  .icon-hero img { width: 320px; height: 320px; object-fit: contain; border-radius: 22%; margin-left: auto; margin-right: auto; }
+  @media print { .icon-hero img { width: 320px; height: 320px; } }
+</style>
 <div class="sp-page">
+  <div class="icon-opening">
   <h1 class="sp-title">APP_NAME</h1>
   <p class="sp-sub">iOS app icons</p>
+  <!-- One representative finished icon. Choose a delivered high-resolution
+       PNG; adapt the hero treatment for its platform. No platform-variant grid. -->
+  <stimma-media class="icon-hero" ref="RUN_ROOTios/AppIcon.appiconset/icon-1024.png"></stimma-media>
   <stimma-section label="At actual size">
     <stimma-sizes>
-      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-180.png" size="180" caption="180 px"></stimma-media>
-      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-120.png" size="120" caption="120 px"></stimma-media>
-      <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-87.png" size="87" caption="87 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-60.png" size="60" caption="60 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-40.png" size="40" caption="40 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-29.png" size="29" caption="29 px"></stimma-media>
       <stimma-media ref="RUN_ROOTios/AppIcon.appiconset/icon-20.png" size="20" caption="20 px"></stimma-media>
     </stimma-sizes>
   </stimma-section>
+  </div>
   <stimma-section label="Platform Study · iOS" page layout="pair">
     <stimma-media ref="RUN_ROOTpreviews/device-studio.png"></stimma-media>
     <stimma-media ref="RUN_ROOTpreviews/device-lifestyle.png"></stimma-media>

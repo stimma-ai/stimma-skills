@@ -41,11 +41,14 @@ relative to each run's root, not to the package root:
 | Android | `previews/platform-android-studio.png`, `previews/platform-android.png`; details: `previews/android-store-light.png`, `previews/android-notification-light.png` |
 | macOS | `previews/platform-macos.png` |
 | Windows | `previews/platform-windows-start.png`, `previews/platform-windows-taskbar.png` |
+| Web | `previews/platform-web-light.png`, `previews/platform-web-dark.png` |
 | Linux | `previews/platform-linux.png` (Ubuntu), `previews/platform-linux-kde.png` (KDE Plasma) |
 
-Only requested platforms are rendered. Web exports have no supplied context
-scene; show their actual files and useful sizes if requested. Do not invent a
-scene filename. Every study uses the delivered platform image, with the system's
+Only requested platforms are rendered. Web has a localized browser tab with the
+supplied app name and exact delivered 16px favicon, shown at 2×. Choose the light
+or dark browser scene to suit the cover, and include native-size 16px and 32px
+PNG samples on the Web page to judge fidelity. Do not invent a website URL.
+Every study uses the delivered platform image, with the system's
 mask or canvas placement applied by the renderer. The Galaxy view has a populated
 home screen; the desktop views are localized Dock, Start and taskbar contexts.
 
@@ -70,12 +73,12 @@ Keep the shared SVG unchanged so it can serve other runs in a brand kit.
 ## Author the cover
 
 Use `references/app-icons-mixed.html` for multiple platforms, or
-`references/app-icons.html` for iOS alone. The mixed reference assumes all five
-mobile/desktop targets: remove unrequested sections and retain every requested
+`references/app-icons.html` for iOS alone. The mixed reference assumes all six
+mobile, desktop and web targets: remove unrequested sections and retain every requested
 one. If iOS is absent, use `templates/delivery.html` plus the section patterns
 in this reference; do not inspect the generated auto cover for its internals.
 Include additional runs and members according to the package's scope.
-Replace `APP_NAME`, `RUN_ID`, `RUN_ROOT`, `MACOS_PNG_REF` and `LINUX_PNG_REF`
+Replace `APP_NAME`, `RUN_ID` and `RUN_ROOT`
 using the supplied name and actual manifest. Do not leave placeholder prose.
 
 The following is a starting composition. The person's requested colors, logo
@@ -86,9 +89,13 @@ By default, group each OS in its own sibling `<stimma-section page>` labelled
 **Platform Study · OS**. Use `layout="pair"` for iOS, Android and Linux, `layout="stack"` for Windows,
 and `layout="single"` for macOS. Place the scene media directly inside;
 do not nest another section or add image margins. The same content becomes a
-responsive HTML section and one landscape PDF page per OS. Keep the opening
-icon overview and “At actual size” row together before these page groups, on
-the opening page. Give contents its own page section.
+responsive HTML section and one landscape PDF page per OS. Open with one generous finished icon and a compact “At actual size” row on
+the same page. Choose a high-resolution delivered icon as the hero; do not show
+an unprepared source or a grid of nearly identical platform variants. The
+platform pages show those differences in context. Keep background-rule prose
+with the relevant platform or contents. Transparent-mark background studies
+belong to brand-mark recipes, not this app-icon cover. Default to a dark cover;
+a warm-white icon background does not imply a light page. Give contents its own page section.
 
 For the opening actual-size row, choose a few small delivered sizes (such as
 16, 32, 48 and 64 px). Large 192–512 px exports belong in the file browser or
