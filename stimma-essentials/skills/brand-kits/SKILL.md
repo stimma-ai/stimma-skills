@@ -144,6 +144,10 @@ Usually include:
   after adding those dependencies so the source and image export agree.
 - A short visual guide and a file index explaining which file to use where.
   Keep print production dimensions separate from the cover PDF.
+  Write the index from the actual manifest after assembly: workspace folders
+  such as `fonts/` or `applications/` may become `members/` or `extras/` in the
+  ZIP. Check README paths too. A self-contained HTML application can open
+  without installing its embedded fonts; installation is for other editors.
 
 Add patterns, photography examples, voice guidance, packaging, or more templates
 when useful. Avoid filling a kit with unused stationery, abstract brand
