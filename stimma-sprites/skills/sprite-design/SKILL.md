@@ -241,6 +241,14 @@ weapon origins, and explains mirroring and background tiling. Inspect the
 HTML at phone/desktop widths and every PDF page. Deliver the package with its
 HTML/PDF guide and ZIP, not a workspace folder or a sprite document alone.
 
+Check the inventory's paths against the final manifest, including folder levels;
+a guessed glob such as `frames/*.png` is wrong when images live in animation
+subfolders. A native `.stimmasprite.json` contains library hash references and
+is not a standalone editable source. Use the portable source ZIPs instead of
+adding loose native JSON stubs. For package refinements, display the new media
+with `revises=existing_asset_id` and a revision note, and verify the receipt's
+asset id and revision number before saying the original package was updated.
+
 For individual legacy exports, `export_sprite` remains available for atlas,
 Godot, RPG Maker, GameMaker and GIF. The generic atlas is not Unity integration.
 

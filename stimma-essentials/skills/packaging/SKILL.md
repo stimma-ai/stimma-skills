@@ -93,6 +93,16 @@ media_id = await pkg.save()
 stimma.show(media_id=media_id, role="final")
 ```
 
+The final `show` line above is for a **first delivery**. For an update, use
+`stimma.show(media_id=media_id, role="final", revises=existing_asset_id,
+revision_note="What changed")` instead. The existing id comes from the earlier
+display receipt or `await stimma.packages.status(original_media_id)`. Reusing a
+title does not reuse its asset. Check the receipt before claiming a revision.
+
+Loose native document JSON may reference a private media library. It is not a
+portable editable file unless its dependencies are embedded or bundled in a
+supported format. Deliver portable source files and omit unusable native stubs.
+
 Keep reusable vector masters as SVG members. A derived raster file set is one
 run, not a replacement for its source or the whole package. When the person
 requests vectorization, use Vector Design first, inspect the resulting SVG,
