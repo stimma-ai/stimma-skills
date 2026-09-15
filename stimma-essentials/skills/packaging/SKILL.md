@@ -162,10 +162,14 @@ Start from a template, then adapt its structure to the work:
   to the recipient's uses and include every relevant run and loose member.
 - `templates/options-board.html` — a comparison of directions with a question.
 
-Default to a dark cover unless the person requests another cover theme. An
-asset's requested background color does not choose the cover theme. For custom
-light covers, set a coherent text and background palette; inspect file controls
-as well as artwork.
+Default the HTML cover AND every PDF page to neutral near-black `#0d0d0e`,
+with light text `#ededee`. Keep that exact neutral background unless the person
+explicitly requests a different cover color. Do not interpret “dark” as brown,
+navy, a warm charcoal, or a color sampled from the artwork. An asset's requested
+background color applies to the asset, not the cover or PDF. Do not independently
+restyle the PDF with a different ground. For explicitly requested custom themes,
+set a coherent text and background palette and inspect file controls as well
+as artwork.
 
 The person's requested design takes precedence over template and recipe cover
 suggestions. You author the composition: change colors, typography, spacing,
@@ -180,9 +184,15 @@ Use kit elements wherever the page touches package content. Reuse the kit's page
 classes (`sp-page`, `sp-title`, `sp-sub`, `sp-label`, `sp-note`); add CSS only for
 what the work needs. Kit print CSS is a default placed before authored CSS.
 Use `:root` tokens (`--sp-bg`, `--sp-fg`, `--sp-muted`, `--sp-line`) for shared
-colors (include `--sp-faint` for small size captions), and `@media print` / `@page` for PDF-specific overrides. For example,
-`:root { --sp-bg: #123f86; --sp-fg: #ffffff; }` sets the page background and text
-in both outputs; `@page { background: #123f86; }` can set a distinct PDF ground.
+colors (include `--sp-faint` for small size captions), and `@media print` / `@page` for PDF-specific overrides. Use this default when writing cover styles:
+
+```css
+:root { --sp-bg: #0d0d0e; --sp-fg: #ededee; }
+@page { background: var(--sp-bg); }
+```
+
+Only replace these colors when the person explicitly requests another cover
+color. Keep the PDF on the same background unless they request otherwise.
 Use your own section layout when single/pair/stack does not fit. Keep content
 legible, local and portable; inspect the authored cover through `pkg.preview()`
 after custom styling. Use `preview_pdf()` to inspect the same PDF export rules

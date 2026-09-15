@@ -94,8 +94,10 @@ the same page. Choose a high-resolution delivered icon as the hero; do not show
 an unprepared source or a grid of nearly identical platform variants. The
 platform pages show those differences in context. Keep background-rule prose
 with the relevant platform or contents. Transparent-mark background studies
-belong to brand-mark recipes, not this app-icon cover. Default to a dark cover;
-a warm-white icon background does not imply a light page. Give contents its own page section.
+belong to brand-mark recipes, not this app-icon cover. Default both HTML and PDF to neutral near-black `#0d0d0e` with light text
+`#ededee`, unless the person explicitly requests another cover color. Do not
+choose brown or another artwork-derived tint. A warm-white icon background
+does not change the cover or PDF background. Give contents its own page section.
 
 For the opening actual-size row, choose a few small delivered sizes (such as
 16, 32, 48 and 64 px). Large 192–512 px exports belong in the file browser or
