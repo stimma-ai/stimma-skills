@@ -189,3 +189,23 @@ def pingpong(frames: list, *, durations_ms: "list | None" = None) -> "tuple[list
     if durations_ms is not None:
         dur = list(durations_ms) + list(durations_ms[-2:0:-1])
     return out, dur
+
+
+def finalize_moves(moves: dict, **kwargs) -> tuple[dict, dict]:
+    """Finalize a whole actor with one crop and scale, preserving move offsets.
+
+    Pass keyed frames on a common original canvas, before per-move resizing.
+    kwargs are finalize's options (height, pad, square, box, binarize).
+    Static poses must be prepared on the same conditioning canvas as clips.
+    """
+    if not moves or any(not frames for frames in moves.values()):
+        raise ValueError("Every move needs at least one frame")
+    frames = [frame for move in moves.values() for frame in move]
+    if len({frame.size for frame in frames}) != 1:
+        raise ValueError("Moves need the same original canvas before finalizing together")
+    finished, info = finalize(frames, **kwargs)
+    result, offset = {}, 0
+    for name, move in moves.items():
+        result[name] = finished[offset:offset + len(move)]
+        offset += len(move)
+    return result, info

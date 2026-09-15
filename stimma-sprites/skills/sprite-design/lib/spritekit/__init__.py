@@ -32,7 +32,7 @@ from .doc import (
 )
 from .encode import load_animation, mirror_frames, save_animation, save_gif
 from .export import TARGETS, export_sprite
-from .finish import (finalize, find_loop, frame_distance, pingpong,
+from .finish import (finalize_moves, finalize, find_loop, frame_distance, pingpong,
                      resize_premultiplied, trim_to_loop, union_box)
 from .extract import (FRAME_BUDGETS, dedup_frames, extract_frames, load_frames,
                       probe_fps, sample_frames, save_frames)
@@ -42,7 +42,7 @@ __all__ = [
     "edge_contact", "measure_drift", "measure_zoom", "stabilize", "apply_profile", "key_background",
     "remove_halo", "clear_matte_regions", "threshold_alpha", "prune_components",
     "auto_tolerance", "choke_matte", "chroma_distance", "denoise_matte",
-    "despill", "keyness", "smooth_silhouette", "thin_gaps", "stabilize_matte", "edge_pad", "fill_holes", "finalize", "resize_premultiplied", "union_box",
+    "despill", "keyness", "smooth_silhouette", "thin_gaps", "stabilize_matte", "edge_pad", "fill_holes", "finalize_moves", "finalize", "resize_premultiplied", "union_box",
     "find_loop", "trim_to_loop", "pingpong", "frame_distance",
     "sample_background", "pad_to_aspect", "pick_key_color", "compose_on", "KEY_COLORS", "save_frames", "load_frames",
     "DIRECTIONS", "MIRROR_PAIRS", "ResolvedAnimation",

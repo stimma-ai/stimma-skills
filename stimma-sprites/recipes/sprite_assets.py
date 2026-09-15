@@ -9,7 +9,7 @@ from sprite_source import read_source
 
 
 @recipe(
-    id="sprite-assets", version=1, display_name="Sprite assets",
+    id="sprite-assets", version=2, display_name="Sprite assets",
     description="Registered sprite frames, atlas, animation metadata and optional Godot 4 resource from a prepared sprite source archive. Repeat for actors, terrain, props and backgrounds.",
     inputs=[Input("source", kind="file", description="ZIP produced by spritekit.package_source: source.json plus approved PNG frames")],
     params=[Param("godot", type="boolean", default=False, description="Also emit Godot 4 SpriteFrames (.tres); full-animation loops only"),
@@ -22,7 +22,9 @@ key, align or invent motion. Repeat this recipe in one package for the game's as
 
 Outputs: frames/<animation>/frame_000.png, atlas/<name>.png and .json, and asset.json.
 asset.json explicitly lists frame paths in playback order, milliseconds, loop bounds,
-facing and top-left normalized pivot. The atlas is a JSON hash with explicit rectangles;
+facing and top-left normalized pivot. content_bounds is the per-frame visible
+alpha bounding box [left, top, right-exclusive, bottom-exclusive] at alpha >= 32;
+it is not a physics collider. The atlas is a JSON hash with explicit rectangles;
 padding is excluded from rectangles. Godot is optional; its .tres and PNG stay together.
 Unity first-version handoff is PNG + documented manual import settings, not native JSON
 import or a tested editor plugin. Keep original artwork and editable sources as members.
@@ -60,7 +62,9 @@ def build(b: Build) -> None:
     manifest["padding"] = b.params.padding
     manifest["atlas"] = f"atlas/{source.base_name}.json"
     manifest["usage"] = usage
-    for a in manifest["animations"]:
+    for a, pixels in zip(manifest["animations"], source.animations):
+        # Visible bounds assist inspection without guessing gameplay collision geometry.
+        a["content_bounds"] = [list(box) if (box := frame.convert("RGBA").getchannel("A").point(lambda v: 255 if v >= 32 else 0).getbbox()) else None for frame in pixels.frames]
         a["frames"] = [f"frames/{a['key']}/frame_{i:03d}.png" for i in range(a["frame_count"])]
     manifest["integrations"] = {"unity": "PNG manual import; editor integration untested",
         "godot": f"godot/{source.base_name}.tres" if b.params.godot else None}

@@ -555,4 +555,16 @@ async def test_extract():
 
 asyncio.run(test_extract())
 
+
+# One shared crop across moves preserves registration as limbs extend.
+from spritekit import finalize_moves
+rest = Image.new("RGBA", (100, 100))
+rest.paste((200, 80, 20, 255), (40, 40, 60, 90))
+extended = rest.copy()
+extended.paste((200, 80, 20, 255), (60, 40, 90, 50))
+moves, info = finalize_moves({"idle": [rest], "reach": [extended]}, height=64)
+check("shared moves same size", moves["idle"][0].size == moves["reach"][0].size)
+check("shared moves feet registered", moves["idle"][0].getbbox()[3] == moves["reach"][0].getbbox()[3])
+check("shared moves body position", moves["idle"][0].getbbox()[0] == moves["reach"][0].getbbox()[0])
+
 print(f"ALL {len(passed)} CHECKS PASSED")
