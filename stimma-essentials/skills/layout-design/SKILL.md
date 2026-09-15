@@ -138,10 +138,17 @@ Pixel dimensions alone do not define a print size. For printable HTML, declare
 the intended dimensions in CSS, including `@page`, margins and print rules,
 and give the owner the actual intended size. For example, an A5 source uses
 `@page { size:148mm 210mm; margin:0 }` with a matching print canvas. Inspect that
-source at its production size. The PNG from `rasterize_layout` has the authored
-pixel dimensions above; call it a preview unless its resolution is sufficient
-at the stated print size. Don't call a screen preview “print-ready,” and don't
-apply package-guide dimensions or its footer to the production artwork.
+source at its production size. Author at **96 CSS pixels per inch**, then use
+`await stimma.rasterize_layout(media_id, out="card-print.png", dpi=300)` for
+print-resolution pixels and density metadata. For example, an A6 canvas is
+about 397×559 CSS pixels with `@page { size:105mm 148mm; margin:0 }`; the 300 dpi
+PNG is about 1241×1747 pixels. Keep the same editable source. Do not multiply
+its typography or spacing to obtain print resolution: that breaks printing
+at the declared physical size. `dpi` changes capture density, not composition.
+Without `dpi`, the PNG retains the authored screen pixel dimensions. Check
+the actual PNG size and print the exported HTML to PDF at its declared size
+before describing either as print-ready. Don't apply package-guide dimensions
+or its footer to the production artwork.
 
 ## create_layout constraints
 
