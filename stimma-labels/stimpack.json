@@ -1,0 +1,9 @@
+{
+  "name": "stimma-labels",
+  "display_name": "Stimma Labels",
+  "description": "Design labels for Avery stock and package exact-size printable PDFs with repeated or mixed artwork",
+  "version": "1",
+  "format": 1,
+  "author": "system",
+  "tags": ["labels", "avery", "printing", "packaging"]
+}
