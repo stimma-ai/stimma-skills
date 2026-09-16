@@ -94,6 +94,15 @@ def main():
         if target not in stocks:
             raise ValueError(f"Missing alias {target}")
         aliases[code] = target
+    # Community definitions can be stale. Keep reviewed manufacturer fixes
+    # separate from the pinned import so refreshing never loses their provenance.
+    fixes = json.loads(Path(__file__).with_name("avery-corrections.json").read_text())
+    for code, stock in fixes["stocks"].items():
+        aliases.pop(code, None)
+        stocks[code] = stock
+    for code, target in fixes["aliases"].items():
+        stocks.pop(code, None)
+        aliases[code] = target
     DEST.mkdir(parents=True, exist_ok=True)
     catalog = {
         "format": 1,

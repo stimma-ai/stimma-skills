@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+:root { --sp-bg: #0d0d0e; --sp-fg: #ededee; }
+@page { background: var(--sp-bg); }
+.download-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+.download-actions a { color: var(--sp-fg); text-decoration: underline; }
+@media print {
+  .download-actions, .file-access { display: none; }
+  .label-summary[layout=pair]:has(.sp-note)>.sp-section-body>stimma-media img { height: 350px; }
+  .label-summary>.sp-section-body { gap: 24px; }
+  .label-summary .sp-note p { margin: 0; }
+}
+</style>
+</head>
+<body>
+<stimma-section class="label-summary" page layout="pair" label="{{TITLE}}">
+  <stimma-media ref="{{MASTER_REF}}" caption="{{DESIGN_CAPTION}}"></stimma-media>
+  <stimma-media ref="{{SHEET_REF}}" caption="{{SHEET_CAPTION}}"></stimma-media>
+  <div class="sp-note">
+    <p>{{STOCK_AND_COUNTS}} Print labels.pdf at Actual Size / 100%, with Fit/Shrink disabled.
+    Check the alignment test on plain paper against the label sheet first. {{CORRECTION_NOTE}}</p>
+    <div class="download-actions">
+      <a href="{{PRINT_PDF_PATH}}" download>Download printable labels</a>
+      <a href="{{ALIGNMENT_PDF_PATH}}" download>Plain-paper alignment test</a>
+    </div>
+  </div>
+</stimma-section>
+<stimma-section class="file-access" label="All files"><stimma-files></stimma-files></stimma-section>
+</body>
+</html>

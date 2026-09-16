@@ -32,7 +32,7 @@ def test_aliases_and_complete_catalog():
     assert len(c["stocks"]) + len(c["aliases"]) == 385
     assert labelkit.lookup("Avery 8160")["code"] == "5160"
     rejected = []
-    for code in c["stocks"]:
+    for code in [*c["stocks"], *c["aliases"]]:
         try:
             labelkit.lookup(code)
         except ValueError as e:
@@ -41,6 +41,24 @@ def test_aliases_and_complete_catalog():
     assert labelkit.design_spec("5163")["artwork_px"] == [1200, 600]
     with pytest.raises(ValueError, match="not in"):
         labelkit.lookup("unknown")
+
+
+def test_manufacturer_corrections_override_conflicting_community_geometry():
+    address = labelkit.lookup("5195")
+    assert address["shape"] == "rectangle"
+    assert len(address["slots_pt"]) == 60
+    assert [address["width_pt"], address["height_pt"]] == [126, 47.52]
+    assert labelkit.lookup("8195")["code"] == "5195"
+    assert address["slots_pt"][0] == pytest.approx([21.6002, 39.6001], abs=0.001)
+    assert address["template_sha256"] and address["source"].endswith("/5195")
+    # An unrelated legacy round stock must not follow the corrected alias.
+    assert labelkit.lookup("5295")["shape"] == "round"
+    round_stock = labelkit.lookup("5294")
+    assert round_stock["slots_pt"][:3] == [[18, 31.5], [216, 31.5], [414, 31.5]]
+    assert round_stock["slots_pt"][-1] == [414, 578.25]
+    assert labelkit.lookup("5163")["slots_pt"][0] == pytest.approx(
+        [11.2001, 36], abs=0.001
+    )
 
 
 def test_mixed_blank_multipage_deterministic_pdf(tmp_path):

@@ -51,7 +51,7 @@ def lookup(code: str) -> dict:
     keys = {k.upper(): k for k in [*c["stocks"], *c["aliases"]]}
     if key not in keys:
         raise ValueError(
-            f"Avery {key} is not in the bundled catalog. Use search() or obtain the official template; do not substitute a similar size."
+            f"Avery {key} is not in the bundled catalog. Ask for the corrected product number or obtain its official template, including paper, margins and slot positions. Label dimensions and count alone cannot establish the sheet layout. Use search() to find verified catalog codes, not to substitute a similar size."
         )
     requested = keys[key]
     canonical = c["aliases"].get(requested, requested)

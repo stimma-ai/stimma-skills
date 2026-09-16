@@ -27,9 +27,22 @@ strings, including letters and variant suffixes. Use `labelkit.lookup(code)` and
 The catalog covers the imported gLabels Avery definitions, not every current
 Avery product. An unknown code needs the manufacturer's actual template and
 geometry. Similar label dimensions do not establish identical sheet placement.
+For an unresolved code, ask for the corrected product number or the official
+template with paper size, margins and slot positions. Width/height and count
+alone cannot establish those positions, so do not offer them as sufficient
+clarification. A missing catalog entry means unverified, not that the product
+does not exist. A fictional company also need not use fictional label stock.
+If the person explicitly chooses a different real stock for a
+fictional demo, resolve and name that new product before designing.
 Custom geometry can be passed as a stock dict in the same documented fields as
 lookup returns (points, 72/in, top-left origin); retain its authoritative source.
 Catalog safe insets are design guides, not manufacturer-certified bleed limits.
+Entries retain their source. Some have `geometry_verified` and a manufacturer
+template PDF hash; other entries are community definitions and may be stale.
+For a new stock, cross-check current manufacturer shape, size and sheet count
+when its template is available. A disagreement needs the actual template layout,
+not a guessed adjustment. Describe a catalog match as a match, not manufacturer
+verification. A plain-paper proof remains part of the first print.
 
 Use the returned physical-size `summary` for stock facts in the cover and
 handoff; `trim_aspect` describes proportions, not inches. Use the artwork aspect
@@ -121,6 +134,10 @@ size. The sheet preview comes from the production PDF, not another mockup.
 Author a compact cover leading with the designs and stock/counts, then sheet
 preview and file access. Combine brief stock facts and print instructions with
 the artwork or sheet preview; a few lines of facts need no separate guide page.
+For a small delivery, read `references/label-cover.html`: it pairs the master
+and actual sheet with a full-width printing note in one PDF page. Replace its
+placeholders with escaped text and actual manifest refs; adapt or add sections
+for more designs/pages. This is a starting composition, not a required design.
 Use actual run-file `path` values from `await pkg.manifest()` as media refs. Explain that **labels.pdf** is the file to print at
 **Actual Size / 100%**, on the stated paper size with Fit/Shrink disabled. A plain
 paper test checks alignment against the physical sheet. The package guide PDF

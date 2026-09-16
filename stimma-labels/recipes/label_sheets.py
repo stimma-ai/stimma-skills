@@ -58,6 +58,9 @@ and actual effective dpi. PRINTING.txt gives 100% / Actual Size instructions.
 Use exact run-file path values from await pkg.manifest() as stimma-media refs.
 Author a compact package cover with Packaging: show the actual designs large enough to
 read, a sheet preview, design quantities, stock code, paper size and printing instructions.
+Read .stimma/skills/stimma-labels/skills/label-design/references/label-cover.html
+for a compact master/sheet starting composition;
+use a short full-width sp-note for facts instead of spilling a separate facts page.
 Provide prominent access to labels.pdf using the package file browser. Distinguish the
 package guide PDF from the printable sheet PDF. Preserve prepared originals as members.
 Add a direct download link to the actual labels.pdf manifest path next to the preview,

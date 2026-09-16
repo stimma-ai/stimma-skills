@@ -1,0 +1,446 @@
+{
+  "aliases": {
+    "8195": "5195"
+  },
+  "description": "Manufacturer outline coordinates for demonstrated upstream conflicts. Coordinates use transformed PDF path points, excluding outline stroke. Frozen package sources are unaffected.",
+  "format": 1,
+  "stocks": {
+    "5163": {
+      "brand": "Avery",
+      "code": "5163",
+      "corner_pt": 14.4,
+      "description": "Shipping labels",
+      "geometry_verified": "Transformed outline path coordinates checked against manufacturer PDF; outline stroke excluded.",
+      "height_pt": 144.0,
+      "hole_radius_pt": 0.0,
+      "paper_pt": [
+        612.0,
+        792.0
+      ],
+      "safe_inset_pt": 9.0,
+      "shape": "rectangle",
+      "slots_pt": [
+        [
+          11.2001,
+          36.0
+        ],
+        [
+          312.7504,
+          36.0
+        ],
+        [
+          11.2001,
+          180.0
+        ],
+        [
+          312.7504,
+          180.0
+        ],
+        [
+          11.2001,
+          324.0
+        ],
+        [
+          312.7504,
+          324.0
+        ],
+        [
+          11.2001,
+          468.0
+        ],
+        [
+          312.7504,
+          468.0
+        ],
+        [
+          11.2001,
+          612.0
+        ],
+        [
+          312.7504,
+          612.0
+        ]
+      ],
+      "source": "https://www.avery.com/templates/5163",
+      "source_revision": "manufacturer-template-2026-09-16",
+      "template_pdf": "https://s3.amazonaws.com/avery.dpp.projects.s3uspdownloadables/US_en/Downloadables/pdf/U-0090-01.pdf",
+      "template_sha256": "c55da8eaf48cee8db4429a94aaea6f3e74c5f9b0ff3edb484e8b3126237e4142",
+      "width_pt": 288.0
+    },
+    "5194": {
+      "brand": "Avery",
+      "code": "5194",
+      "corner_pt": 0,
+      "description": "Round labels",
+      "geometry_verified": "Transformed outline path coordinates checked against manufacturer PDF; outline stroke excluded.",
+      "height_pt": 180.0,
+      "hole_radius_pt": 0.0,
+      "paper_pt": [
+        612.0,
+        792.0
+      ],
+      "safe_inset_pt": 4.5,
+      "shape": "round",
+      "slots_pt": [
+        [
+          18.0,
+          31.5
+        ],
+        [
+          216.0,
+          31.5
+        ],
+        [
+          414.0,
+          31.5
+        ],
+        [
+          18.0,
+          213.75
+        ],
+        [
+          216.0,
+          213.75
+        ],
+        [
+          414.0,
+          213.75
+        ],
+        [
+          18.0,
+          396.0
+        ],
+        [
+          216.0,
+          396.0
+        ],
+        [
+          414.0,
+          396.0
+        ],
+        [
+          18.0,
+          578.25
+        ],
+        [
+          216.0,
+          578.25
+        ],
+        [
+          414.0,
+          578.25
+        ]
+      ],
+      "source": "https://www.avery.com/templates/5294",
+      "source_revision": "manufacturer-template-2026-09-16",
+      "template_pdf": "https://s3.amazonaws.com/avery.dpp.projects.s3uspdownloadables/US_en/Downloadables/pdf/U-0100-01.pdf",
+      "template_sha256": "8cfe5e471af3c0628f8fbb786632ba137da491cee56ac58b86c14bdf13474f0f",
+      "width_pt": 180.0
+    },
+    "5195": {
+      "brand": "Avery",
+      "code": "5195",
+      "corner_pt": 6.768,
+      "description": "Return address labels",
+      "geometry_verified": "Transformed outline path coordinates checked against manufacturer PDF; outline stroke excluded.",
+      "height_pt": 47.52,
+      "hole_radius_pt": 0.0,
+      "paper_pt": [
+        612.0,
+        792.0
+      ],
+      "safe_inset_pt": 9.0,
+      "shape": "rectangle",
+      "slots_pt": [
+        [
+          21.6002,
+          39.6001
+        ],
+        [
+          169.1998,
+          39.6001
+        ],
+        [
+          316.7994,
+          39.6001
+        ],
+        [
+          464.4,
+          39.6001
+        ],
+        [
+          21.6002,
+          87.1001
+        ],
+        [
+          169.1998,
+          87.1001
+        ],
+        [
+          316.7994,
+          87.1001
+        ],
+        [
+          464.4,
+          87.1001
+        ],
+        [
+          21.6002,
+          134.6001
+        ],
+        [
+          169.1998,
+          134.6001
+        ],
+        [
+          316.7994,
+          134.6001
+        ],
+        [
+          464.4,
+          134.6001
+        ],
+        [
+          21.6002,
+          182.1499
+        ],
+        [
+          169.1998,
+          182.1499
+        ],
+        [
+          316.7994,
+          182.1499
+        ],
+        [
+          464.4,
+          182.1499
+        ],
+        [
+          21.6002,
+          229.6499
+        ],
+        [
+          169.1998,
+          229.6499
+        ],
+        [
+          316.7994,
+          229.6499
+        ],
+        [
+          464.4,
+          229.6499
+        ],
+        [
+          21.6002,
+          277.2002
+        ],
+        [
+          169.1998,
+          277.2002
+        ],
+        [
+          316.7994,
+          277.2002
+        ],
+        [
+          464.4,
+          277.2002
+        ],
+        [
+          21.6002,
+          324.7002
+        ],
+        [
+          169.1998,
+          324.7002
+        ],
+        [
+          316.7994,
+          324.7002
+        ],
+        [
+          464.4,
+          324.7002
+        ],
+        [
+          21.6002,
+          372.1997
+        ],
+        [
+          169.1998,
+          372.1997
+        ],
+        [
+          316.7994,
+          372.1997
+        ],
+        [
+          464.4,
+          372.1997
+        ],
+        [
+          21.6002,
+          419.7495
+        ],
+        [
+          169.1998,
+          419.7495
+        ],
+        [
+          316.7994,
+          419.7495
+        ],
+        [
+          464.4,
+          419.7495
+        ],
+        [
+          21.6002,
+          467.2495
+        ],
+        [
+          169.1998,
+          467.2495
+        ],
+        [
+          316.7994,
+          467.2495
+        ],
+        [
+          464.4,
+          467.2495
+        ],
+        [
+          21.6002,
+          514.7993
+        ],
+        [
+          169.1998,
+          514.7993
+        ],
+        [
+          316.7994,
+          514.7993
+        ],
+        [
+          464.4,
+          514.7993
+        ],
+        [
+          21.6002,
+          562.2993
+        ],
+        [
+          169.1998,
+          562.2993
+        ],
+        [
+          316.7994,
+          562.2993
+        ],
+        [
+          464.4,
+          562.2993
+        ],
+        [
+          21.6002,
+          609.7993
+        ],
+        [
+          169.1998,
+          609.7993
+        ],
+        [
+          316.7994,
+          609.7993
+        ],
+        [
+          464.4,
+          609.7993
+        ],
+        [
+          21.6002,
+          657.3491
+        ],
+        [
+          169.1998,
+          657.3491
+        ],
+        [
+          316.7994,
+          657.3491
+        ],
+        [
+          464.4,
+          657.3491
+        ],
+        [
+          21.6002,
+          704.8491
+        ],
+        [
+          169.1998,
+          704.8491
+        ],
+        [
+          316.7994,
+          704.8491
+        ],
+        [
+          464.4,
+          704.8491
+        ]
+      ],
+      "source": "https://www.avery.com/templates/5195",
+      "source_revision": "manufacturer-template-2026-09-16",
+      "template_pdf": "https://s3.amazonaws.com/avery.dpp.projects.s3uspdownloadables/US_en/Downloadables/pdf/U-0363-01.pdf",
+      "template_sha256": "cfe4edb089cc8961c5fbfece9080a4488d56584caa2e2ebcd4e810300e13e294",
+      "width_pt": 126.0
+    },
+    "5295": {
+      "brand": "Avery",
+      "code": "5295",
+      "corner_pt": 0.0,
+      "description": "Round labels (legacy gLabels definition)",
+      "height_pt": 238.5,
+      "hole_radius_pt": 0.0,
+      "paper_pt": [
+        612,
+        792
+      ],
+      "safe_inset_pt": 4.5,
+      "shape": "round",
+      "slots_pt": [
+        [
+          46.1232,
+          34.8768
+        ],
+        [
+          327.3768,
+          34.8768
+        ],
+        [
+          46.1232,
+          276.7536
+        ],
+        [
+          327.3768,
+          276.7536
+        ],
+        [
+          46.1232,
+          518.6304
+        ],
+        [
+          327.3768,
+          518.6304
+        ]
+      ],
+      "source": "https://raw.githubusercontent.com/j-evins/glabels-qt/554c9f04389f7a1afa18685cab015273f0b21d94/templates/avery-us-templates.xml",
+      "source_revision": "554c9f04389f7a1afa18685cab015273f0b21d94",
+      "width_pt": 238.5
+    }
+  }
+}
