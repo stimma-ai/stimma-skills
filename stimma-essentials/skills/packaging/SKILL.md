@@ -369,6 +369,18 @@ source folders or all previews as a speculative packaging recovery step.
 
 ## When a member changes
 
+Start from `pkg = await stimma.packages.open(media_id)` for an existing package.
+Inspect `await pkg.manifest()` for member ids, runs and paths, and
+`await pkg.preview()` for the artwork and `_stimma/cover.src.html`. This works
+in a fresh chat: the saved package supplies the context. Existing outputs are
+carried byte-for-byte; installed recipe upgrades do not silently rebuild them.
+Add new members/runs normally. To replace a source, use
+`await pkg.replace_member(member_id, path)` and `await pkg.rerun(run_id)` for
+its dependent runs. Their ids and paths stay stable. Save rejects a changed
+source whose outputs have not been refreshed. Update the cover from its saved
+source so it describes the change while retaining the rest of the guide.
+
+
 Save revised work as a revision of its existing asset. For a package update,
 save the new media, then call `stimma.show(media_id=new_media_id, role="final",
 revises=existing_asset_id, revision_note="What changed")`. The native `show` tool
