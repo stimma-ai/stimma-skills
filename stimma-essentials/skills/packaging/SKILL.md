@@ -380,6 +380,26 @@ its dependent runs. Their ids and paths stay stable. Save rejects a changed
 source whose outputs have not been refreshed. Update the cover from its saved
 source so it describes the change while retaining the rest of the guide.
 
+Each `run_code`/`run_file` call has a fresh Python scope. `open` always loads the
+saved package, not an earlier unsaved draft. Explore first, then keep the actual
+edits, preview and save in one script. For a source replacement:
+
+```python
+pkg = await stimma.packages.open(existing_media_id)
+await pkg.replace_member(member_id, "revised-source.zip")
+await pkg.rerun(run_id)
+pkg.set_cover(open("revised-cover.html").read())  # edited authored source
+preview = await pkg.preview()
+result = await pkg.save()
+print(result)
+```
+
+Use the returned media id to display the revision. If inspection requires another
+call, retain this script and rerun it after corrections, rather than assuming a
+Python variable or an unsaved draft survived. Unchanged source frames can be
+copied directly into a revised source archive; do not regenerate them to rebuild
+one animation's exports.
+
 
 Save revised work as a revision of its existing asset. For a package update,
 save the new media, then call `stimma.show(media_id=new_media_id, role="final",
