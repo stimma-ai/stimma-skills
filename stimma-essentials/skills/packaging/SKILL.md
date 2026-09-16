@@ -380,6 +380,11 @@ its dependent runs. Their ids and paths stay stable. Save rejects a changed
 source whose outputs have not been refreshed. Update the cover from its saved
 source so it describes the change while retaining the rest of the guide.
 
+For an existing loose extra (such as a proof image or notes), use
+`pkg.replace_file("extras/proof.png", "updated-proof.png")`, taking the first
+argument from the manifest. This preserves its name and path. `add_file` adds
+another file, and `replace_member` only accepts member ids.
+
 Each `run_code`/`run_file` call has a fresh Python scope. `open` always loads the
 saved package, not an earlier unsaved draft. Explore first, then keep the actual
 edits, preview and save in one script. For a source replacement:
