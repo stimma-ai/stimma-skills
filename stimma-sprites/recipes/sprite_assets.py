@@ -9,7 +9,7 @@ from sprite_source import read_source
 
 
 @recipe(
-    id="sprite-assets", version=2, display_name="Sprite assets",
+    id="sprite-assets", version=3, display_name="Sprite assets",
     description="Registered sprite frames, atlas, animation metadata and optional Godot 4 resource from a prepared sprite source archive. Repeat for actors, terrain, props and backgrounds.",
     inputs=[Input("source", kind="file", description="ZIP produced by spritekit.package_source: source.json plus approved PNG frames")],
     params=[Param("godot", type="boolean", default=False, description="Also emit Godot 4 SpriteFrames (.tres); full-animation loops only"),
@@ -62,7 +62,11 @@ def build(b: Build) -> None:
     manifest["pixels_per_unit"] = b.params.pixels_per_unit
     manifest["padding"] = b.params.padding
     manifest["atlas"] = f"atlas/{source.base_name}.json"
-    manifest["usage"] = usage
+    manifest["usage"] = dict(usage)
+    if "tile_size" in usage:
+        w, h = source.animations[0].frames[0].size
+        manifest["usage"]["tile_grid"] = {"columns": w // usage["tile_size"],
+                                           "rows": h // usage["tile_size"]}
     for a, pixels in zip(manifest["animations"], source.animations):
         # Visible bounds assist inspection without guessing gameplay collision geometry.
         a["content_bounds"] = [list(box) if (box := frame.convert("RGBA").getchannel("A").point(lambda v: 255 if v >= 32 else 0).getbbox()) else None for frame in pixels.frames]

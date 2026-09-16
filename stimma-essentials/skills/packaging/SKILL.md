@@ -379,3 +379,9 @@ Rebuild the package when appropriate so the
 person receives an up-to-date result. Rebuild carries the authored cover forward;
 review its words and composition against the revised contents and refresh it
 when needed.
+
+
+Workspace ZIPs, JSON, fonts, code and editable HTML can be package inputs or
+extras without being standalone library items. Pass their paths directly to
+`pkg.add_member` or `pkg.add_file`; the package retains them. `library.save`
+is for supported library datatypes, not arbitrary production files.

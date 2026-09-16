@@ -244,7 +244,9 @@ HTML/PDF guide and ZIP, not a workspace folder or a sprite document alone.
 Compute tile-count and scale labels from the final pixel dimensions and logical
 tile size. Cross-check prose in `usage` and the guide against those numbers;
 copying an earlier caption does not validate it. For example, a 256×64 slab at
-64px tiles is four tiles wide and one high. Attachment coordinates belong to
+64px tiles is four tiles wide and one high. Declare `usage.tile_size` for tile
+art; the recipe computes `usage.tile_grid` from the final PNG dimensions and
+rejects a contradictory supplied grid. Attachment coordinates belong to
 the owning actor’s structured metadata. Other assets should refer to that
 attachment by name, rather than duplicating its coordinates in prose. During
 a wording-only correction, preserve verified geometry; a new measurement is
