@@ -60,9 +60,16 @@ Author a compact package cover with Packaging: show the actual designs large eno
 read, a sheet preview, design quantities, stock code, paper size and printing instructions.
 Provide prominent access to labels.pdf using the package file browser. Distinguish the
 package guide PDF from the printable sheet PDF. Preserve prepared originals as members.
+Add a direct download link to the actual labels.pdf manifest path next to the preview,
+and a separate alignment-test.pdf link for the plain-paper proof.
 Keep the cover's normal branding/background out of the printable sheets.
 For changes, open the existing package, replace its source member and rerun this run;
-retain unchanged artwork and show the result as a revision of the same package asset.""",
+retain unchanged artwork and show the result as a revision of the same package asset.
+Across code calls, resume the latest preview folder with packages.open(folder) to
+retain unsaved edits. An integer media id opens the original saved revision.
+For measured printer alignment, rerun with offsets in millimeters: positive is
+right/down, so subtract observed right/down error from the current offsets.
+Keep the same source and all other parameters; update the guide and inspect again.""",
 )
 def build(b: Build):
     try:

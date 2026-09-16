@@ -1,5 +1,4 @@
 import importlib.util
-import io
 import json
 import sys
 import zipfile
@@ -11,7 +10,7 @@ from PIL import Image
 
 LIB = Path(__file__).resolve().parents[1] / "skills/label-design/lib"
 sys.path.insert(0, str(LIB))
-import labelkit
+import labelkit  # noqa: E402 - the helper is bundled with the skill, not installed
 
 
 def source(tmp_path, code="5163", pages=None, **kwargs):
@@ -110,6 +109,36 @@ def test_round_mask_and_offset(tmp_path):
             :3
         ] == (255, 0, 0)
         assert im.getpixel((round((x + 3) * 2), round(y * 2)))[:3] == (255, 255, 255)
+
+
+def test_measured_alignment_moves_art_and_proof_together(tmp_path):
+    """A right/low print error needs a left/up correction, without redoing art."""
+    result = source(tmp_path, code="5294", pages=[["a"] + [None] * 11])
+    before = Path(result["path"]).read_bytes()
+    base = labelkit.render_source(result["path"])
+    # Existing +0.5mm x, +0.75mm y, observed +1mm x, +2mm y error.
+    corrected = labelkit.render_source(
+        result["path"], offset_x_mm=-0.5, offset_y_mm=-1.25
+    )
+    assert Path(result["path"]).read_bytes() == before
+    plan = json.loads(corrected["sheet-plan.json"])
+    assert plan["printer_offset_mm"] == [-0.5, -1.25]
+    assert plan["pages"] == [["a"] + [None] * 11]
+    # Ink bounds in both PDFs move by the same measured amount; no rescaling.
+    import numpy as np
+
+    def bounds(data):
+        with pdfium.PdfDocument(data) as doc:
+            assert doc[0].get_size() == pytest.approx((612, 792), abs=0.001)
+            pixels = np.asarray(doc[0].render(scale=4).to_pil().convert("RGB"))
+            ys, xs = np.where(np.any(pixels < 220, axis=2))
+            return np.array([xs.min(), ys.min(), xs.max(), ys.max()]) / 4
+
+    expected = np.array([-0.5, -1.25, -0.5, -1.25]) * 72 / 25.4
+    for name in ("labels.pdf", "alignment-test.pdf"):
+        assert bounds(corrected[name]) - bounds(base[name]) == pytest.approx(
+            expected, abs=0.3
+        )
 
 
 def test_unsafe_source_and_nan(tmp_path):

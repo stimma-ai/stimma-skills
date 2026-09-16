@@ -137,8 +137,16 @@ Use Python when a numerical check is needed. Use the manifest's exact paths as c
 refs. A run id identifies a file browser, not a path prefix. These operations
 do not create library items. `set_cover()` validates refs immediately.
 
-Python locals do not persist between calls. Keep the build in `build_package.py`
-and use `write_file` or `edit_file` to update that file between these steps:
+Python locals do not persist between calls. A preview is a resumable snapshot:
+`pkg = await stimma.packages.open(preview_folder)` restores the exact inspected
+members, runs, extras and cover. `preview_html()` and `preview_pdf()` return its
+folder in `draft`. Print and retain that path, then open the latest snapshot in
+the next call. This does not create library items or regenerate artwork. An
+integer media id opens that saved revision instead. Keep snapshots intact;
+attach cover edits with `set_cover()` on the resumed draft.
+
+Alternatively, keep the whole build in `build_package.py` and use `write_file`
+or `edit_file` to update that file between these steps:
 Calls on `pkg` belong in that script too; a later `run_code` call has no `pkg`.
 
 1. Build members and runs, then print the manifest and preview folder. Run it
@@ -332,6 +340,11 @@ it in a sentence.
 
 Only promise actions the page supports. Do not invent installation, drag, or
 folder-download affordances. Use the existing file browser for access to files.
+For a primary deliverable, also put a descriptive download link near the work:
+`<a href="EXACT_MANIFEST_PATH" download>Download printable labels</a>` (choose
+wording for the actual file). Relative links work in the app and extracted ZIP.
+The standalone HTML and guide PDF are presentations, not substitutes for the
+ZIP containing the production files.
 
 Let whitespace, typography, and the shared kit organize the page. Avoid nested
 cards and redundant decoration. Display sizes, counts, and bytes as facts using
@@ -385,23 +398,22 @@ For an existing loose extra (such as a proof image or notes), use
 argument from the manifest. This preserves its name and path. `add_file` adds
 another file, and `replace_member` only accepts member ids.
 
-Each `run_code`/`run_file` call has a fresh Python scope. `open` always loads the
-saved package, not an earlier unsaved draft. Explore first, then keep the actual
-edits, preview and save in one script. For a source replacement:
+Each `run_code`/`run_file` call has a fresh Python scope. Open the saved media id
+once, apply the change, then print a preview snapshot path. For a replacement:
 
 ```python
 pkg = await stimma.packages.open(existing_media_id)
 await pkg.replace_member(member_id, "revised-source.zip")
 await pkg.rerun(run_id)
 pkg.set_cover(open("revised-cover.html").read())  # edited authored source
-preview = await pkg.preview()
-result = await pkg.save()
-print(result)
+print(await pkg.preview())
 ```
 
-Use the returned media id to display the revision. If inspection requires another
-call, retain this script and rerun it after corrections, rather than assuming a
-Python variable or an unsaved draft survived. Unchanged source frames can be
+Inspect that snapshot, then resume with `pkg = await stimma.packages.open(snapshot_path)`
+in the next call, update the cover if needed, and save. Use the returned media id
+to display the revision. Open the latest preview path after each inspection so
+all edits survive; reopening the original media id starts over. A single script
+containing the complete edit is also valid. Unchanged source frames can be
 copied directly into a revised source archive; do not regenerate them to rebuild
 one animation's exports.
 

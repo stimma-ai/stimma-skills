@@ -44,7 +44,13 @@ keep text inside that shape, not merely inside the rectangle. CD stock also has
 a central hole. A very thin border near a cut makes small printer shifts obvious.
 
 Default to zero bleed and a design with deliberate edge whitespace unless the
-person wants edge-to-edge color. Bleed extends artwork beyond the trim; it
+person wants edge-to-edge color. For that default, use a white canvas with the
+illustration and all lettering inset by at least the stock safe inset or 2 mm,
+whichever is larger. Carry this physical margin into the generation prompt and
+inspect it on the finished master. Avoid a frame following the cut: it makes
+ordinary printer shifts conspicuous. A tinted background reaching the trim is
+edge-to-edge color even when the text is inset; it needs a bleed decision too.
+Bleed extends artwork beyond the trim; it
 changes the artwork aspect and requires room between labels. The helper checks
 that bleed regions fit without overlapping adjacent labels. Shared edges cannot
 support arbitrary different full-bleed designs. Explain a material limitation in
@@ -122,11 +128,24 @@ is a separate presentation, not the print file. Show the production `labels.pdf`
 in chat alongside the package so the person has direct access to the actual
 printable file. Do not claim physical testing.
 
+Place a direct `<a href="ACTUAL_LABELS_PDF_PATH" download>Download printable
+labels</a>` link near the sheet preview and an equally clear plain-paper
+alignment-test link. Use the actual manifest paths. The app's **Download guide
+PDF** exports the presentation, so the printable-file link belongs in the cover
+itself as well as the chat handoff.
+
 For a revision, recover the frozen source and prepare the new assignments or
-changed artwork. Keep one build script that opens the saved package, replaces
-the source member, reruns its recipe, updates the cover/extras, previews, and
-saves the result. The draft exists only within that script: another `open()`
-starts again from the saved original. Revise and rerun the complete script after
-preview corrections, then show the saved media as a revision of the existing
-package asset. Quantities/arrangement changes need no
-image generation. Printer x/y offsets are measured corrections, not guesses.
+changed artwork. Open the saved package, replace the source member and rerun
+its recipe. Print `await pkg.preview()` and inspect it. In the next call, use
+`await stimma.packages.open(preview_folder)` to resume those exact unsaved edits;
+the original media id would reopen the original saved version. Visual previews
+also return this resumable folder as `draft`. Update the cover/extras, inspect,
+then save and show a revision of the existing package asset.
+
+For a printer correction, keep the source and artwork unchanged and rerun with
+updated offsets. Positive offsets move right/down. A measured result 1 mm right
+and 2 mm low needs -1 mm x and -2 mm y added to the run's existing offsets.
+Preserve other run parameters. A constant shift can be corrected; drift that
+grows down the sheet calls for checking paper size/scaling/template instead.
+Report the correction in plain language and supply another plain-paper proof.
+Quantities, arrangement and alignment changes need no image generation.
