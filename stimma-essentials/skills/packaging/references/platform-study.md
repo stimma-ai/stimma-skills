@@ -14,9 +14,15 @@ or replacing; packaging is the task, isolation may be one preparation step.
 
 The recipe's default `artwork_fit="auto"` measures transparent margins or a
 uniform source background and fits the visible mark to each platform. Do not
-add more transparent padding or hand-resize each output. For intentionally
-composed full-bleed artwork with deliberate internal spacing, use
-`artwork_fit="canvas"`. Preserve the actual mark's color, opacity and shape.
+add more transparent padding or hand-resize each output. Reserve
+`artwork_fit="canvas"` for intentionally composed full-bleed artwork such as
+illustrated or gradient grounds and edge-to-edge patterns. A mark on a flat
+ground is not that case, even one you composed yourself: iOS and macOS draw the
+tile, Windows and Linux ship the bare mark, so the mark must be fitted per
+platform. The recipe refuses canvas fit when the visible mark spans less than
+half the master; use the default fit, and lower a platform's `*_scale` if a
+deliberately lighter look is wanted. Preserve the actual mark's color, opacity
+and shape.
 
 An Android foreground must remain legible in the guaranteed circular safe zone.
 Supply `android_foreground` only when it needs different artwork from the master.
