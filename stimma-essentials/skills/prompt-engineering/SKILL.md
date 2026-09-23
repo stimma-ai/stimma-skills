@@ -14,6 +14,16 @@ environments:
 
 **Two regimes, opposite rules.** Text-to-image models want a prose *description* of the image to create. Image-to-image edit models want an imperative *command* describing the change — the source image already supplies the description. Everything under "Core Principle" through "Prompt Length" is the text-to-image regime; see "Image-to-Image Prompts" before writing any edit prompt.
 
+## Models With Their Own Prompt Format
+
+Some models expect a specific prompt structure (e.g. Qwen-Image-2.1, Ideogram 4, MiniMax H3). For those, the tool's schema reports a `prompt_format` (its stub docstring says "Prompt format: …"), and your prompt is rewritten into that format automatically before generating. The result tells you it happened and shows the exact prompt sent (`.sent_prompt` in code).
+
+- **Don't hand-write the format.** Write a clear description of what you want — subject, text to render in double quotes, which input image plays which role — and let the rewrite handle structure, length, and syntax.
+- **Read what was sent** when a result surprises you; fix your intent, not the formatted text.
+- **Opt out** with `enhance_prompt=False` only when you must send an exact string (e.g. replaying a known-good formatted prompt). Pass `enhance_prompt=True` to get the same model-aware rewrite on any other model.
+
+Everything below applies to models without their own format.
+
 ## Core Principle: Write Prose, Not Keywords
 
 Write prompts as flowing descriptive sentences — like describing a scene to a photographer.
