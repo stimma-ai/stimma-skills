@@ -49,8 +49,10 @@ alpha and something has to go behind the mark. It is not yours to invent: it is
 the person's decision, made before packaging. If they have not made it, stop
 and ask. The useful way to ask is to show it — put the mark on three or four
 candidate grounds (a white, a near-black, one or two drawn from the artwork's
-own palette that the mark is not made of), show them side by side, and let the
-person pick. Then package with the one they chose. The build refuses a canvas
+own palette that the mark is not made of). Write each composited preview to
+a workspace image and attach its `path` to the corresponding `ask_user` option,
+so the person picks from picture tiles showing the actual mark on each ground.
+Then package with the one they chose. The build refuses a canvas
 the mark disappears into, so a bad pick comes back as a reason, not a file.
 
 If the icon wants a coloured or illustrated ground rather than a flat one, that
