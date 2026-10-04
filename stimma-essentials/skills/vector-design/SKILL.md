@@ -180,9 +180,55 @@ The loop:
    element count that differs, a rotation direction reversed. Those are the errors that
    survive, because they are the ones you were not already thinking about.
 
+   Then **measure** it. Eyes, including yours, forgive a lot at thumbnail size; a number
+   does not. Crop both silhouettes to their bounding boxes, scale them to the same
+   square, and compute how much they overlap. Write the disagreement out as an image too:
+   it shows *where* the shapes differ, which a score alone cannot.
+
+   ```python
+   import numpy as np
+   from PIL import Image
+
+   ref = Image.open("reference.png").convert("RGBA")
+   mine = await stimma.rasterize_svg("mark.svg", width=512)
+
+   def silhouette(img, bg=None):
+       a = np.asarray(img.convert("RGBA")).astype(int)
+       m = a[..., 3] > 128                                   # transparent background
+       if bg is not None:                                    # flat background colour
+           m &= np.abs(a[..., :3] - bg).sum(2) > 60
+       ys, xs = np.nonzero(m)
+       box = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+       aspect = box.shape[1] / box.shape[0]
+       sq = Image.fromarray(box.astype(np.uint8) * 255).resize((256, 256))
+       return np.asarray(sq) > 127, aspect
+
+   bg = np.asarray(ref)[3, 3, :3].astype(int)                # sample a corner
+   r, r_aspect = silhouette(ref, bg)
+   v, v_aspect = silhouette(mine)
+   iou = (r & v).sum() / (r | v).sum()
+   print(f"overlap {iou:.2f}  aspect ref {r_aspect:.2f} vs mine {v_aspect:.2f}")
+
+   diff = np.zeros((256, 256, 3), np.uint8)                  # white: both
+   diff[r & v] = 255                                         # red: only the reference
+   diff[r & ~v] = (220, 40, 40)                              # blue: only yours
+   diff[v & ~r] = (40, 90, 220)
+   Image.fromarray(diff).resize((512, 512), Image.NEAREST).save("diff.png")
+   ```
+
+   `view_image` the diff. Red is shape you are missing, blue is shape you added; a red
+   band on one side and a blue band on the other means an element is offset or rotated.
+   Aim for an overlap of 0.9 or better on a flat mark. Below about 0.85 a viewer will see
+   a different drawing, not a cleaner version of the same one, so keep going. A shaded
+   or 3D-looking source will not reach 1.0 as a flat redraw; its silhouette still should.
+
+   If you are changing the colours (the person asked for a palette, say), measure the
+   shape before you swap them, and swap them last. Tell the person the overlap score
+   when you present the redraw.
+
 5. **Iterate.** Two or three passes is normal. Expect the first pass to be close on
-   layout and off on angle, weight, or curvature. Compare again after every pass —
-   a fix in one place routinely breaks something you had already got right.
+   layout and off on angle, weight, or curvature. Compare and measure again after every
+   pass — a fix in one place routinely breaks something you had already got right.
 
 Sample the reference's colors rather than guessing them — read the pixels with PIL in
 `run_code` and use the actual hex values.
