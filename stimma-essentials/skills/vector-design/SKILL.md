@@ -180,51 +180,58 @@ The loop:
    element count that differs, a rotation direction reversed. Those are the errors that
    survive, because they are the ones you were not already thinking about.
 
-   Then **measure** it. Eyes, including yours, forgive a lot at thumbnail size; a number
-   does not. Crop both silhouettes to their bounding boxes, scale them to the same
-   square, and compute how much they overlap. Write the disagreement out as an image too:
-   it shows *where* the shapes differ, which a score alone cannot.
+   Then **measure** it, element by element. Eyes, including yours, forgive a lot at
+   thumbnail size; a number does not. And the outline alone is not enough: two drawings
+   can share a silhouette while the shapes inside it differ (a card that is narrower,
+   tilted differently, or sits lower behind its neighbour). Fit both images into the
+   same square by their overall bounding box, split them into their colour regions,
+   and score each region on its own:
 
    ```python
    import numpy as np
    from PIL import Image
 
-   ref = Image.open("reference.png").convert("RGBA")
-   mine = await stimma.rasterize_svg("mark.svg", width=512)
-
-   def silhouette(img, bg=None):
+   N = 512
+   def fit(img):                                    # crop to the artwork, fit into N x N
        a = np.asarray(img.convert("RGBA")).astype(int)
-       m = a[..., 3] > 128                                   # transparent background
-       if bg is not None:                                    # flat background colour
-           m &= np.abs(a[..., :3] - bg).sum(2) > 60
-       ys, xs = np.nonzero(m)
-       box = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
-       aspect = box.shape[1] / box.shape[0]
-       sq = Image.fromarray(box.astype(np.uint8) * 255).resize((256, 256))
-       return np.asarray(sq) > 127, aspect
+       rgb = a[..., :3].copy(); rgb[a[..., 3] < 128] = 255
+       fg = np.abs(rgb - 255).sum(2) > 60
+       ys, xs = np.nonzero(fg)
+       crop = rgb[ys.min():ys.max() + 1, xs.min():xs.max() + 1].astype(np.uint8)
+       h, w = crop.shape[:2]; s = (N - 16) / max(h, w)
+       im = Image.fromarray(crop).resize((round(w * s), round(h * s)), Image.NEAREST)
+       c = Image.new("RGB", (N, N), "white"); c.paste(im, ((N - im.width) // 2, (N - im.height) // 2))
+       return np.asarray(c).astype(int)
 
-   bg = np.asarray(ref)[3, 3, :3].astype(int)                # sample a corner
-   r, r_aspect = silhouette(ref, bg)
-   v, v_aspect = silhouette(mine)
-   iou = (r & v).sum() / (r | v).sum()
-   print(f"overlap {iou:.2f}  aspect ref {r_aspect:.2f} vs mine {v_aspect:.2f}")
+   ref = fit(Image.open("reference.png"))
+   mine = fit(await stimma.rasterize_svg("mark.svg", width=1024))
+   colors = [(254, 133, 0), (0, 192, 173), (10, 67, 219)]   # the reference's main colours, sampled
+   def region(a, c): return np.abs(a - c).sum(2) < 90
 
-   diff = np.zeros((256, 256, 3), np.uint8)                  # white: both
-   diff[r & v] = 255                                         # red: only the reference
-   diff[r & ~v] = (220, 40, 40)                              # blue: only yours
-   diff[v & ~r] = (40, 90, 220)
-   Image.fromarray(diff).resize((512, 512), Image.NEAREST).save("diff.png")
+   for c in colors:
+       r, m = region(ref, c), region(mine, c)
+       iou = (r & m).sum() / (r | m).sum()
+       print(c, f"overlap {iou:.3f}")
+
+   diff = np.full((N, N, 3), 255, np.uint8)                 # white: agree
+   for c in colors:
+       r, m = region(ref, c), region(mine, c)
+       diff[r & ~m] = (220, 40, 40)                         # red: in the reference only
+       diff[m & ~r] = (40, 90, 220)                         # blue: in yours only
+   Image.fromarray(diff).save("diff.png")
    ```
 
    `view_image` the diff. Red is shape you are missing, blue is shape you added; a red
-   band on one side and a blue band on the other means an element is offset or rotated.
-   Aim for an overlap of 0.9 or better on a flat mark. Below about 0.85 a viewer will see
-   a different drawing, not a cleaner version of the same one, so keep going. A shaded
-   or 3D-looking source will not reach 1.0 as a flat redraw; its silhouette still should.
+   band along one edge of a card and a blue band along the opposite edge means that card
+   is offset or rotated. **Every region needs an overlap of 0.95 or better**, and no
+   coloured band in the diff should be thicker than a few pixels. Report the *lowest*
+   region score, never an average: one wrong card is a wrong drawing, however good the
+   others are. A shaded or 3D-looking source will not reach 1.0 as a flat redraw; its
+   regions still should.
 
-   If you are changing the colours (the person asked for a palette, say), measure the
-   shape before you swap them, and swap them last. Tell the person the overlap score
-   when you present the redraw.
+   If you are changing the colours (the person asked for a palette, say), measure with
+   the reference's colours first and swap them last. Tell the person the lowest region
+   score when you present the redraw.
 
 5. **Iterate.** Two or three passes is normal. Expect the first pass to be close on
    layout and off on angle, weight, or curvature. Compare and measure again after every
