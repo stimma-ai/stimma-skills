@@ -114,6 +114,22 @@ right at full size and is unusable as artwork. Nobody can recolor one petal of i
 nothing snaps to a grid, and the symmetry that made the mark a mark is gone. Redrawing
 gives you a handful of shapes, and the *structure* comes back with them.
 
+**Decide what kind of redraw this is before you start.**
+
+- **Clean-up redraw (the default for logos, marks, icons, badges).** Sources for these
+  are usually rough: an AI-generated image is slightly off-centre, its "identical" parts
+  differ a little, its curves wobble; a scanned or exported logo has drift. The person
+  wants what a designer would hand back: the *same design*, drawn properly. Keep every
+  element, the element count, the layout, the proportions and the colours; regularise
+  everything that was meant to be regular (true symmetry, equal repeats, shared radii,
+  aligned edges, centred on the canvas). Differences from the source are fine, and
+  expected, as long as each one moves toward regularity. Say what you cleaned up.
+- **Faithful redraw (illustrations, scenes, characters, deliberately irregular art, or
+  when the person asks for an exact match).** Here the irregularity *is* the content.
+  Fit each element to the source as closely as you can and keep its quirks.
+
+If a request could go either way, pick by content and say which you chose.
+
 The loop:
 
 1. **Look at it properly.** `view_image(media_id=..., detail="high")`. Read the actual
@@ -181,11 +197,8 @@ The loop:
    survive, because they are the ones you were not already thinking about.
 
    Then **measure** it, element by element. Eyes, including yours, forgive a lot at
-   thumbnail size; a number does not. And the outline alone is not enough: two drawings
-   can share a silhouette while the shapes inside it differ (a card that is narrower,
-   tilted differently, or sits lower behind its neighbour). Fit both images into the
-   same square by their overall bounding box, split them into their colour regions,
-   and score each region on its own:
+   thumbnail size; a number does not. Fit both images into the same square by their
+   overall bounding box, split them into their colour regions, and score each region:
 
    ```python
    import numpy as np
@@ -210,8 +223,7 @@ The loop:
 
    for c in colors:
        r, m = region(ref, c), region(mine, c)
-       iou = (r & m).sum() / (r | m).sum()
-       print(c, f"overlap {iou:.3f}")
+       print(c, f"overlap {(r & m).sum() / (r | m).sum():.3f}")
 
    diff = np.full((N, N, 3), 255, np.uint8)                 # white: agree
    for c in colors:
@@ -221,17 +233,23 @@ The loop:
    Image.fromarray(diff).save("diff.png")
    ```
 
-   `view_image` the diff. Red is shape you are missing, blue is shape you added; a red
-   band along one edge of a card and a blue band along the opposite edge means that card
-   is offset or rotated. **Every region needs an overlap of 0.95 or better**, and no
-   coloured band in the diff should be thicker than a few pixels. Report the *lowest*
-   region score, never an average: one wrong card is a wrong drawing, however good the
-   others are. A shaded or 3D-looking source will not reach 1.0 as a flat redraw; its
-   regions still should.
+   `view_image` the diff. Red is shape you are missing, blue is shape you added. Read it
+   according to the kind of redraw:
+
+   - **Clean-up:** expect thin fringes. What you are checking is that every fringe is
+     the *intended* kind: a slight even sliver where you straightened a wobble, centred
+     the mark, or made repeats identical. A thick band, a whole lobe in red or blue, a
+     missing or extra element, or a part that moved somewhere else is a real error; fix
+     it. Every region should still overlap about 0.85 or better: below that the eye sees
+     a different drawing, not a cleaner one. Also check the regularity you claimed
+     (rotate the mark by its repeat angle and compare it with itself; it should match
+     almost exactly). When you present it, show the original, the redraw and the diff,
+     and say in one or two sentences what you regularised.
+   - **Faithful:** every region needs 0.95 or better, and no band in the diff should be
+     thicker than a few pixels. Report the lowest region score, never an average.
 
    If you are changing the colours (the person asked for a palette, say), measure with
-   the reference's colours first and swap them last. Tell the person the lowest region
-   score when you present the redraw.
+   the reference's colours first and swap them last.
 
 5. **Iterate.** Two or three passes is normal. Expect the first pass to be close on
    layout and off on angle, weight, or curvature. Compare and measure again after every
