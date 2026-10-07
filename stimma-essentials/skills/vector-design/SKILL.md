@@ -236,15 +236,45 @@ The loop:
    `view_image` the diff. Red is shape you are missing, blue is shape you added. Read it
    according to the kind of redraw:
 
-   - **Clean-up:** expect thin fringes. What you are checking is that every fringe is
-     the *intended* kind: a slight even sliver where you straightened a wobble, centred
-     the mark, or made repeats identical. A thick band, a whole lobe in red or blue, a
-     missing or extra element, or a part that moved somewhere else is a real error; fix
-     it. Every region should still overlap about 0.85 or better: below that the eye sees
-     a different drawing, not a cleaner one. Also check the regularity you claimed
-     (rotate the mark by its repeat angle and compare it with itself; it should match
-     almost exactly). When you present it, show the original, the redraw and the diff,
-     and say in one or two sentences what you regularised.
+   - **Clean-up:** expect thin fringes against the raw source. What you are checking is
+     that every fringe is the *intended* kind: a slight even sliver where you straightened
+     a wobble, centred the mark, or made repeats identical. A thick band, a whole lobe in
+     red or blue, a missing or extra element, or a part that moved somewhere else is a
+     real error; fix it. Every region should still overlap about 0.85 or better: below
+     that the eye sees a different drawing, not a cleaner one.
+
+     Small shared details are where clean-ups go wrong: a little hook where a petal's
+     edge turns a corner, a notch, a pointed tip near the centre. Smoothing curves can
+     erase them, and against the raw source they hide among the clean-up fringes. For a
+     mark built from repeats, compare against the *idealised* source instead: average the
+     source over its repeats (rotate the silhouette by each repeat angle and take the
+     mean), so per-repeat wobble washes out and the shared details stay sharp. Your
+     redraw should match that almost exactly (overlap 0.97 or better), and any diff
+     blob more than a few pixels thick is a missed or invented detail:
+
+     ```python
+     from PIL import ImageFilter
+     def sil(img):                                  # silhouette fitted to N x N, as floats
+         return (np.abs(fit(img) - 255).sum(2) > 60).astype(float)
+     def rot(m, ang, c):
+         return np.asarray(Image.fromarray((m * 255).astype(np.uint8)).rotate(
+             ang, center=c, resample=Image.BILINEAR)) / 255
+     src = sil(Image.open("reference.png"))
+     ys, xs = np.nonzero(src > 0.5); c = (xs.mean(), ys.mean())
+     ideal = np.mean([rot(src, k * 360 / 8, c) for k in range(8)], axis=0) > 0.5   # 8 repeats
+     mine = sil(await stimma.rasterize_svg("mark.svg", width=1024)) > 0.5
+     print("overlap with idealised source", (ideal & mine).sum() / (ideal | mine).sum())
+     def thick(m, r=3):                             # keep only parts thicker than ~2r px
+         im = Image.fromarray((m * 255).astype(np.uint8))
+         return np.asarray(im.filter(ImageFilter.MinFilter(2*r+1)).filter(ImageFilter.MaxFilter(2*r+1))) > 127
+     print("missed detail px", thick(ideal & ~mine).sum(), "invented px", thick(mine & ~ideal).sum())
+     ```
+
+     Then look: `view_image` the idealised diff zoomed in on every corner, every tip,
+     and the centre. Fix each blob before presenting. Also check the regularity you
+     claimed (rotate the mark by its repeat angle and compare it with itself; it should
+     match almost exactly). When you present it, show the original, the redraw and the
+     diff, and say in one or two sentences what you regularised.
    - **Faithful:** every region needs 0.95 or better, and no band in the diff should be
      thicker than a few pixels. Report the lowest region score, never an average.
 
