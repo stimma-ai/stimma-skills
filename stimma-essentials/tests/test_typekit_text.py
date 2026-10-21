@@ -6,8 +6,8 @@ from xml.etree import ElementTree as ET
 import pytest
 from PIL import ImageFont
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "skills/brand-kits/lib"))
-from brand_typography import outline_text  # noqa: E402
+sys.path.insert(0, str(Path(__file__).parents[1] / "skills/vector-design/lib"))
+from typekit import outline_text  # noqa: E402
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def test_real_outlines_and_escaped_name_preserve_font(font):
     assert not root.findall(".//{http://www.w3.org/2000/svg}text")
     assert root.attrib["aria-label"] == "Tandem & Relaydesk"
     assert root.attrib["viewBox"].split()[:2] == ["0", "0"]
-    assert root.find("{http://www.w3.org/2000/svg}g").attrib["transform"].startswith("translate(")
+    assert not [el for el in root.iter() if "transform" in el.attrib]
     assert float(root.attrib["width"]) > float(root.attrib["height"]) * 5
     assert font.read_bytes() == before
     assert outline_text("Tandem & Relaydesk", str(font), tracking=1) == svg

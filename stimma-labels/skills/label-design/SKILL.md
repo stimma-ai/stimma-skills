@@ -79,7 +79,7 @@ wording, spelling, margins and cropping before multiplying a design over a sheet
 A finished generated label with correct wording is a valid master; separate
 text composition is optional. For small copy or typography needing more control,
 retain the generated illustration and compose reviewed text with layout tools.
-For portable font acquisition, Brand Kits provides `brand_fonts.fetch_family`;
+For portable font acquisition, Vector Design provides `typekit.fetch_family`;
 invoke that skill when needed and keep the font in the workspace. Use supplied copy; ask for missing facts
 that actually belong on the label instead of inventing ingredients or claims.
 A requested scent/name label need not become an unsolicited regulatory project.

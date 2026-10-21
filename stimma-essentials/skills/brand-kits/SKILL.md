@@ -6,9 +6,6 @@ author: system
 tags: [brand, identity, logo, typography, palette, startup, maker]
 environments:
   chat: true
-provides:
-  - brand_typography
-  - brand_fonts
 ---
 
 # Brand kits
@@ -72,39 +69,14 @@ tool, not an STP catalog entry. Use `stimma.rasterize_svg` when pixels are neede
 
 ## Typography without setup work
 
-Choose fonts for this business. Use supplied files when available. Otherwise,
-fetch a chosen Google Fonts family and its license directly into the workspace;
-there is no need to inspect the owner's machine or install fonts system-wide:
+Choose fonts for this business. Use supplied files when available. Font fetching,
+outlined lettering and embedded web fonts come from the Vector Design skill's
+`typekit` module; invoke Vector Design to use it. There is no need to inspect the
+owner's machine or install fonts system-wide.
 
-```python
-from brand_fonts import fetch_family, font_face
-from brand_typography import outline_text
-family = fetch_family("Space Grotesk")  # agent-selected example, not a default
-print(family)  # actual font paths, weights, axes, license path and source
-font = family["fonts"][0]["path"]  # choose the actual style from these rows
-css = font_face(font, family="Brand Heading")
-svg = outline_text("The supplied name", font, font_size=120, fill="#172334")
-```
-
-`fetch_family(family, dest="fonts")` downloads open font files plus their license
-from the official Google Fonts repository and reuses a complete local copy.
-It returns `{family, fonts:[{path,family,style,weight,css_style,axes}], license, source}`.
-Read the license and bundle the chosen fonts and license with the kit.
-`font_face(path, family=None)` returns data-embedded `@font-face` CSS with the
-actual weight/range and style; use that same family name in editable HTML.
-Write the returned CSS into the artwork; don't print its large embedded font data.
-`describe_font(path)` reads this metadata for a supplied font. No network is
-needed to embed supplied/local files. A failed download is a concrete font
-availability issue, not a reason to search unrelated folders.
-
-`outline_text(text, font_path, *, font_size=120, tracking=0, fill="#172334",
-padding=8, axes=None) -> str` makes portable SVG lettering with actual glyphs
-and kerning. Optional variable axes such as `{"wght":600}` affect outlines only.
-It supports single-line Latin text without ligatures; unsupported scripts or
-missing glyphs fail explicitly and need a shaping workflow. Inspect spacing.
-The returned SVG already has a zero-origin viewBox and padded bounds; use it
-directly or place it in a lockup without re-normalizing its glyph coordinates.
-Keep live text in editable application sources; outline logo delivery artwork.
+Bundle the chosen fonts and their license with the kit. Embed fonts in editable
+HTML with `font_face`, using the same family name in its CSS. Keep live text in
+editable application sources, and outline logo lettering for delivery artwork.
 
 ## A small, usable delivery
 
