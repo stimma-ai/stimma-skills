@@ -1,0 +1,9 @@
+{
+  "name": "stimma-cricut",
+  "display_name": "Stimma Cricut",
+  "description": "Cutting-machine files for Cricut Design Space: die-cut stickers for Print Then Cut, and cut-safe SVG layers at true physical size for vinyl, iron-on, stencils and paper",
+  "version": "1",
+  "format": 1,
+  "author": "system",
+  "tags": ["cricut", "cutting-machine", "stickers", "vinyl", "svg", "print-then-cut", "crafts"]
+}
