@@ -38,10 +38,14 @@ Every join between two clips can carry any of these:
   the same frame and still visibly change speed or direction.
 - **An audio jump.** Loudness, room tone and ambience change between runs just like
   exposure does, and a hard splice clicks.
+- **A slow start.** Image-to-video often opens with a lull of a second or so while
+  motion builds from the still, before it settles into its rhythm (MiniMax H3 does
+  this often). A clip pinned to a last frame can coast into it the same way. Loop
+  or join across a lull and the rhythm breaks every time it comes around.
 
-`seamkit` fixes the first, second, third and last of these mechanically, and
-measures the fourth. Motion is fixed at generation time: by how you pin, and by
-where you put the join.
+`seamkit` fixes the exposure offset, repeated frames, popping heads and audio
+mechanically, and measures motion. Motion is fixed by choosing which part of
+each clip to use, by how you pin, and by where you put the join.
 
 ## Working rules
 
@@ -113,16 +117,38 @@ Pick the strongest one the available tools offer.
 The clip's last frame and first frame are close but not equal. Generate a bridge
 from the end back to the start, then join with `loop=True`.
 
-- **Local MiniMax H3 Reference to Video:** pin the clip's last second (with sound) at
-  0 and its first second at the end. Pass the clip in `input_audios` for the voice.
-  Join with `overlap` set to the pinned frame count on both segments (see
-  [Join](#join)).
-- **LTX Loop (local):** does the bridge and the join in one step. Run `seamkit.check`
-  on the result with `loop=True`.
-- **Cloud, or any first/last-frame tool:** first frame = the clip's last frame, last
-  frame = its first frame. Pick a tool that returns its pinned frames exactly; LTX
-  2.5 returns them cropped. If the clip's ends are moving fast, first trim the clip
-  to start and end where the motion pauses, then bridge.
+**Choose the loop window first, before generating the bridge.** The bridge is
+pinned to the window's ends, so the window can't change afterwards.
+
+- **By default, leave out a few frames at each end** (2–4 at 24 fps). The first
+  frame is often the reference image, with its own texture. The ends are where
+  pinned frames and slow-downs sit. Losing them costs nothing and removes a
+  likely discontinuity.
+- **Then measure the motion:** `await seamkit.motion(stimma, path)`. If `settles_at`
+  is past about half a second, the clip opens with a lull: start the window
+  there. If `fades_at` is well before the end, it slows down into its last frame:
+  end the window there.
+- **Keep the length if it matters.** Make the bridge longer by however much you
+  cut. A 1.5 s lull cut from the start comes back as a bridge 1.5 s longer, so the
+  loop runs the same length with the stall gone.
+- Take the bridge's pins (frames or clips) from the window's ends, not the clip's.
+  Join with the same window: `trim_head` and `trim_tail` on the locked segment.
+- If the clip's ends move fast and the tool only pins stills, also prefer window
+  ends where motion pauses.
+
+Then generate the bridge:
+
+- **Local MiniMax H3 Reference to Video:** pin the window's last second (with sound)
+  at 0 and its first second at the end. Pass the clip in `input_audios` for the
+  voice. Join with `overlap` set to the pinned frame count on both segments (see
+  [Join](#join)). Clip pins carry motion, so the bridge doesn't open with its own
+  lull. A bridge pinned to stills can, which is one more reason to prefer clips.
+- **LTX Loop (local):** does the bridge and the join in one step, on the whole clip.
+  Trim the clip to its window first, then run `seamkit.check` on the result with
+  `loop=True`.
+- **Cloud, or any first/last-frame tool:** first frame = the window's last frame,
+  last frame = its first frame. Pick a tool that returns its pinned frames exactly;
+  LTX 2.5 returns them cropped.
 - **Sound:** if the bridge comes back silent (Kling with frames, for example), use
   `audio="loop"`, which builds a seamless loop of the clip's own sound.
 
@@ -133,6 +159,8 @@ out and comes back. Check the wrap with `seamkit.check(stimma, path, loop=True)`
 
 ### Continue a clip, or build a long take
 
+- Check where the previous segment's motion fades (`seamkit.motion`). Continue from
+  before a slow ending, not from inside it.
 - **Local:** MiniMax H3 Reference to Video, pinning the previous segment's last
   second with sound at 0, the same voice reference, and the same reference images.
   Pin where each segment should land as a keyframe at its end. Join with `overlap`.
@@ -208,6 +236,9 @@ joins each segment's sound, matches loudness at the seams and removes clicks;
 BT.709, encoded once at high quality.
 
 `seamkit.check(stimma, segments_or_path, loop=False)` measures without writing.
+`seamkit.motion(stimma, path)` reports motion per second relative to the clip's
+steady level, with `settles_at` and `fades_at`, the window where it's actually
+moving.
 
 ### Read the report
 

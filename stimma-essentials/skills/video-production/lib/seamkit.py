@@ -613,3 +613,46 @@ async def check(stimma, segments, *, loop=False):
     if isinstance(segments, (str, Path)):
         segments = [segments]
     return await join(stimma, segments, None, loop=loop, audio="none")
+
+
+async def motion(stimma, path, *, threshold=0.6):
+    """How much the picture moves over time, to find a slow start or a slow end.
+
+    Image-to-video often opens with a lull while motion builds from the still,
+    and a clip pinned to a last frame can coast into it. Returns per-second
+    motion (1.0 = the clip's steady level), ``settles_at``: the first time
+    motion reaches ``threshold`` of steady, and ``fades_at``: the last time it
+    is still there. Loop or join inside that window to leave both lulls out.
+    """
+    info = await probe(stimma, path)
+    fps = info["fps"]
+    w = 160
+    h = max(2, round(info["height"] * w / info["width"] / 2) * 2)
+    work = Path(".seamkit") / uuid.uuid4().hex[:8]
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        raw = work / "gray.raw"
+        await stimma.ffmpeg("-v", "error", "-y", "-i", str(path), "-map", "0:v:0",
+                            "-vf", f"scale={w}:{h},format=gray", "-f", "rawvideo", str(raw), timeout=1800)
+        frames = np.fromfile(raw, dtype=np.uint8).reshape(-1, h, w).astype(np.float32)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    if len(frames) < 4:
+        raise ValueError(f"{path} is too short to measure")
+    z = (frames - frames.mean(axis=(1, 2), keepdims=True)) / (frames.std(axis=(1, 2), keepdims=True) + 1e-6)
+    step = np.abs(np.diff(z, axis=0)).mean(axis=(1, 2))
+    win = max(1, round(fps / 4))
+    smooth = np.convolve(step, np.ones(win) / win, mode="same")
+    steady = float(np.median(smooth)) or 1e-6
+    level = smooth / steady
+    moving = np.nonzero(level >= threshold)[0]
+    settles = (moving[0] + 1) / fps if len(moving) else 0.0
+    fades = (moving[-1] + 1) / fps if len(moving) else len(frames) / fps
+    per_second = [round(float(level[i:i + round(fps)].mean()), 2) for i in range(0, len(level), round(fps))]
+    return {
+        "duration": round(len(frames) / fps, 3),
+        "fps": fps,
+        "per_second": per_second,
+        "settles_at": round(settles if settles >= 0.25 else 0.0, 2),
+        "fades_at": round(fades if len(frames) / fps - fades >= 0.25 else len(frames) / fps, 2),
+    }

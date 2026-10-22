@@ -134,3 +134,14 @@ async def test_loop_bridge_with_clip_pins_at_both_ends(tmp_path, monkeypatch):
     for seam in report["seams"]:
         assert max(abs(d) for d in seam["after"]["median_delta_rgb"]) < 1.5, seam
         assert seam["after"]["motion_step_ratio"] < 2, seam
+
+
+async def test_motion_finds_a_slow_start(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Motion builds from a standstill over the first second, then runs steady.
+    speed = np.minimum(1.0, np.arange(96) / 24) ** 2
+    write_clip(Path("ramp.mp4"), [scene(t) for t in np.cumsum(speed)])
+    report = await seamkit.motion(FakeStimma(), "ramp.mp4")
+    assert 0.4 <= report["settles_at"] <= 1.0, report
+    assert report["fades_at"] == report["duration"], report
+    assert report["per_second"][0] < 0.6 and report["per_second"][-1] > 0.8, report
