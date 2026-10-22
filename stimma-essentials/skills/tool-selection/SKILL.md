@@ -90,7 +90,7 @@ Generally the open source models need a fair amount of massaging and help to mak
 - **"Best" / "final" / "presentation":** Veo 3.1. *Flag that it's the most-expensive tier before submitting.*
 - **Commercial mid-tier:** Seedance 2.0.
 - **Low-cost + fast + acceptable quality:** MiniMax H3 Max Turbo, H3 Fast, or Veo 3.1 Fast.
-- **ComfyUI user with stock Stimma workflows:** MiniMax H3; its ⚡ variants for drafts and iteration. LTX 2.5 when speed matters more than quality.
+- **ComfyUI user with stock Stimma workflows:** MiniMax H3; its ⚡ variants when speed matters more than the last bit of quality. A ⚡ result doesn't predict what full H3 will make, so it's a choice of final model, not a draft. LTX 2.5 when speed matters more than quality.
 - **Genuinely unclear:** one question — "Cinematic premium (Veo), commercial mid-tier (Seedance), or open-weights (MiniMax H3)?"
 
 ### Matching the job to a tool
@@ -102,6 +102,8 @@ Some video jobs have a right tool regardless of which model family you picked:
 - **Hit exact frames or moments at exact times** (a still at 3s, a clip of the source at the end): keyframes, on MiniMax H3 reference to video or LTX image to video in ComfyUI. LTX keyframes pin picture only, not sound. Cloud tools only pin first and last frames.
 - **Seamless loop:** LTX Loop (ComfyUI).
 - **Join two clips with a generated transition:** LTX Stitch (ComfyUI).
+
+For any job that joins clips (loops, continuations, transitions, long takes, multi-shot), follow **Video Production** for planning and for the join itself.
 
 ## Specialty
 
