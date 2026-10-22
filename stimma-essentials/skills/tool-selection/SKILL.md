@@ -73,23 +73,34 @@ Video splits along **audio, duration, quality, open-weights, cost**. There's no 
 - **Veo 3.1** — most-expensive tier. 4K, best dialogue/lip-sync. For final / presentation work.
 - **Veo 3.1 Fast** — same family, cheaper sibling of full Veo (still on the higher end).
 - **Grok Imagine Video** — mid tier, audio, middle-ground option.
-- **LTX 2.3** — open weights, up to 4K/20s/audio, mid tier. Strongest open-weights with audio.
+- **LTX 2.3** — open weights, up to 4K/20s/audio, mid tier. The open-weights option on cloud.
 - **Wan 2.6** — 1080p/15s/audio, mid tier. **Wan 2.6 Flash** is the cheaper sibling.
 
 **Open-weights / ComfyUI:**
-- **Wan 2.2** — open-source quality benchmark. Stock workflows: `Stimma-Wan22-T2V`, `-I2V`, `-FLF2V`, plus `-Lightning` fast variants.
-- **LTX 2.3** — also stock (`Stimma-LTX2-T2V`, `-I2V`, and Distilled). Supports audio. Lower visual quality than Wan 2.2.
+- **MiniMax H3** — the open-weights benchmark, ahead of everything else local by a good margin. Native stereo audio. Text to video, image to video (first frame, optional last frame), and reference to video (image, video, and voice references, plus keyframes). The **⚡** variants trade some quality for much faster eight-step runs.
+- **LTX 2.5** — the fast, decent fallback when H3 is too slow for the job. Audio, native multishot in text to video, start/end frames and keyframes in image to video, plus Extend Video, Loop, and Stitch tools. **LTX 2.3** is its older sibling with the same tool set.
+- **Wan 2.2** — legacy. Old and visually behind H3 and LTX 2.5, no audio. Only reach for it when the user asks for it or already works in a Wan setup with their own LoRAs.
 
 Generally the open source models need a fair amount of massaging and help to make anything production-ready. Set expectations accordingly. People who know how to use them make great stuff, but it doesn't happen out of the box.
 
 ### Guidelines
 
-- **Audio matters a lot (dialogue, sync, music-driven):** Veo 3.1 if budget allows, otherwise Seedance / LTX 2.3 / Wan 2.6.
+- **Audio matters a lot (dialogue, sync, music-driven):** Veo 3.1 if budget allows, otherwise Seedance / LTX 2.3 / Wan 2.6. Locally, MiniMax H3.
 - **"Best" / "final" / "presentation":** Veo 3.1. *Flag that it's the most-expensive tier before submitting.*
 - **Commercial mid-tier:** Seedance 1.5 Pro.
 - **Low-cost + fast + acceptable quality:** Veo 3.1 Fast or Wan 2.6 Flash.
-- **ComfyUI user with stock Stimma workflows:** Wan 2.2 or LTX 2.3 local. Lightning/Distilled variants for speed.
-- **Genuinely unclear:** one question — "Cinematic premium (Veo), commercial mid-tier (Seedance), or open-source (Wan 2.2 or LTX)?"
+- **ComfyUI user with stock Stimma workflows:** MiniMax H3; its ⚡ variants for drafts and iteration. LTX 2.5 when speed matters more than quality.
+- **Genuinely unclear:** one question — "Cinematic premium (Veo), commercial mid-tier (Seedance), or open-weights (MiniMax H3 locally)?"
+
+### Matching the job to a tool
+
+Some video jobs have a right tool regardless of which model family you picked:
+
+- **Continue or extend an existing video:** MiniMax H3 reference to video, pinning the video's last second (with sound) as a keyframe at 0 and passing the video as the voice reference; follow the tool's instructions for joining. LTX 2.5 / 2.3 Extend Video is the faster alternative and appends the continuation for you. **Don't** continue a video by taking its last frame into an image-to-video tool: that drops the motion and the voice, and the seam shows.
+- **Open on one image, end on another:** MiniMax H3 or LTX image to video with first and last frames.
+- **Hit exact frames or moments at exact times** (a still at 3s, a clip of the source at the end): keyframes, on MiniMax H3 reference to video or LTX image to video. LTX keyframes pin picture only, not sound.
+- **Seamless loop:** LTX Loop.
+- **Join two clips with a generated transition:** LTX Stitch.
 
 ## Specialty
 
@@ -135,9 +146,9 @@ Everything else is a one-off — don't save. If the user contradicts a saved pre
 ## Respecting signals
 
 - Named a model → use it, no lecture.
-- "cheap" / "low-cost" → Klein 9B / Z-Image / Wan Flash / Lightning workflows
+- "cheap" / "low-cost" → Klein 9B / Z-Image / Wan Flash / H3 ⚡ / LTX 2.5
 - "best" / "hero" / "final" → Flux Max / Veo 3.1 / Nano Banana Pro / Seedream 4.5
-- "fast" → Klein 9B / Z-Image Turbo / Veo Fast / Lightning workflows
+- "fast" → Klein 9B / Z-Image Turbo / Veo Fast / H3 ⚡ / LTX 2.5
 - "open source" / "local" → ComfyUI (their existing ecosystem first)
 - "for a client" / "production" → premium tier, flag that before running
 - "like last time" / "same as before" → check memory + recent history
