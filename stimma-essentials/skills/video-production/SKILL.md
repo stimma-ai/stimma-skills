@@ -60,12 +60,6 @@ and look differ in kind, not just in quality. If speed matters, make the faster
 model the final model and say so. Lower resolution or a shorter test clip only when
 the user asks for one.
 
-**Plan the whole job, then render it in one go.** Local video takes a long time, and
-the user walks away while it runs. Ask your questions before rendering, not between
-segments. Then queue every segment that doesn't depend on another and finish the
-job: render, join, check, deliver. On the cloud, cost is money; flag premium tiers
-before running, as Tool Selection says.
-
 **Pin to fixed frames instead of chaining.** Each continuation starts from the last
 one's output, so its errors compound: identity, exposure and saturation drift a
 little with every hop. Segments pinned at both ends to frames from one master take

@@ -133,14 +133,23 @@ the old grid and returns a new one:
 
 ```python
 # Only the new cells get generated — the other 56 are carried over.
-new_cols = {}
+new_col_calls = {}
 for step in (1400, 1600, 1800):
     path = f"flux2-klein-9b/dropstock_v1/dropstock_v1_{step:09d}.safetensors"
     assert path in available, f"{path} not in the catalog"   # never guess a path
-    new_cols[f"Dropstock {step}"] = await asyncio.gather(*[
+    new_col_calls[f"Dropstock {step}"] = [
         TOOLNAME(prompt=p, seed=s, loras=[{"path": path, "weight": 1.0}])
         for p, s in zip(prompts, seeds)
-    ])
+    ]
+
+# Submit all new cells together, then group the results by column.
+new_results = iter(await asyncio.gather(*[
+    call for calls in new_col_calls.values() for call in calls
+]))
+new_cols = {
+    label: [next(new_results) for _ in calls]
+    for label, calls in new_col_calls.items()
+}
 
 grid = await stimma.extend_parameter_sweep(
     grid,                                            # dict or media_id

@@ -1,7 +1,7 @@
 ---
 name: prompt-engineering
 display_name: Prompt Engineering
-description: Guide for writing effective prompts — prose scene descriptions for text-to-image, imperative edit commands for image-to-image
+description: Guide for writing effective image and video prompts, choosing enhancement or manual authorship, and following model-specific input formats
 author: system
 tags: [prompt, writing, guide, fundamentals, prose]
 environments:
@@ -16,13 +16,13 @@ environments:
 
 ## Models With Their Own Prompt Format
 
-Some models expect a specific prompt structure (e.g. Qwen-Image-2.1, Ideogram 4, MiniMax H3). For those, the tool's schema reports a `prompt_format` (its stub docstring says "Prompt format: …"), and your prompt is rewritten into that format automatically before generating. The result tells you it happened and shows the exact prompt sent (`.sent_prompt` in code).
+Read the tool's `prompt_format` guidance ("Prompt format: …" in its stub). It distinguishes a required input format from a recommended writing style. Enhancement defaults are a separate choice: omitting `enhance_prompt` uses the tool's default, `True` requests a model-aware rewrite, and `False` sends your wording unchanged.
 
-- **Don't hand-write the format.** Write a clear description of what you want — subject, text to render in double quotes, which input image plays which role — and let the rewrite handle structure, length, and syntax.
-- **Read what was sent** when a result surprises you; fix your intent, not the formatted text.
-- **Opt out** with `enhance_prompt=False` only when you must send an exact string (e.g. replaying a known-good formatted prompt). Pass `enhance_prompt=True` to get the same model-aware rewrite on any other model.
+- **Required format:** Use enhancement to construct it, or read the tool's format reference and author it yourself when you need precise control. For MiniMax H3, `.stimma/prompt-formats/minimax-h3.md` documents the audiovisual fields, shot and cut timing, and input alignment. Use enhancement when the format is unfamiliar and its reference is unavailable. Turning enhancement off leaves those requirements in place.
+- **Recommended style:** Choose enhancement when its rewrite helps the task. Preserve your wording when exact control, close variations, or a known-good prompt is more useful.
+- **Inspect what was sent:** Rewrites are available as `.sent_prompt` in code. Judge whether they preserve the intended content and structure before deciding how to iterate.
 
-Everything below applies to models without their own format.
+The general writing advice below applies within the selected model's input requirements.
 
 ## Core Principle: Write Prose, Not Keywords
 
