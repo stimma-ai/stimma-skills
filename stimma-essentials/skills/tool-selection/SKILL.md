@@ -96,7 +96,7 @@ Generally the open source models need a fair amount of massaging and help to mak
 
 Some video jobs have a right tool regardless of which model family you picked:
 
-- **Continue or extend an existing video:** MiniMax H3 reference to video, pinning the video's last second (with sound) as a keyframe at 0 and passing the video as the voice reference; follow the tool's instructions for joining. LTX 2.5 / 2.3 Extend Video is the faster alternative and appends the continuation for you. **Don't** continue a video by taking its last frame into an image-to-video tool: that drops the motion and the voice, and the seam shows.
+- **Continue or extend an existing video:** MiniMax H3 reference to video, pinning the video's last second (with sound) as a keyframe at 0 and passing the video as the voice reference; follow the tool's instructions for joining. LTX 2.5 / 2.3 Extend Video is the faster alternative and appends the continuation for you. Taking the last frame into an image-to-video tool also works and can be fine for one or two continuations, but warn the user about the pitfall: the new clip doesn't carry the original's motion or voice, so the seam can show, and it gets worse as you chain more.
 - **Open on one image, end on another:** MiniMax H3 or LTX image to video with first and last frames.
 - **Hit exact frames or moments at exact times** (a still at 3s, a clip of the source at the end): keyframes, on MiniMax H3 reference to video or LTX image to video. LTX keyframes pin picture only, not sound.
 - **Seamless loop:** LTX Loop.
