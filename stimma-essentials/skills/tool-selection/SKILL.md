@@ -69,12 +69,13 @@ ComfyUI users vary enormously. Some use stock Comfyui-Stimma workflows; others h
 Video splits along **audio, duration, quality, open-weights, cost**. There's no single right answer — ask what matters.
 
 **Audio-capable cloud:**
-- **Seedance 1.5 Pro** — ByteDance, strong camera control, up to 12s/1080p, mid tier. Common commercial choice.
+- **MiniMax H3** — the same open-weights benchmark as locally, with native stereo audio, first/last frames, and a separate reference-to-video tool (image, video, and voice references). Mid tier. **H3 Fast** and **H3 Max** are cheaper and quicker at 480p/768p; **H3 Max Turbo** is the low-cost tier (text and image to video only). Cloud H3 has no timed keyframes.
+- **Seedance 2.0** — ByteDance, strong camera control, up to 4K/15s, mid tier. Common commercial choice.
 - **Veo 3.1** — most-expensive tier. 4K, best dialogue/lip-sync. For final / presentation work.
 - **Veo 3.1 Fast** — same family, cheaper sibling of full Veo (still on the higher end).
 - **Grok Imagine Video** — mid tier, audio, middle-ground option.
-- **LTX 2.3** — open weights, up to 4K/20s/audio, mid tier. The open-weights option on cloud.
-- **Wan 2.6** — 1080p/15s/audio, mid tier. **Wan 2.6 Flash** is the cheaper sibling.
+- **LTX 2.5 Pro / Fast** — open weights, audio, first/last frames, camera moves; Fast goes to 4K/20s. Mid tier. **LTX 2.3** is the older sibling.
+- **Wan 2.7** — 1080p/15s/audio, multi-shot, mid tier.
 
 **Open-weights / ComfyUI:**
 - **MiniMax H3** — the open-weights benchmark, ahead of everything else local by a good margin. Native stereo audio. Text to video, image to video (first frame, optional last frame), and reference to video (image, video, and voice references, plus keyframes). The **⚡** variants trade some quality for much faster eight-step runs.
@@ -85,22 +86,22 @@ Generally the open source models need a fair amount of massaging and help to mak
 
 ### Guidelines
 
-- **Audio matters a lot (dialogue, sync, music-driven):** Veo 3.1 if budget allows, otherwise Seedance / LTX 2.3 / Wan 2.6. Locally, MiniMax H3.
+- **Audio matters a lot (dialogue, sync, music-driven):** Veo 3.1 if budget allows, otherwise MiniMax H3 / Seedance / Wan 2.7. Locally, MiniMax H3.
 - **"Best" / "final" / "presentation":** Veo 3.1. *Flag that it's the most-expensive tier before submitting.*
-- **Commercial mid-tier:** Seedance 1.5 Pro.
-- **Low-cost + fast + acceptable quality:** Veo 3.1 Fast or Wan 2.6 Flash.
+- **Commercial mid-tier:** Seedance 2.0.
+- **Low-cost + fast + acceptable quality:** MiniMax H3 Max Turbo, H3 Fast, or Veo 3.1 Fast.
 - **ComfyUI user with stock Stimma workflows:** MiniMax H3; its ⚡ variants for drafts and iteration. LTX 2.5 when speed matters more than quality.
-- **Genuinely unclear:** one question — "Cinematic premium (Veo), commercial mid-tier (Seedance), or open-weights (MiniMax H3 locally)?"
+- **Genuinely unclear:** one question — "Cinematic premium (Veo), commercial mid-tier (Seedance), or open-weights (MiniMax H3)?"
 
 ### Matching the job to a tool
 
 Some video jobs have a right tool regardless of which model family you picked:
 
-- **Continue or extend an existing video:** MiniMax H3 reference to video, pinning the video's last second (with sound) as a keyframe at 0 and passing the video as the voice reference; follow the tool's instructions for joining. LTX 2.5 / 2.3 Extend Video is the faster alternative and appends the continuation for you. Taking the last frame into an image-to-video tool also works and can be fine for one or two continuations, but warn the user about the pitfall: the new clip doesn't carry the original's motion or voice, so the seam can show, and it gets worse as you chain more.
+- **Continue or extend an existing video:** MiniMax H3 reference to video, pinning the video's last second (with sound) as a keyframe at 0 and passing the video as the voice reference; follow the tool's instructions for joining. LTX 2.5 / 2.3 Extend Video is the faster alternative and appends the continuation for you. On Stimma Cloud, H3 reference to video takes the video's last few seconds as a reference video and voice instead; it opens close to where the clip ends but not on its exact frame. Taking the last frame into an image-to-video tool also works and can be fine for one or two continuations, but warn the user about the pitfall: the new clip doesn't carry the original's motion or voice, so the seam can show, and it gets worse as you chain more.
 - **Open on one image, end on another:** MiniMax H3 or LTX image to video with first and last frames.
-- **Hit exact frames or moments at exact times** (a still at 3s, a clip of the source at the end): keyframes, on MiniMax H3 reference to video or LTX image to video. LTX keyframes pin picture only, not sound.
-- **Seamless loop:** LTX Loop.
-- **Join two clips with a generated transition:** LTX Stitch.
+- **Hit exact frames or moments at exact times** (a still at 3s, a clip of the source at the end): keyframes, on MiniMax H3 reference to video or LTX image to video in ComfyUI. LTX keyframes pin picture only, not sound. Cloud tools only pin first and last frames.
+- **Seamless loop:** LTX Loop (ComfyUI).
+- **Join two clips with a generated transition:** LTX Stitch (ComfyUI).
 
 ## Specialty
 
@@ -114,7 +115,7 @@ Some video jobs have a right tool regardless of which model family you picked:
 
 - Good: "Going with Klein 9B — fast, low-cost tier, handles edits too. Say the word if you want Flux Max for final quality."
 - Good: "Using GPT Image 2 High — slow and premium, but nails embedded text."
-- Good: "Seedance 1.5 Pro for this. Veo 3.1 if you want top-shelf, but it's our most-expensive tier."
+- Good: "Seedance 2.0 for this. Veo 3.1 if you want top-shelf, but it's our most-expensive tier."
 - Bad: "I considered six tools and here's my analysis…"
 - Bad: "Klein 9B costs about $0.017." ← never quote numbers.
 
@@ -146,7 +147,7 @@ Everything else is a one-off — don't save. If the user contradicts a saved pre
 ## Respecting signals
 
 - Named a model → use it, no lecture.
-- "cheap" / "low-cost" → Klein 9B / Z-Image / Wan Flash / H3 ⚡ / LTX 2.5
+- "cheap" / "low-cost" → Klein 9B / Z-Image / H3 Max Turbo / H3 ⚡ / LTX 2.5
 - "best" / "hero" / "final" → Flux Max / Veo 3.1 / Nano Banana Pro / Seedream 4.5
 - "fast" → Klein 9B / Z-Image Turbo / Veo Fast / H3 ⚡ / LTX 2.5
 - "open source" / "local" → ComfyUI (their existing ecosystem first)
