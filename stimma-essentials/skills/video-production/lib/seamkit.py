@@ -525,7 +525,7 @@ async def _encode(stimma, frames_path, audio, size, fps, out, crf):
 
 
 async def join(stimma, segments, out=None, *, loop=False, match=True, audio="auto",
-               fps=None, crf=14, keep_work=False):
+               fps=None, crf=14, keep_work=False, preserve_state=False):
     """Join segments into ``out`` with every seam handled; returns a report.
 
     ``segments`` is a list of paths or dicts with:
@@ -547,6 +547,14 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
     segments' audio, for silent bridges; "none" drops audio.
     ``out=None`` measures and reports without writing (same as ``check``).
     """
+    if preserve_state:
+        if out is None or loop or fps is not None or audio != "auto":
+            raise ValueError("preserve_state needs an output, matching native frame rates, original audio and no loop")
+        report = await stimma.join_video(segments, out=str(out))
+        measured = await check(stimma, report["segments"])
+        report["seams"] = measured["seams"]
+        report["warnings"] = measured["warnings"]
+        return report
     if audio not in ("auto", "loop", "none"):
         raise ValueError('audio must be "auto", "loop" or "none"')
     work = Path(".seamkit") / uuid.uuid4().hex[:8]

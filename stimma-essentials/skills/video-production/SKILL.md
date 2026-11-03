@@ -60,7 +60,20 @@ and look differ in kind, not just in quality. If speed matters, make the faster
 model the final model and say so. Lower resolution or a shorter test clip only when
 the user asks for one.
 
-**Pin to fixed frames instead of chaining.** Each continuation starts from the last
+**Use original generation state for supported continuations.** A pinned library
+video automatically supplies its stored companion state when the tool can use it;
+keep using the ordinary media ID and keyframe arguments. For local H3, the tested
+continuation is the last 39 frames (1.625 seconds at 24 fps), pinned at zero with
+sound. Use the workflow's instructions for other formats/windows. Inspect
+`media_info` when a fallback needs diagnosis; do not load raw tensors yourself.
+For these clean overlapping continuations, assemble with
+`seamkit.join(stimma, segments, out="long.mp4", preserve_state=True)`, supplying
+each continuation's `overlap` in frames. This removes overlap without matching,
+crossfading or mixing and preserves reusable state through the assembled timeline.
+Read the seam report and inspect the boundaries. If repair is needed, use the
+ordinary repair path; affected coverage no longer inherits original state.
+
+**Use fixed anchors when original state cannot be reused.** Each pixel-based continuation starts from the last
 one's output, so its errors compound: identity, exposure and saturation drift a
 little with every hop. Segments pinned at both ends to frames from one master take
 or one set of reference images keep their error bounded. Chain at most two or
@@ -81,7 +94,9 @@ where speed is near zero.
 Every clip in a join must share one frame rate. Regenerate rather than resample when
 you can.
 
-**Every join goes through seamkit.** Never splice clips with a bare ffmpeg concat.
+**Every join goes through seamkit.** Its state-preserving path uses the trusted
+frame-accurate assembler; its repair path can match and blend. Bare ffmpeg edits
+do not automatically preserve companion coverage.
 Check the report, look at the frames either side of each seam, then deliver.
 
 ## How much a pin carries
