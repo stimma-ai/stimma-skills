@@ -145,3 +145,20 @@ async def test_motion_finds_a_slow_start(tmp_path, monkeypatch):
     assert 0.4 <= report["settles_at"] <= 1.0, report
     assert report["fades_at"] == report["duration"], report
     assert report["per_second"][0] < 0.6 and report["per_second"][-1] > 0.8, report
+
+
+async def test_state_preserving_join_measures_rich_host_report_without_repair(loop_clips):
+    from unittest.mock import AsyncMock
+    src, bridge = loop_clips
+    stimma = FakeStimma()
+    original = [{"media_id": 1}, {"media_id": 2, "trim_head": 1}]
+    parts = [
+        {"path": str(src), "trim_head": 0, "trim_tail": 0, "lock": True, "frames": 48, "has_audio": True},
+        {"path": str(bridge), "trim_head": 1, "trim_tail": 1, "lock": True, "frames": 12, "has_audio": True},
+    ]
+    stimma.join_video = AsyncMock(return_value={"out": "joined.mp4", "frames": 60, "segments": parts, "companions": 2})
+    report = await seamkit.join(stimma, original, "joined.mp4", preserve_state=True)
+    stimma.join_video.assert_awaited_once_with(original, out="joined.mp4")
+    assert len(report["seams"]) == 1
+    assert report["segments"] == parts
+    assert report["companions"] == 2

@@ -551,7 +551,8 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
         if out is None or loop or fps is not None or audio != "auto":
             raise ValueError("preserve_state needs an output, matching native frame rates, original audio and no loop")
         report = await stimma.join_video(segments, out=str(out))
-        measured = await check(stimma, report["segments"])
+        measured = await check(stimma, [{k: segment[k] for k in ("path", "trim_head", "trim_tail", "lock")}
+                                         for segment in report["segments"]])
         report["seams"] = measured["seams"]
         report["warnings"] = measured["warnings"]
         return report
