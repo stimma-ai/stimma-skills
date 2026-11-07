@@ -22,8 +22,9 @@ explain the decisions that matter, and provide access to the files. Use as many
 responsive sections and PDF pages as the content needs; a small delivery can
 still be one page. Author page boundaries with `stimma-section` and inspect them.
 
-Reach for a package when the request calls for a coherent deliverable, a set of
-choices, or files to hand on. A single image someone asked to see does not need
+Reach for a package when the request calls for a coherent deliverable or files
+to hand on. Work the user should look at and decide on (directions to choose
+from, rounds of results to review) belongs in a contact sheet instead. A single image someone asked to see does not need
 to become a package.
 
 Use the installed recipe for a supported file set instead of implementing its
