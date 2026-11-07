@@ -27,12 +27,18 @@ attention, in what order, with what explanation, and what you need from them.
 - **Reads in the order the user should read it.** Lead with what matters most,
   such as the current round, the best so far, or the decision you need. Put
   older or weaker material lower, or in collapsed sections.
-- **Shows only what you want looked at.** Finished work, not the ingredients.
-  Intermediates (keyframes, segments, masks) stay out unless the user is
-  reviewing them specifically; the media info panel already shows how
-  something was made.
-- **Says what changed and why.** A one-line note per section is enough:
-  "Halved the camera speed after round 2 felt rushed."
+- **Shows the finished work the review is about.** If the user asked for
+  videos, the sheet shows videos. What you made along the way to get there
+  (start frames, keyframes, references, segments, masks) stays off the sheet,
+  even when making it was a step the user asked for, and even in a collapsed
+  section: everything on a sheet is in its slideshow and asks for the user's
+  attention. Put it on the sheet only when it is the thing being reviewed,
+  such as a request to pick start frames before anything is animated. The
+  media info panel already shows how each piece was made.
+- **Says what changed and why, in terms the user sees.** A one-line note per
+  section is enough: "Halved the camera speed after round 2 felt rushed."
+  Leave out models, LoRAs and settings unless they explain a visible
+  difference.
 - **Asks for decisions next to the work.** Put a choice next to the options it's
   about, a rating on the picture being rated, an approval check on the item it
   approves.
@@ -141,5 +147,5 @@ from a template:
   set-aside work at the bottom.
 - **A batch of deliverables:** one row per item with its specs and an approval
   check, plus a comparison wherever you retouched something.
-- **A storyboard or sequence:** sections in story order, each with its frames as
-  a strip and the shot notes beside it.
+- **A storyboard or sequence:** sections in story order, each with its shots
+  and the shot notes beside them.
