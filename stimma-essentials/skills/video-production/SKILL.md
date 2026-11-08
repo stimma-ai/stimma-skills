@@ -54,6 +54,12 @@ the frames that pin each segment as images, and get them approved. Stills are th
 preview; they're cheap to iterate and they predict the video. Then render the video
 once, at final settings.
 
+**Make the stills at the video's shape.** Choose the video tool and its output size
+before generating any frame you'll pin, and generate every pinned frame at that
+aspect. A frame of another shape gets stretched or cropped to fit, and nothing in the
+still warns you. To use an image of another shape, crop or outpaint it to the video's
+aspect yourself, so you choose what's kept.
+
 **No draft video rounds.** A faster or distilled variant (⚡, Turbo, Fast, Max) does
 not predict what the full model will make from the same prompt and seed. Its motion
 and look differ in kind, not just in quality. If speed matters, make the faster
