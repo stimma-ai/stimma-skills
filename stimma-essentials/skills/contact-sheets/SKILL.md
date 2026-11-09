@@ -90,7 +90,10 @@ Review elements. Give every one an id you'll keep:
 
 `for` ties a rating or check to a `stimma-media` id, so it also appears when
 the user steps through that picture in the slideshow. `stimma-choice` takes
-`multiple` for more than one answer. Every picture and section takes comments
+`multiple` for more than one answer. Each option shows in full on its own row,
+so word it as the answer. An option whose `ref` is a picture already on the
+sheet is picked on that picture too and isn't shown again, so a choice never
+needs its own copy of the work. Every picture and section takes comments
 without you adding anything. Markers are the user's own library marks, not
 answers.
 
