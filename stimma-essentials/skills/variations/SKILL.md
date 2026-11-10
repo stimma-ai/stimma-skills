@@ -107,7 +107,7 @@ After a varied result, use its reported choices. Copy names and values exactly.
 - **"Keep that outfit, vary the rest"**: same prompt, `vary=True`, `keep_choices={"outfit": r.choices["outfit"]}`.
 - **"Keep everything, new outfit"**: `keep_choices` = all of `r.choices` except `outfit`. Do not pass `draw_seed` (it would draw the same outfit again).
 - **"Same but older"**: `keep_choices` = all of `r.choices` with `age` set to the new value, plus that result's `seed`.
-- **"Only red or blue"**: map the choice to a list, `keep_choices={"colour": ["red", "blue"]}`.
+- **"Only red or blue"**: map the choice to a list, `keep_choices={"color": ["red", "blue"]}`.
 - **Same choices, new picture (seed shopping)**: pass the result's `draw_seed` and leave `seed` out.
 - **Same picture's randomness, new choices**: pass its `seed` and no `draw_seed`.
 
@@ -211,7 +211,7 @@ from stimma.tools.text_to_image import TOOLNAME  # real name from .stimma/tools/
 
 prompt = (
     "Studio portrait of a woman in her thirties with freckles and green eyes, "
-    "wearing a grey knit sweater, her hair in "
+    "wearing a gray knit sweater, her hair in "
     "{a sharp chin-length bob|loose shoulder-length curls|a high ponytail with soft flyaways|a clean side undercut}. "
     "Soft window light, plain warm backdrop."
 )

@@ -31,7 +31,7 @@ Prompts you send use the same syntax a person types in Tool View:
 - `{red|blue|green}`: one option is picked for each image.
 - `{{outfit}}`: a saved list or segment of that name is filled in. With `vary=True`, any name works: suitable options are found for it.
 - `[Shot on Portra 400]`: the words in brackets are kept exactly; the brackets are dropped.
-- A line starting with `#`: a note on how to choose ("# keep the colours muted"). It never reaches the image model.
+- A line starting with `#`: a note on how to choose ("# keep the colors muted"). It never reaches the image model.
 
 - Without `vary`, a `{{name}}` that isn't a saved list stops the call and nothing is generated. Write its options as `{a|b|c}` instead, or pass `vary=True`.
 - Prompts read from the library (a person's image, `media_info`'s `written_prompt`) may contain this syntax. Reusing them as they are is fine; it means what it meant for the person.
