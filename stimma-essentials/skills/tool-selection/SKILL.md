@@ -18,8 +18,8 @@ Use this skill when the user asks for image or video generation and **hasn't nam
 ## Decision order
 
 1. **User named a model?** → Use it. Stop.
-2. **Memory has a relevant preference?** (board, task-type, or user level) → Use it. 
-3. **Read the context.** Board/project name, word choice ("hero image" vs "just something quick"), what they've been running recently, what providers they have. Don't label the user or ask them to pick a persona.
+2. **Memory has a relevant preference?** (collection, task-type, or user level) → Use it. 
+3. **Read the context.** Collection/project name, word choice ("hero image" vs "just something quick"), what they've been running recently, what providers they have. Don't label the user or ask them to pick a persona.
 4. **Match guideline to context below.** Announce the pick + the tradeoff in one short line.
 5. **If genuinely ambiguous, ask one short question.** Never dump the menu.
 
@@ -141,7 +141,7 @@ Never list the whole catalog. Two or three named options max.
 Save to memory **only on explicit durable language**:
 - "Always use X"
 - "From now on, X"
-- "On this board, default to X"
+- "In this collection, default to X"
 - "For video, I always want Y"
 
 Everything else is a one-off — don't save. If the user contradicts a saved preference later, treat that as a one-off too unless they say something durable.
