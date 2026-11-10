@@ -1,7 +1,7 @@
 ---
 name: variations
 display_name: Variations
-description: Create controlled variations of an existing media asset by preserving selected visual traits while changing seeds, prompts, or image-reference settings
+description: Create controlled variations of an existing media asset or idea by preserving selected visual traits while changing seeds, varied prompt choices (vary, keep_choices, draw_seed), or image-reference settings
 author: system
 tags: [variations, image generation, img2img, seeds, exploration, prompt editing]
 environments:
@@ -19,6 +19,7 @@ Start by inferring the user's real goal. People often ask for "variations" when 
 - **Lucky roll**: Same concept, same prompt/config, different seeds. They like the image and want a better draw.
 - **Near misses**: Keep the concept and style, make small prompt changes to discover better phrasing.
 - **Controlled alternatives**: Change one or two named elements, such as hair, outfit, pose, expression, lighting, crop, colorway, or background.
+- **Many different looks**: "20 different looks", "a cast", "a mood board": one idea, with several parts that should differ from image to image and still fit together.
 - **More of this**: Preserve the identity, style, or product language closely while producing sibling images.
 - **Creative directions**: Use the source as a starting point and explore meaningfully different treatments.
 - **Recovery from weak source info**: The user only has a random image or a past asset with little or no lineage.
@@ -82,14 +83,47 @@ Rules:
 - Keep the salt unobtrusive: "variation token 7f3a" is acceptable; do not add fake objects or style words.
 - Do not use prompt salting when a real seed parameter is available and works.
 
+### Varied choices (`vary=True`)
+
+Use for "many different looks" and for any sweep of a named element. Write the parts that should differ as choices in one prompt, and pass `vary=True` on every call:
+
+- `{a sharp chin-length bob|loose curls|a high ponytail}` when you know the options.
+- `{{hairstyle}}` when you want options found for you (fresh, fitting options, usually more varied than a list you would write).
+- `# notes` on their own lines to steer how choices are made ("# outfits suit a rainy city").
+
+The prompt is read once (the first call takes a few seconds longer; calls with the same prompt share it), and each image gets its own choices, made to fit together. Every result reports what it got: `r.choices` (`{"hairstyle": "loose curls", ...}`) and `r.draw_seed`; the run receipt prints the same as `choices: hairstyle = loose curls · ... (draw_seed N)`.
+
+Rules:
+
+- **Identity stays plain text.** Who or what the subject is (a person's face, build, age and skin; a character; a product) is written out, never made a choice, unless the user asks for different people. Vary only what the user wants varied.
+- Keep `enhance_prompt` omitted or `False` for character and product work, so nothing is added beyond your words. `enhance_prompt=True` with `vary` lets the rewrite add choices of its own; use it only for open exploration.
+- Keep `seed` fixed across the batch when only the choices should change; leave it out for a looser spread.
+- Without `vary`, each `{a|b}` is still picked at random per call, but there is no prepared reading, no fitting together and nothing reported to hold.
+
+### Holding and repeating choices
+
+After a varied result, use its reported choices. Copy names and values exactly.
+
+- **"Keep that outfit, vary the rest"**: same prompt, `vary=True`, `keep_choices={"outfit": r.choices["outfit"]}`.
+- **"Keep everything, new outfit"**: `keep_choices` = all of `r.choices` except `outfit`. Do not pass `draw_seed` (it would draw the same outfit again).
+- **"Same but older"**: `keep_choices` = all of `r.choices` with `age` set to the new value, plus that result's `seed`.
+- **"Only red or blue"**: map the choice to a list, `keep_choices={"colour": ["red", "blue"]}`.
+- **Same choices, new picture (seed shopping)**: pass the result's `draw_seed` and leave `seed` out.
+- **Same picture's randomness, new choices**: pass its `seed` and no `draw_seed`.
+
+A name that isn't one of the prompt's choices stops the call and lists the real names.
+
+### Varying the user's own images
+
+A person's image made in Tool View with varied choices (and any image you made with `vary`) records them: `media_info` lists its `choices`, `draw_seed` and `written_prompt`. To make more like it with some parts changed, call the same tool with `params_from=<media_id>, vary=True` and `keep_choices` = its choices minus the ones to change. With `vary`, `params_from` starts from the prompt as the person wrote it, so the rest really varies; without `vary` it reproduces the image exactly. Images made with varied choices open in Tool View with their prompt, so the person can take over from there.
+
 ### Surgical prompt edits
 
-Use when the user names a specific element to vary.
+Use when the user names a specific element to change in one image, or when the tool can't vary (it then says so in the result).
 
 Rules:
 
 - Keep everything else explicit and stable.
-- Generate a small labeled sweep of alternatives.
 - Change only the target element unless related details must change to stay coherent.
 - For people/characters, preserve identity descriptors, face, body, pose, and style unless the user asks to vary them.
 
@@ -169,34 +203,53 @@ Replace `TOOLNAME` with a real tool from `.stimma/tools/text-to-image/`, and `pr
 
 ### Single-Axis Sweep
 
-Use for "show hair variations", "try different backgrounds", or "explore lighting."
+Use for "show hair variations", "try different backgrounds", or "explore lighting." One prompt, the axis written as a choice, `vary=True`, a fixed seed so only that choice changes.
 
 ```python
 import asyncio
 from stimma.tools.text_to_image import TOOLNAME  # real name from .stimma/tools/text-to-image/
 
-variants = [
-    ("Short bob", prompt.replace("{hair}", "a sharp chin-length bob")),
-    ("Loose curls", prompt.replace("{hair}", "loose shoulder-length curls")),
-    ("High ponytail", prompt.replace("{hair}", "a high ponytail with soft flyaways")),
-    ("Undercut", prompt.replace("{hair}", "a clean side undercut with longer hair swept over")),
-]
-
+prompt = (
+    "Studio portrait of a woman in her thirties with freckles and green eyes, "
+    "wearing a grey knit sweater, her hair in "
+    "{a sharp chin-length bob|loose shoulder-length curls|a high ponytail with soft flyaways|a clean side undercut}. "
+    "Soft window light, plain warm backdrop."
+)
 results = await asyncio.gather(*[
-    TOOLNAME(prompt=p, seed=seed, width=width, height=height)
-    for _, p in variants
+    TOOLNAME(prompt=prompt, vary=True, seed=seed, width=width, height=height)
+    for _ in range(6)
 ])
 
+name = next(iter(results[0].choices))  # the choice's name, as the result reports it
 grid = await stimma.create_parameter_sweep(
     media_ids=results,
     rows=1,
     cols=len(results),
     row_headers=[""],
-    col_headers=[label for label, _ in variants],
+    col_headers=[r.choices.get(name, "") for r in results],
     title="Hair Variations",
 )
 stimma.show(grid)
 ```
+
+To show every option exactly once, make one call per option with `keep_choices={name: option}` (read `name` from a first result). Use `{{hairstyle}}` instead of a list when the user wants options you didn't think of.
+
+### Many Different Looks
+
+```python
+import asyncio
+from stimma.tools.text_to_image import TOOLNAME  # real name from .stimma/tools/text-to-image/
+
+prompt = (
+    "Photograph of a barista behind the counter of a {{cafe}}, wearing {{outfit}}, "
+    "{{pose}}. Natural light.\n"
+    "# every barista is a different person: vary age, build and skin tone widely"
+)
+results = await asyncio.gather(*[TOOLNAME(prompt=prompt, vary=True) for _ in range(12)])
+stimma.show(results)
+```
+
+Afterwards, "keep the third one's outfit" is `keep_choices={"outfit": results[2].choices["outfit"]}` on the same prompt (use the name exactly as `.choices` reports it).
 
 ### Reference-Guided Variations
 
@@ -248,6 +301,7 @@ Be direct and brief.
 
 - For close work: "I kept the prompt/config stable and varied seeds."
 - For surgical work: "I held the character and framing steady and swept hairstyle only."
+- For varied choices: name what was held and what varied, in the user's words ("I kept the outfit and varied the setting"). Mention a choice's value only when it helps them pick.
 - For exploration: "I made these wider so we can find a direction, not just a better roll."
 - For no-lineage images: "There was no generation lineage, so I treated the image as a visual reference and rebuilt the prompt."
 
