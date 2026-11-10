@@ -1,7 +1,7 @@
 ---
 name: prompt-engineering
 display_name: Prompt Engineering
-description: Guide for writing effective image and video prompts, choosing enhancement or manual authorship, and following model-specific input formats
+description: Guide for writing effective image and video prompts, the prompt syntax ({a|b}, {{name}}, [exact], # notes), choosing enhancement or manual authorship, and following model-specific input formats
 author: system
 tags: [prompt, writing, guide, fundamentals, prose]
 environments:
@@ -16,13 +16,28 @@ environments:
 
 ## Models With Their Own Prompt Format
 
-Read the tool's `prompt_format` guidance ("Prompt format: …" in its stub). It distinguishes a required input format from a recommended writing style. Enhancement defaults are a separate choice: omitting `enhance_prompt` uses the tool's default, `True` requests a model-aware rewrite, and `False` sends your wording unchanged.
+Read the tool's `prompt_format` guidance ("Prompt format: …" in its stub). It distinguishes a required input format from a recommended writing style. Enhancement defaults are a separate choice: omitting `enhance_prompt` uses the tool's default, `True` requests a model-aware rewrite, and `False` keeps your wording (the prompt syntax below still applies).
 
 - **Required format:** Use enhancement to construct it, or read the tool's format reference and author it yourself when you need precise control. For MiniMax H3, `.stimma/prompt-formats/minimax-h3.md` documents the audiovisual fields, shot and cut timing, and input alignment. Use enhancement when the format is unfamiliar and its reference is unavailable. Turning enhancement off leaves those requirements in place.
 - **Recommended style:** Choose enhancement when its rewrite helps the task. Preserve your wording when exact control, close variations, or a known-good prompt is more useful.
-- **Inspect what was sent:** Rewrites are available as `.sent_prompt` in code. Judge whether they preserve the intended content and structure before deciding how to iterate.
+- **Inspect what was sent:** Rewrites, and prompts whose syntax was filled in, are available as `.sent_prompt` in code. Judge whether they preserve the intended content and structure before deciding how to iterate.
 
 The general writing advice below applies within the selected model's input requirements.
+
+## Prompt Syntax
+
+Prompts you send use the same syntax a person types in Tool View:
+
+- `{red|blue|green}`: one option is picked for each image.
+- `{{outfit}}`: a saved list or segment of that name is filled in. With `vary=True`, any name works: suitable options are found for it.
+- `[Shot on Portra 400]`: the words in brackets are kept exactly; the brackets are dropped.
+- A line starting with `#`: a note on how to choose ("# keep the colours muted"). It never reaches the image model.
+
+- Without `vary`, a `{{name}}` that isn't a saved list stops the call and nothing is generated. Write its options as `{a|b|c}` instead, or pass `vary=True`.
+- Prompts read from the library (a person's image, `media_info`'s `written_prompt`) may contain this syntax. Reusing them as they are is fine; it means what it meant for the person.
+- Write literal braces only in a JSON prompt; a whole-JSON prompt (and MiniMax H3's format) is sent untouched.
+
+**One image or many.** For one deliberate image, commit to each detail (see "Be decisive" below) and leave `vary` off. When the user wants many different images from one idea ("20 different looks", "a cast of 12", "mood board"), write the parts that should differ as choices (`{a|b|c}` or `{{name}}`) and pass `vary=True` on every call: the prompt is read once, each image gets its own choices, and they are made to fit together. Each result lists what it got (`.choices`, `.draw_seed`); hold some with `keep_choices` and repeat them with `draw_seed`. The **variations** skill covers these moves. Who or what the subject is (a person's face and build, a product, a character) stays as plain text, never a choice, unless the user asks for different people.
 
 ## Core Principle: Write Prose, Not Keywords
 
@@ -39,7 +54,7 @@ Front-load the most important elements. Order: **Subject** → **Action/Pose** �
 
 - **Default to photography** — unless user requests illustration/painting/cartoon/etc., assume realistic photo. Include photographic language ("photograph of", "natural lighting", "shallow depth of field"). Many models default to surreal style without photo specifics.
 - **Describe people thoroughly** — facial features, hair, skin, body type, expression, ethnicity, clothing, unique characteristics. Never just "a woman." Weave details into coherent sentences.
-- **Be decisive** — never give the model a choice ("standing or sitting" produces blended results). Commit to one option.
+- **Be decisive** — never leave a choice to the image model ("standing or sitting" produces blended results). Commit to one option, or, when you want different options across images, write them as `{standing|sitting}` so one is picked per image (see "Prompt Syntax").
 - **Repetition reinforces** — describe important details in multiple phrasings to help the model lock on.
 - **Avoid equipment nouns** — "camera", "studio lights" may render literally. Use "looking at the viewer" not "looking at the camera"; "shot from a low angle" not "camera angle from below."
 - **Describe what you want, not what you don't** — many models lack negative prompts. Use positive opposites ("tack-sharp focus" not "no blur").
