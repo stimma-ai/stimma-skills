@@ -25,8 +25,8 @@ attention, in what order, with what explanation, and what you need from them.
 ## What a good sheet does
 
 - **Reads in the order the user should read it.** Lead with what matters most,
-  such as the current round, the best so far, or the decision you need. Put
-  older or weaker material lower, or in collapsed sections.
+  such as what's new, the best so far, or the decision you need. Put older or
+  weaker material lower, show it small, collapse it, or take it off.
 - **Shows the finished work the review is about.** If the user asked for
   videos, the sheet shows videos. What you made along the way to get there
   (start frames, keyframes, references, segments, masks) stays off the sheet,
@@ -42,9 +42,13 @@ attention, in what order, with what explanation, and what you need from them.
 - **Asks for decisions next to the work.** Put a choice next to the options it's
   about, a rating on the picture being rated, an approval check on the item it
   approves.
-- **Stays current.** As work comes in, add it to the same sheet and publish
-  again. Don't start a new sheet for the same work; don't re-show the same
-  items in chat.
+- **Stays current.** As work comes in, update the same sheet and publish
+  again rather than re-showing items in chat. When you revise after a review,
+  lead with what changed and what still needs the user's eyes. Work they've
+  already reviewed and you didn't change doesn't need to be in front of them
+  again at full size: show it as a small strip, collapse it, summarize it, or
+  take it off, whichever suits the task. Don't assume what they didn't comment
+  on is settled; ask when it matters ("Keep the other two as they are?").
 - **Keeps your judgment visible.** If you set something aside, you can keep it
   in a collapsed section with the reason. The reasons tell the user why it's
   missing and help them steer you.
@@ -126,8 +130,14 @@ tiles' ids, for ratings or checks tied to them. For larger edits,
 same sheet, and the chat gets a one-line update instead of a media panel. Read
 the warnings it returns and fix what they name.
 
-Keep component ids stable when you rewrite. The user's answers and comments
-are tied to them, and a publish that drops a reviewed id warns you.
+The user's answers and comments are tied to component ids. Keep an id while
+its review is still open; a publish that drops an id with review you haven't
+been sent yet warns you. Once you've acted on a review, you're free to take
+that item off. To keep an item but start its review fresh (the notes field, or
+a take the user is keeping), give it a new id, such as `notes` becoming
+`notes-2`, so last round's text and comments don't follow the user into the
+next round. Say briefly what you did with their notes, in the section note or
+at the top of the sheet.
 
 ## The user's review
 
@@ -135,7 +145,9 @@ The user answers, rates, comments, and then sends the review. It arrives as a
 chat message listing each answer and comment with the id and media it's about.
 If you're still working, it reaches you at your next step. Act on it: develop
 the chosen direction, drop what they rejected, answer their comments in the
-next round's notes, and publish. `await stimma.contact_sheets.review()` returns
+next round's notes, and publish. Not every review is for you to act on right
+away: the user may be collecting feedback, or acting on it themselves, so
+follow what they ask. `await stimma.contact_sheets.review()` returns
 the whole review at any time, with unsent items marked.
 
 ## Shapes this takes
@@ -145,9 +157,15 @@ from a template:
 
 - **Directions to choose from:** columns of alternatives, each with a short
   rationale, followed by the choice and any questions that shape the next round.
+- **Converging on a set:** what's new or redone first, at full size, each with
+  what you did about the comment it answers; work that's already settled as a
+  small strip; earlier takes collapsed or gone.
 - **A body of work that keeps growing:** a "Start here" section with the best so
-  far, then one section per round with what changed, older rounds collapsed,
-  set-aside work at the bottom.
+  far, then the newest work, with older material collapsed, set-aside work at
+  the bottom.
+- **Something for someone else:** when the user wants to share the result or
+  hand it to another person, make a fresh sheet with only the work that's
+  ready, not the working sheet with its history.
 - **A batch of deliverables:** one row per item with its specs and an approval
   check, plus a comparison wherever you retouched something.
 - **A storyboard or sequence:** sections in story order, each with its shots
