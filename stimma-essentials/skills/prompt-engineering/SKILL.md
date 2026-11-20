@@ -99,3 +99,14 @@ Pass all source images as `input_images`. Write a compositional caption (not imp
 ## Inpainting
 
 Exception to the imperative rule: when a mask defines the edit region, prompt should caption the replacement content, not command placement. "A vintage wooden rocking chair with a red velvet cushion" — not "Place a rocking chair here."
+
+## Image-to-Video Prompts
+
+The start image supplies how everything looks, and the prompt supplies what happens. But the model draws every frame again, and whatever the prompt doesn't hold onto drifts toward the typical as the clip plays: faces turn generic, unusual details smooth away, and the framing widens. Describe the motion, and also say what stays the same.
+
+- **Hold the camera still by default.** Unless the user asks for camera movement, write a static shot that keeps the start image's framing ("static shot, framing unchanged, no zoom or pull-back"). When the user wants a move, name it exactly ("slow push-in").
+- **Frame relative to the subject, not the scene.** "Close on the subject, framed as in the start image" keeps the subject large. Framing described through the setting lets the shot drift wide and shrinks the subject.
+- **Restate the framing as the action unfolds.** One framing line at the start fades as the motion builds. Close motion sentences with where the subject sits in the frame ("…turns, still filling the frame").
+- **Describe the appearance that must hold, in positive terms.** "Wearing exactly the outfit shown" holds better than "don't change the clothes." Name distinctive features outright. If you only warn against change, the model fills in the typical and erases what made the subject distinctive.
+- **Spend words on what must stay.** What the prompt dwells on stays stable, and what it mentions once drifts. Give the subject and framing most of the words, and keep the setting to a clause unless it is the subject.
+- **Word each video in a set differently.** Several clips written from one template with swapped nouns drift toward each other. Phrase each one's motion and description in its own words.
