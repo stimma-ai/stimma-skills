@@ -84,39 +84,52 @@ bounding it. So continue for short extensions (two or three hops) or a tracking
 shot nobody can plan; for anything longer, keep every frame at most two
 generations from a clean still.
 
-**A planned long take renders in two parallel passes**, with a tool that pins clips
-at both ends (local MiniMax H3 Reference to Video):
+**A planned long take renders in one parallel wave of still-to-still segments**,
+with a tool that pins frames at both ends:
 
 1. **Anchor stills**, one per key moment, each made directly from the source image
    (never an edit of an edit), at the video's shape, sharing its framing, lens and
-   look unless the story moves the camera.
-2. **Keys:** one segment per anchor at the tool's native length, the anchor pinned
-   at the start and also passed as a reference, the prompt describing that
-   anchor's own moment. A pinned still is weak; when the reference or prompt
-   disagrees with it, the model drifts back toward them.
-3. **Bridges:** one between each pair of neighboring keys, the earlier key's tail
-   clip pinned at the start and the later key's head clip (just past its pinned
-   still) at the end, with sound, from the library; both anchors as references;
-   the prompt describing only the motion between them.
-4. **Assemble** key, bridge, key, ... with each pinned span as `overlap` and
-   `trim_head` on keys for the skipped still; trim the last key's tail so the take
-   is exactly the requested length.
+   look. Pick moments where motion briefly settles: the take passes through each
+   anchor, and a still carries no speed.
+2. **Segments:** one between each pair of neighboring anchors, at the tool's native
+   length, the earlier anchor pinned at the start and the later one at the end, both
+   passed as references, the same voice reference on every segment, and the prompt
+   describing the action that takes one into the other.
+3. **Join** them in order with seamkit, `trim_head: 1` on every segment after the
+   first (its opening repeats the anchor the previous one ended on). Trim the last
+   segment's tail so the take is exactly the requested length.
 
-Keys are one wave and bridges a second, so every GPU works at once. Submit each wave
-together, sized to `await stimma.tasks.workers(tool)`, inside
-`stimma.batch(title, total=N)` so the count is right from the start. Tested on
-local H3 (5 s native, 39-frame pins), each key plus bridge adds about 7 s. With a
-tool that pins only stills, run anchor-to-anchor segments in one wave instead.
+Every segment renders at once, so every GPU works. Submit them together, sized to
+`await stimma.tasks.workers(tool)`, inside `stimma.batch(title, total=N)` so the
+count is right from the start. On local H3 (5 s native) each segment adds 5 s.
 
-**Anchors must agree before any video.** A bridge between differently framed stills
-resolves the difference with a cut, not a move. View them side by side and run
-`seamkit.anchors`; redo any that reframed or shifted. Render every still before any
-video: swapping image and video models on a GPU costs minutes.
+**Don't bridge with clips pinned at both ends.** Local H3 treats a pinned clip as a
+shot of its own: when the prompt asks for anything other than what the clip is
+already doing, it leaves the start clip, or enters the end clip, with a hard cut.
+Tested on consistent anchors, bridges between keys cut in 46 of 50, whatever the
+pin lengths (22 or 39 frames), the bridge length (5 or 10 s), the end pin (clip or
+still) or the keys; still-to-still segments cut in 2 of 10. The crossfade hides
+the join, not the cut inside the bridge, so a seam report alone looks fine.
+
+**A take that travels** (a walk, a drive, a tracking shot moving through a place)
+can't be planned as anchors: nothing predicts where each segment ends, so the next
+anchor is never where the last one stopped, and the model cuts to it. Continue it
+instead, each hop pinning the previous tail and describing the same ongoing action
+(those hops didn't cut, 0 of 20), in runs of two or three hops with stored state;
+for anything longer, end a run on a planned cut and start the next from a fresh
+still.
+
+**Anchors must agree before any video.** A segment between differently framed
+stills resolves the difference with a cut, not a move. View them side by side and
+run `seamkit.anchors`; redo any that reframed or shifted (an edit model often zooms
+in: try another seed). Render every still before any video: swapping image and
+video models on a GPU costs minutes.
 
 **Check every segment; fix only what failed.** Run `seamkit.cuts` on each segment
-before assembly: bridges cut most often right where a pin starts or ends. Run
-`seamkit.drift` on the assembled take. Regenerate only the key or bridge that
-failed.
+before assembly; a cut in the first few frames means it popped off its start anchor.
+After joining, check each seam's motion ratio and run `seamkit.drift` on the take.
+Regenerate only the segment that failed, with a new seed; if the same pair fails
+twice, redo the anchor.
 
 ## How much a pin carries
 
@@ -124,7 +137,9 @@ From strongest to weakest:
 
 1. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
    Carries picture, motion and audio; the output repeats the pinned clip, giving
-   real overlap to crossfade. LTX keyframes pin clips too, picture only.
+   real overlap to crossfade. LTX keyframes pin clips too, picture only. It carries
+   on only what the clip is already doing; ask for a different action or framing and
+   local H3 cuts away from it.
 2. **A reference video plus a voice reference** (H3 Reference to Video on Stimma
    Cloud). Carries motion and voice; opens near the reference's last frame, not on it.
 3. **An extend tool** (SkyReels V4 Extend on the cloud, LTX Extend Video locally).
@@ -161,6 +176,9 @@ Then generate the bridge:
 - **Local MiniMax H3 Reference to Video:** pin the window's last second (with sound)
   at 0 and its first second at the end, with the clip in `input_audios` for the
   voice. Join with `overlap` set to the pinned frame count on both segments. Clip pins carry motion, so the bridge has no lull of its own.
+  Run `seamkit.cuts` on the bridge: when the window's ends differ much, H3 jumps
+  into the end clip with a cut. Then pin the window's last and first frames as
+  stills instead.
 - **LTX Loop (local):** bridges and joins in one step. Trim the clip to its window
   first, then `seamkit.check` the result with `loop=True`.
 - **Cloud, or any first/last-frame tool:** first frame = the window's last frame,
@@ -195,7 +213,8 @@ For a short extension (see [Long takes](#long-takes) for anything longer):
 
 The bridge's first frame is clip A's last frame and its last frame is clip B's
 first. Locally, LTX Stitch does this and keeps the source audio. Otherwise use a
-first/last-frame tool, or local H3 with clips pinned at both ends. Lock both clips;
+first/last-frame tool, or local H3 with those two frames pinned as stills (H3 cuts
+into a clip pinned at the end unless the two clips nearly match). Lock both clips;
 the bridge is adjusted to fit both.
 
 ### Talking head and dialogue
