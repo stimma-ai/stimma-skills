@@ -234,7 +234,9 @@ def _trim(segs, loop):
     """Drop head pops on adjustable segments and frames that repeat across a seam."""
     for seg in segs:
         f = seg.frames
-        if seg.lock or len(f) < 10:
+        # An overlapping head is crossfaded, which hides a pop; dropping a frame
+        # there would misalign the shared frames by one.
+        if seg.lock or seg.overlap or len(f) < 10:
             continue
         typical = _typical_step(f, 1)
         d = _content_diff(f[0], f[1])
@@ -792,3 +794,284 @@ async def cuts(stimma, path, *, ignore_before=0.0, seams=None, min_confidence=0.
     return {"duration": round(len(frames) / fps, 3), "fps": fps,
             "checked_from": round(max(first, 0) / fps, 3), "cuts": found,
             "continuous": not any(not c["at_seam"] for c in found)}
+
+
+# ---------------------------------------------------------------- drift
+
+# Limits, calibrated on 40 s H3 takes (960x544): serial continuation chains,
+# with and without stored state, against two-pass anchored assemblies of the
+# same scenes. Each is measured on a window against the reference window.
+DRIFT_LIMITS = {
+    "exposure": 20.0,      # |mean luma shift|, 0-255 levels
+    "saturation": 15.0,    # |mean saturation shift|, 0-255 scale
+    "color_match": 0.80,   # color histogram overlap with the reference, 0..1
+    "sharpness": 0.80,     # fine detail relative to the opening window
+    "framing": 1.20,       # apparent zoom vs the reference, either way
+    "framing_match": 0.30,  # below this, the picture differs too much to judge framing
+}
+_DRIFT_W = 640          # analysis width for look and detail
+_DRIFT_FPS = 2          # samples per second
+_FRAME_W = 96           # analysis width for framing
+_FRAME_SCALES = np.exp(np.linspace(math.log(0.6), math.log(1.8), 25))
+_FRAME_SHIFTS = [(dy, dx) for dy in (-4, 0, 4) for dx in (-6, 0, 6)]
+_STILL_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
+
+
+async def _samples(stimma, path, size, work, *, start=0, end=None, fps=_DRIFT_FPS):
+    """Frames of ``path`` (a still gives one) at ``size``, as a uint8 array."""
+    w, h = size
+    still = Path(str(path)).suffix.lower() in _STILL_SUFFIXES
+    vf = ""
+    if not still:
+        if start or end is not None:
+            vf += f"trim=start_frame={int(start)}" + (f":end_frame={int(end)}" if end is not None else "")
+            vf += ",setpts=PTS-STARTPTS,"
+        vf += f"fps={fps},"
+    vf += f"scale={w}:{h}:flags=area,format=rgb24"
+    raw = work / f"{uuid.uuid4().hex[:8]}.rgb"
+    await stimma.ffmpeg("-v", "error", "-y", "-i", str(path), "-map", "0:v:0", *(["-frames:v", "1"] if still else []),
+                        "-vf", vf, "-f", "rawvideo", str(raw), timeout=1800)
+    n = raw.stat().st_size // (w * h * 3)
+    if n == 0:
+        raise ValueError(f"{path}: nothing to measure in that range")
+    return np.memmap(raw, dtype=np.uint8, mode="r", shape=(n, h, w, 3))
+
+
+def _luma(f):
+    return f[..., 0] * 0.2126 + f[..., 1] * 0.7152 + f[..., 2] * 0.0722
+
+
+def _sharpness(y):
+    """Fine detail per unit of edge strength: falls as a picture softens, roughly
+    independent of how much texture is in view."""
+    lap = np.abs(4 * y[1:-1, 1:-1] - y[:-2, 1:-1] - y[2:, 1:-1] - y[1:-1, :-2] - y[1:-1, 2:])
+    gx, gy = y[1:-1, 2:] - y[1:-1, :-2], y[2:, 1:-1] - y[:-2, 1:-1]
+    return float(lap.mean() / max(float(np.sqrt(gx * gx + gy * gy).mean()), 1e-3))
+
+
+def _look(frames):
+    """Exposure, saturation, color histogram, sharpness and framing thumbnail of a stack."""
+    lumas, sats, sharp, thumbs = [], [], [], []
+    hist = np.zeros(512)
+    for f in frames:
+        f = f.astype(np.float32)
+        y = _luma(f)
+        hi, lo = f.max(-1), f.min(-1)
+        lumas.append(float(y.mean()))
+        sats.append(float(((hi - lo) / np.maximum(hi, 1)).mean() * 255))
+        q = np.clip((f / 32).astype(np.int32), 0, 7)
+        hist += np.bincount((q[..., 0] * 64 + q[..., 1] * 8 + q[..., 2]).ravel(), minlength=512)
+        sharp.append(_sharpness(y))
+        thumbs.append(_thumb(y))
+    return {"luma": float(np.mean(lumas)), "sat": float(np.mean(sats)), "hist": hist / hist.sum(),
+            "sharp": float(np.mean(sharp)), "thumbs": thumbs}
+
+
+def _thumb(y):
+    s = max(1, y.shape[1] // _FRAME_W)
+    h, w = y.shape[0] // s, y.shape[1] // s
+    return y[:h * s, :w * s].reshape(h, s, w, s).mean(axis=(1, 3))
+
+
+def _zoom(img, s):
+    """``img`` magnified ``s`` times about its center (bilinear), same size."""
+    h, w = img.shape
+    ys = ((h - h / s) / 2 + (np.arange(h) + 0.5) / s - 0.5).clip(0, h - 1)
+    xs = ((w - w / s) / 2 + (np.arange(w) + 0.5) / s - 0.5).clip(0, w - 1)
+    yi, xi = np.minimum(ys.astype(int), h - 2), np.minimum(xs.astype(int), w - 2)
+    fy, fx = (ys - yi)[:, None], (xs - xi)[None]
+    a, b = img[yi][:, xi], img[yi][:, xi + 1]
+    c, d = img[yi + 1][:, xi], img[yi + 1][:, xi + 1]
+    return a * (1 - fy) * (1 - fx) + b * (1 - fy) * fx + c * fy * (1 - fx) + d * fy * fx
+
+
+def _std(a):
+    a = a - a.mean(axis=-1, keepdims=True)
+    return a / (a.std(axis=-1, keepdims=True) + 1e-6)
+
+
+class _Framing:
+    """Apparent zoom of a picture relative to a reference: the magnification of the
+    reference (with a small shift) whose structure best matches it."""
+
+    def __init__(self, ref_thumb):
+        m = 6
+        h, w = ref_thumb.shape
+        self.crop = (slice(m, h - m), slice(m, w - m))
+        rows, self.scales = [], []
+        for s in _FRAME_SCALES:
+            z = _zoom(ref_thumb, s)
+            for dy, dx in _FRAME_SHIFTS:
+                rows.append(z[m + dy:h - m + dy, m + dx:w - m + dx].ravel())
+                self.scales.append(s)
+        self.templates = _std(np.stack(rows))
+        self.scales = np.array(self.scales)
+
+    def measure(self, thumbs):
+        """(scale, match) over a stack: median best scale and its median correlation."""
+        best_s, best_c = [], []
+        for t in thumbs:
+            c = self.templates @ _std(t[self.crop].ravel()) / self.templates.shape[1]
+            i = int(np.argmax(c))
+            best_s.append(self.scales[i])
+            best_c.append(c[i])
+        return float(np.exp(np.median(np.log(best_s)))), float(np.median(best_c))
+
+
+def _compare(look, ref, framing, sharp_base, limits):
+    """Shifts of ``look`` from ``ref``, framing from ``framing``, and the limits crossed."""
+    scale, match = framing.measure(look["thumbs"])
+    row = {
+        "exposure": round(look["luma"] - ref["luma"], 1),
+        "saturation": round(look["sat"] - ref["sat"], 1),
+        "color_match": round(float(np.minimum(look["hist"], ref["hist"]).sum()), 3),
+        "sharpness": round(look["sharp"] / max(sharp_base, 1e-6), 3) if sharp_base else None,
+        "framing_scale": round(scale, 2),
+        "framing_match": round(match, 2),
+    }
+    flags = []
+    if abs(row["exposure"]) > limits["exposure"]:
+        flags.append("exposure")
+    if abs(row["saturation"]) > limits["saturation"]:
+        flags.append("saturation")
+    if row["color_match"] < limits["color_match"]:
+        flags.append("color")
+    if row["sharpness"] is not None and row["sharpness"] < limits["sharpness"]:
+        flags.append("detail")
+    if match >= limits["framing_match"] and not 1 / limits["framing"] <= scale <= limits["framing"]:
+        flags.append("framing")
+    row["flags"] = flags
+    return row
+
+
+async def _analysis_size(stimma, path):
+    info = await probe(stimma, path)
+    return (_DRIFT_W, max(2, round(info["height"] * _DRIFT_W / info["width"] / 2) * 2)), info
+
+
+async def drift(stimma, video, *, reference=None, window=4.0, limits=None):
+    """Has a long take drifted from where it started? Measures look, detail and framing
+    over time against a reference.
+
+    Each generation that starts from the previous one's output adds a little
+    error, and it compounds: colors saturate and darken, fine detail smears, and
+    the framing creeps in. Each step looks fine next to its neighbor, so
+    comparing neighbors (or watching) misses it. This compares every stretch of
+    the take with the reference instead.
+
+    ``video``: a path, measured in windows of ``window`` seconds; or a list of
+    segments (paths, or dicts with ``path`` and optional ``trim_head``,
+    ``trim_tail``, ``overlap`` in frames, as for ``join``), measured one window
+    per segment, leaving out each segment's trimmed and overlapping frames.
+    ``reference``: the picture whose framing the take should keep, such as the
+    start image (a still, or a video's opening); default the first window. Look
+    and detail are always compared with the first window: no video reproduces a
+    still's exact palette and crispness, so measuring those against the still
+    would only measure the first generation.
+
+    Per window: ``exposure`` and ``saturation`` (shift in 0-255 levels),
+    ``color_match`` (histogram overlap, 1 = same palette), ``sharpness`` (fine
+    detail relative to the first window, 1 = unchanged), ``framing_scale``
+    (apparent zoom vs the reference, above 1 = tighter) with ``framing_match``
+    (how well the pictures align; below ``DRIFT_LIMITS["framing_match"]`` the
+    content differs too much to judge framing), and ``flags`` naming each limit
+    crossed. Returns ``{"ok", "summary", "windows", "worst", "limits"}``.
+
+    Measured against the start, a planned change also reads as drift: a move
+    to a new place or a planned push-in. Read the flags against the plan, and
+    look at the flagged windows next to the reference.
+    """
+    limits = {**DRIFT_LIMITS, **(limits or {})}
+    segments = None if isinstance(video, (str, Path)) else [
+        {"path": s} if isinstance(s, (str, Path)) else dict(s) for s in video]
+    first = video if segments is None else segments[0]["path"]
+    size, info = await _analysis_size(stimma, first)
+    work = Path(".seamkit") / uuid.uuid4().hex[:8]
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        spans = []
+        if segments is None:
+            frames = await _samples(stimma, video, size, work)
+            n = max(1, round(window * _DRIFT_FPS))
+            for i in range(0, len(frames), n):
+                if len(frames) - i >= max(2, n // 2) or i == 0:
+                    spans.append((i / _DRIFT_FPS, min(len(frames), i + n) / _DRIFT_FPS, frames[i:i + n]))
+        else:
+            t = 0.0
+            for k, seg in enumerate(segments):
+                seg_info = info if k == 0 else await probe(stimma, seg["path"])
+                fps = seg_info["fps"] or 24.0
+                head = int(seg.get("trim_head", 0)) + (int(seg.get("overlap", 0)) if k else 0)
+                total = round(seg_info["duration"] * fps)
+                end = total - int(seg.get("trim_tail", 0))
+                frames = await _samples(stimma, seg["path"], size, work, start=head, end=end)
+                spans.append((t, t + (end - head) / fps, frames))
+                t += (end - head) / fps
+        base = _look(spans[0][2])
+        thumbs = base["thumbs"]
+        if reference is not None:
+            still = Path(str(reference)).suffix.lower() in _STILL_SUFFIXES
+            end = None if still else round(window * ((await probe(stimma, reference))["fps"] or 24.0))
+            thumbs = _look(await _samples(stimma, reference, size, work, end=end))["thumbs"]
+        framing = _Framing(np.mean(thumbs, axis=0))
+        windows = []
+        for k, (t0, t1, frames) in enumerate(spans):
+            row = _compare(base if k == 0 else _look(frames), base, framing, base["sharp"], limits)
+            windows.append({"start": round(t0, 2), "end": round(t1, 2), **row})
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    flagged = [w for w in windows if w["flags"]]
+    worst = {
+        "exposure": max((w["exposure"] for w in windows), key=abs),
+        "saturation": max((w["saturation"] for w in windows), key=abs),
+        "color_match": min(w["color_match"] for w in windows),
+        "sharpness": min(w["sharpness"] for w in windows),
+        "framing_scale": max((w["framing_scale"] for w in windows if w["framing_match"] >= limits["framing_match"]),
+                             key=lambda s: abs(math.log(s)), default=None),
+    }
+    if flagged:
+        kinds = sorted({f for w in flagged for f in w["flags"]})
+        summary = (f"drift in {', '.join(kinds)} from {flagged[0]['start']:g} s "
+                   f"({len(flagged)} of {len(windows)} windows)")
+    else:
+        summary = f"no drift beyond the limits across {len(windows)} windows"
+    return {"ok": not flagged, "summary": summary, "windows": windows, "worst": worst, "limits": limits}
+
+
+async def anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12):
+    """Do anchor stills agree with the source picture before you render video from them?
+
+    Segments that start from separate stills only join smoothly when the stills
+    share the source's shape, framing and look: a bridge between two stills
+    framed differently resolves the difference with a cut, not a move. Image
+    edits often reframe a little tighter or shift the exposure without being
+    asked. Compare each anchor with the source and redo the ones that moved.
+
+    Per still: ``aspect`` (its width/height over the source's), ``framing_scale``
+    (apparent zoom vs the source, above 1 = tighter) and ``framing_match``,
+    ``exposure``, ``saturation``, ``color_match``, and ``flags``. Framing is
+    flagged outside ``framing_tolerance`` either way when the pictures align well
+    enough to judge (``framing_match`` 0.5 or more); a still showing a new place
+    can't be compared that way and is marked ``comparable: False``, so check its
+    framing by eye. Returns ``{"ok", "stills": [...]}``.
+    """
+    limits = {**DRIFT_LIMITS, **(limits or {}), "framing": framing_tolerance, "framing_match": 0.5}
+    size, info = await _analysis_size(stimma, source)
+    work = Path(".seamkit") / uuid.uuid4().hex[:8]
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        ref = _look(await _samples(stimma, source, size, work, end=1))
+        framing = _Framing(ref["thumbs"][0])
+        out = []
+        for path in stills:
+            s_info = await probe(stimma, path)
+            row = _compare(_look(await _samples(stimma, path, size, work, end=1)), ref, framing, None, limits)
+            aspect = (s_info["width"] / s_info["height"]) / (info["width"] / info["height"])
+            row = {"path": str(path), "aspect": round(aspect, 3), **row,
+                   "comparable": row["framing_match"] >= limits["framing_match"]}
+            if abs(aspect - 1) > 0.01:
+                row["flags"].insert(0, "aspect")
+            out.append(row)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    return {"ok": not any(r["flags"] for r in out), "stills": out}
