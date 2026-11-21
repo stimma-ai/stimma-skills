@@ -35,10 +35,15 @@ Every join between two clips can carry any of these:
 - **An audio jump.** Loudness and room tone change between runs; a hard splice clicks.
 - **A slow start.** Image-to-video often opens with a lull of a second or so while
   motion builds (MiniMax H3 often), and a clip pinned to a last frame can coast
-  into one. Loop or join across a lull and the rhythm breaks.
+  into one. Loop or join across a lull and the rhythm breaks: slow, pause, jump.
+- **Judder.** Some generated clips repeat a frame in a steady cadence, so motion
+  stutters inside the clip.
 
-`seamkit` fixes exposure, repeated frames, popping heads and audio, and measures
-motion; motion is fixed by what you use of each clip, how you pin, and where you join.
+`seamkit` fixes exposure, repeated frames, popping heads, judder and audio. Where a
+clip slows into or out of a seam it leaves out the slowest frames so the motion
+keeps its pace, and it switches the sound at a quiet moment near each seam. It
+measures motion; the rest of motion is fixed by what you use of each clip, how you
+pin, and where you join.
 
 ## Working rules
 
@@ -96,8 +101,11 @@ with a tool that pins frames at both ends:
    passed as references, the same voice reference on every segment, and the prompt
    describing the action that takes one into the other.
 3. **Join** them in order with seamkit, `trim_head: 1` on every segment after the
-   first (its opening repeats the anchor the previous one ended on). Trim the last
-   segment's tail so the take is exactly the requested length.
+   first (its opening repeats the anchor the previous one ended on), none of them
+   locked. Each segment slows into the still it ends on and starts slowly from the
+   next; seamkit leaves those slow frames out (up to about half a second per
+   join), so plan a little extra length. Trim the last segment's tail so the take
+   is exactly the requested length.
 
 Every segment renders at once, so every GPU works. Submit them together, sized to
 `await stimma.tasks.workers(tool)`, inside `stimma.batch(title, total=N)` so the
@@ -252,7 +260,8 @@ Each segment is a path, or a dict with:
 
 - `lock: True` for footage that must not change (the user's clip, a loop's source).
   Unlocked segments get a gain and offset fitted at each end and ramped between;
-  if nothing is locked, the first segment is.
+  if nothing is locked, the first segment is the color reference. Only segments
+  you didn't lock are retimed or repaired.
 - `overlap: N` when this segment's first N frames show the same moments as the
   previous segment's last N (a pinned clip). They're crossfaded, picture and sound,
   which hides the join; use it for every delivered take.
@@ -267,7 +276,11 @@ Each segment is a path, or a dict with:
 Options: `loop=True` joins the end back to the start. `audio="auto"` (the default)
 joins each segment's sound, matches loudness at the seams and removes clicks;
 `"loop"` makes a seamless loop of the locked segments' sound; `"none"` drops audio.
-`fps=` resamples mismatched frame rates as a last resort. The output is H.264,
+`fps=` resamples mismatched frame rates as a last resort. `pace=True` (default)
+leaves out slow frames next to a hard seam and blends two frames across it;
+`repair=True` (default) replaces repeated frames with interpolated ones. At every
+seam the sound switches at the quietest moment within `audio_search` seconds
+(0.25), each side keeping its own sync, so speech isn't cut mid-word or doubled. The output is H.264,
 BT.709, encoded once at high quality. `preserve_state=True` instead cuts hard after
 each overlap and keeps stored state on the joined file, so the joins can show; to
 extend a finished take, pin its last segment from the library instead.
@@ -290,7 +303,9 @@ stills)` checks anchor stills against the source the same way, before rendering.
 
 For each seam, `before` and `after` give `median_delta_rgb` (level difference) and
 `motion_step_ratio` (the jump across the seam over a normal frame step); `fit` says
-what kind of mismatch it was, and each segment lists its `actions`.
+what kind of mismatch it was, `at_frame` is where the seam lands in the output,
+`slow_frames_left_out` how many frames pacing dropped there, and each segment
+lists its `actions`.
 
 - **After:** deltas within 1–2 levels and a motion ratio under about 2 are invisible.
 - **`motion_step_ratio` well above 2 after the join:** the motion jumps, and color

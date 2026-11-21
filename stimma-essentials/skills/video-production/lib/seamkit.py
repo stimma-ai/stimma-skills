@@ -141,6 +141,27 @@ def _smoothstep(x):
 
 # ---------------------------------------------------------------- segments
 
+class _Frames:
+    """A segment's frames with some left out or replaced; indexes like an array."""
+
+    def __init__(self, raw, idx, fix):
+        self.raw, self.idx, self.fix = raw, idx, fix
+
+    def __len__(self):
+        return len(self.idx)
+
+    def _one(self, i):
+        return self.fix[i] if i in self.fix else self.raw[i]
+
+    def __getitem__(self, k):
+        if isinstance(k, slice):
+            sel = self.idx[k]
+            if not sel:
+                return np.zeros((0,) + self.raw.shape[1:], np.uint8)
+            return np.stack([self._one(i) for i in sel])
+        return self._one(self.idx[k])
+
+
 class _Segment:
     def __init__(self, spec, index):
         spec = {"path": spec} if isinstance(spec, (str, Path)) else dict(spec)
@@ -150,17 +171,30 @@ class _Segment:
         self.index = index
         self.path = str(spec["path"])
         self.lock = spec.get("lock")
+        self.footage = bool(self.lock)  # locked by the caller: never retimed or repaired
         self.trim_head = int(spec.get("trim_head", 0))
         self.trim_tail = int(spec.get("trim_tail", 0))
         self.overlap = int(spec.get("overlap", 0))
         self.cut = bool(spec.get("cut", False))
+        self.skip = set()       # raw frames left out to keep the pace across a seam
+        self.skip_head = self.skip_tail = 0
+        self.fix = {}           # raw frame -> replacement (repaired repeats)
+        self.blend = 0          # frames crossfaded with the previous segment at a hard seam
+        self.audio_pre = self.audio_post = None
         self.actions = []
         self.head_t = self.tail_t = np.array([[1.0, 0.0]] * 3)
 
     @property
     def frames(self):
         end = len(self.raw) - self.trim_tail
-        return self.raw[self.trim_head:end]
+        if not self.skip and not self.fix:
+            return self.raw[self.trim_head:end]
+        return _Frames(self.raw, [i for i in range(self.trim_head, end) if i not in self.skip], self.fix)
+
+    def raw_index(self, j):
+        """Raw frame index of output position j (after trims and skips)."""
+        end = len(self.raw) - self.trim_tail
+        return [i for i in range(self.trim_head, end) if i not in self.skip][j]
 
     def transform_at(self, i, n):
         """Correction for frame i of n: ramps head -> tail with a smoothstep."""
@@ -265,6 +299,123 @@ def _trim(segs, loop):
                 break
 
 
+def _repeats(frames):
+    """Frames that nearly repeat the one before while the next step makes up for it.
+
+    Some generators emit these in a regular cadence: the picture holds for a
+    frame, then jumps two frames' worth, a judder you see as uneven motion.
+    Returns local indices of the repeated frames.
+    """
+    n = len(frames)
+    if n < 8:
+        return []
+    steps = np.array([_content_diff(frames[i], frames[i + 1]) for i in range(n - 1)])
+    floor = 0.3 * float(np.median(steps))
+    out = []
+    for i in range(1, n - 2):
+        local = float(np.median(steps[max(0, i - 6):i + 7]))
+        if local > floor and steps[i] < 0.4 * local and steps[i + 1] > 1.4 * local:
+            out.append(i + 1)
+    return out
+
+
+async def _repair_repeats(stimma, segs, work):
+    """Replace repeated frames in segments the caller did not lock with interpolated ones."""
+    for seg in segs:
+        if seg.footage:
+            continue
+        f = seg.frames
+        found = [j for j in _repeats(f) if 0 < j < len(f) - 1]
+        if not found:
+            continue
+        h, w = f[0].shape[:2]
+        pairs = work / f"{seg.index}.pairs.rgb"
+        mids = work / f"{seg.index}.mids.rgb"
+        with open(pairs, "wb") as fh:
+            for j in found:
+                fh.write(np.ascontiguousarray(f[j - 1]).tobytes())
+                fh.write(np.ascontiguousarray(f[j + 1]).tobytes())
+            fh.write(np.ascontiguousarray(f[found[-1] + 1]).tobytes())  # the filter holds back its last frames
+            fh.write(np.ascontiguousarray(f[found[-1] + 1]).tobytes())
+        # Doubling the rate puts a motion-compensated middle frame after every
+        # input frame; the one after each pair's first frame is the repair.
+        await stimma.ffmpeg("-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}",
+                            "-framerate", "24", "-i", str(pairs),
+                            "-vf", "minterpolate=fps=48:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1:scd=none",
+                            "-f", "rawvideo", "-pix_fmt", "rgb24", str(mids), timeout=1800)
+        out = np.fromfile(mids, dtype=np.uint8)
+        out = out[:len(out) // (w * h * 3) * (w * h * 3)].reshape(-1, h, w, 3)
+        base = seg.trim_head
+        for n, j in enumerate(found):
+            if 4 * n + 1 < len(out):
+                seg.fix[base + j] = out[4 * n + 1].copy()
+        seg.actions.append(f"replaced {len(found)} repeated frame(s) with interpolated ones")
+
+
+def _pace_keep(steps, target):
+    """Positions to keep along a run of frames so motion advances ~target per frame.
+
+    The first and last positions are always kept; nothing is ever repeated.
+    """
+    arc = np.concatenate([[0.0], np.cumsum(steps)])
+    m = int(np.clip(round(arc[-1] / max(target, 1e-6)), 1, len(steps)))
+    keep = []
+    for goal in np.linspace(0.0, arc[-1], m + 1):
+        i = int(np.argmin(np.abs(arc - goal)))
+        if not keep or i > keep[-1]:
+            keep.append(i)
+    if keep[-1] != len(arc) - 1:
+        keep.append(len(arc) - 1)
+    return keep
+
+
+def _match_pace(segs, loop, fps, blend):
+    """Keep the motion's pace through hard seams.
+
+    A generated segment pinned to a still at its start or end slows into it:
+    the last and first half second barely move, so a join there reads as slow,
+    pause, jump. Where the frames next to a seam move clearly slower than the
+    footage around it, leave out slow frames from the side(s) not locked so
+    the motion advances at the surrounding pace, then blend ``blend`` frames
+    across the seam. Returns {(prev, next): frames left out}.
+    """
+    span = max(4, round(fps / 2))
+    done = {}
+    for prev, nxt in _seams(segs, loop):
+        if nxt.cut or nxt.overlap or (prev.footage and nxt.footage):
+            continue
+        pf, nf = prev.frames, nxt.frames
+        if len(pf) < 3 * span or len(nf) < 3 * span:
+            continue
+        lp = 0 if prev.footage else span
+        ln = 0 if nxt.footage else span
+        seq = list(pf[len(pf) - lp - 1:]) + list(nf[:ln + 1])
+        steps = np.array([_content_diff(seq[i], seq[i + 1]) for i in range(len(seq) - 1)])
+        around = [_content_diff(pf[i], pf[i + 1]) for i in range(len(pf) - 3 * span, len(pf) - span - 1)]
+        around += [_content_diff(nf[i], nf[i + 1]) for i in range(span, 3 * span - 1)]
+        pace = float(np.median(around))
+        dropped = 0
+        if pace > 0 and float(np.mean(steps)) < 0.75 * pace:
+            keep = set(_pace_keep(steps, pace))
+            p_drop = [k for k in range(1, lp + 1) if k not in keep]
+            n_drop = [k for k in range(lp + 1, lp + ln + 1) if k not in keep]
+            p_raw = [prev.raw_index(len(pf) - lp - 1 + k) for k in p_drop]
+            n_raw = [nxt.raw_index(k - lp - 1) for k in n_drop]
+            prev.skip.update(p_raw)
+            nxt.skip.update(n_raw)
+            prev.skip_tail += len(p_raw)
+            nxt.skip_head += len(n_raw)
+            dropped = len(p_raw) + len(n_raw)
+            if p_raw:
+                prev.actions.append(f"left out {len(p_raw)} slow frame(s) before the seam into segment {nxt.index}")
+            if n_raw:
+                nxt.actions.append(f"left out {len(n_raw)} slow frame(s) after the seam from segment {prev.index}")
+        if blend and not prev.footage and not nxt.footage:
+            nxt.blend = blend
+        done[(prev.index, nxt.index)] = dropped
+    return done
+
+
 def _seam_windows(prev, nxt):
     """Matching frame stacks either side of a seam (the shared frames when overlapping)."""
     k = nxt.overlap or _REF_FRAMES
@@ -332,7 +483,7 @@ def _plan(segs, loop=False):
     plan = []
     for seg in segs:
         n = len(seg.frames)
-        k = min(seg.overlap, n, len(plan)) if plan and not seg.cut else 0
+        k = min(seg.overlap or seg.blend, n, len(plan)) if plan and not seg.cut else 0
         for j in range(k):
             w = _smoothstep((j + 1) / (k + 1))
             plan[len(plan) - k + j] = ("blend", plan[len(plan) - k + j], (seg, j), w)
@@ -403,15 +554,20 @@ def _rms_db(x):
     return 20 * math.log10(rms) if rms > 1e-5 else None
 
 
-def _segment_audio(seg, fps):
+def _segment_audio(seg, fps, ext=0):
+    """The segment's sound for its output frames, plus up to ``ext`` samples of the
+    sound just outside them (frames trimmed or left out) for crossfades."""
     per_frame = SAMPLE_RATE / fps
-    start = round(seg.trim_head * per_frame)
+    start = round((seg.trim_head + seg.skip_head) * per_frame)
     n = round(len(seg.frames) * per_frame)
     if seg.audio is None:
+        seg.audio_pre = seg.audio_post = np.zeros((0, 2), np.float32)
         return np.zeros((n, 2), np.float32), False
     a = seg.audio[start:start + n]
     if len(a) < n:
         a = np.concatenate([a, np.zeros((n - len(a), 2), np.float32)])
+    seg.audio_pre = seg.audio[max(0, start - ext):start].astype(np.float32)
+    seg.audio_post = seg.audio[start + n:start + n + ext].astype(np.float32)
     return a.astype(np.float32), True
 
 
@@ -444,6 +600,9 @@ def _match_loudness(segs, tracks, loop, window_s=2.0):
         ramp = _smoothstep(np.linspace(0, 1, len(audio), dtype=np.float32))
         db = h * (1 - ramp) + t * ramp
         tracks[i] = (audio * (10 ** (db / 20))[:, None], real)
+        if seg.audio_pre is not None:
+            seg.audio_pre = seg.audio_pre * 10 ** (h / 20)
+            seg.audio_post = seg.audio_post * 10 ** (t / 20)
         gains[seg.index] = {"head_db": round(h, 2), "tail_db": round(t, 2)}
     return gains
 
@@ -453,14 +612,54 @@ def _xfade(a, b):
     return a * np.cos(w * np.pi / 2) + b * np.sin(w * np.pi / 2)
 
 
-def _assemble_audio(segs, tracks, fps, loop=False):
-    """Join tracks on the video's timeline: crossfade overlaps, de-click hard joins."""
+def _rms(x):
+    return float(np.sqrt(np.mean(np.square(x)))) if len(x) else 0.0
+
+
+def _assemble_audio(segs, tracks, fps, loop=False, xfade=0, search=0):
+    """Join tracks on the video's timeline: crossfade overlaps, de-click hard joins.
+
+    At a seam the sound switches from one segment to the next at the quietest
+    moment within ``search`` samples of the seam (or of the middle of the
+    frames the two share), with an ``xfade`` crossfade there. Each side keeps its own timing (sound just outside a
+    segment's frames covers the difference), so speech stays in sync and is
+    never cut mid-word or doubled when a quieter moment is near.
+    """
     per_frame = SAMPLE_RATE / fps
     out = np.zeros((0, 2), np.float32)
+    dangle = np.zeros((0, 2), np.float32)  # previous segment's sound past its last frame
+    win = SAMPLE_RATE // 50
     for seg, (audio, _) in zip(segs, tracks):
         audio = audio.copy()
+        joined = len(out) and not seg.cut
+        pre = seg.audio_pre if seg.audio_pre is not None else np.zeros((0, 2), np.float32)
+        if joined and (xfade or seg.blend or seg.overlap):
+            shared = seg.overlap or seg.blend
+            kb = min(round(min(shared, len(seg.frames)) * per_frame), len(out), len(audio))
+            n_start = len(out) - kb                     # timeline sample where this segment's frames begin
+            prev = np.concatenate([out, dangle])        # previous sound, valid up to len(prev)
+            nxt = np.concatenate([pre, audio])          # this sound, starting at n_start - len(pre)
+            off = n_start - len(pre)
+            h = max(xfade // 2, kb // 2, 1)
+            center = n_start + kb // 2
+            lo = max(center - search, off + h, h)
+            hi = min(center + search, len(prev) - h, off + len(nxt) - h)
+            ts = center
+            if hi >= lo:
+                best = None
+                for t in range(lo, hi + 1, max(1, SAMPLE_RATE // 200)):
+                    loud = _rms(prev[t - win:t + win]) + _rms(nxt[t - off - win:t - off + win])
+                    score = loud * (1 + 0.5 * abs(t - center) / max(search, 1))
+                    if best is None or score < best:
+                        best, ts = score, t
+            h = max(1, min(h, ts - off, len(prev) - ts, ts))
+            out = np.concatenate([prev[:ts - h], _xfade(prev[ts - h:ts + h], nxt[ts - h - off:ts + h - off]),
+                                  nxt[ts + h - off:]])
+            dangle = seg.audio_post if seg.audio_post is not None else np.zeros((0, 2), np.float32)
+            continue
         k = round(min(seg.overlap, len(seg.frames)) * per_frame) if len(out) and not seg.cut else 0
         k = min(k, len(out), len(audio))
+        dangle = seg.audio_post if seg.audio_post is not None else np.zeros((0, 2), np.float32)
         if k:
             out[-k:] = _xfade(out[-k:], audio[:k])
             audio = audio[k:]
@@ -527,7 +726,8 @@ async def _encode(stimma, frames_path, audio, size, fps, out, crf):
 
 
 async def join(stimma, segments, out=None, *, loop=False, match=True, audio="auto",
-               fps=None, crf=14, keep_work=False, preserve_state=False):
+               fps=None, crf=14, keep_work=False, preserve_state=False, pace=True,
+               repair=True, audio_xfade=0.06, audio_search=0.25):
     """Join segments into ``out`` with every seam handled; returns a report.
 
     ``segments`` is a list of paths or dicts with:
@@ -548,6 +748,15 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
     "loop" replaces the soundtrack with a seamless loop of the locked
     segments' audio, for silent bridges; "none" drops audio.
     ``out=None`` measures and reports without writing (same as ``check``).
+
+    ``pace=True`` keeps motion at the surrounding pace through hard seams: where
+    a segment slows into or out of a seam (a pinned still at its end or start
+    does this), slow frames on a side you did not lock are left out and two frames
+    are blended across the seam. ``repair=True`` replaces frames an adjustable
+    segment nearly repeats (a judder some generators produce) with interpolated
+    ones. At hard seams the sound switches at the quietest moment within
+    ``audio_search`` seconds, crossfaded over ``audio_xfade`` seconds, each side
+    keeping its own sync.
     """
     if preserve_state:
         if out is None or loop or fps is not None or audio != "auto":
@@ -571,6 +780,9 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
                     np.concatenate([prev.frames[-_REF_FRAMES:], nxt.frames[:_REF_FRAMES]]),
                     min(_REF_FRAMES, len(prev.frames)))
         _trim(segs, loop)
+        if repair and out is not None:
+            await _repair_repeats(stimma, segs, work)
+        paced = _match_pace(segs, loop, out_fps, 2) if pace else {}
         fits = _solve(segs, loop, match)
         plan = _plan(segs, loop)
         report = {"frames": len(plan), "fps": out_fps, "warnings": warnings, "seams": [],
@@ -595,13 +807,16 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
             at = positions.get(key[1])
             after = _measure_output(frames, 0 if wrap else at, wrap=wrap) if wrap or at is not None else None
             report["seams"].append({"between": list(key), "before": before[key],
-                                    "fit": fits.get(key), "after": after})
+                                    "fit": fits.get(key), "after": after, "at_frame": 0 if wrap else at,
+                                    "slow_frames_left_out": paced.get(key, 0)})
 
         track = None
         if audio == "auto" and any(s.audio is not None for s in segs):
-            tracks = [_segment_audio(s, out_fps) for s in segs]
+            xfade = round(max(0.0, audio_xfade) * SAMPLE_RATE)
+            search = round(max(0.0, audio_search) * SAMPLE_RATE)
+            tracks = [_segment_audio(s, out_fps, search + xfade) for s in segs]
             report["audio_gains_db"] = _match_loudness(segs, tracks, loop)
-            track = _assemble_audio(segs, tracks, out_fps, loop)
+            track = _assemble_audio(segs, tracks, out_fps, loop, xfade, search)
         elif audio == "loop":
             sources = [s.audio for s in segs if s.lock and s.audio is not None]
             if not sources:

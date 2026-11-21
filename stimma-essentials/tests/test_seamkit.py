@@ -162,3 +162,49 @@ async def test_state_preserving_join_measures_rich_host_report_without_repair(lo
     assert len(report["seams"]) == 1
     assert report["segments"] == parts
     assert report["companions"] == 2
+
+
+def _steps(path):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-vf", "format=gray", "-f", "rawvideo", "-"],
+                         capture_output=True, check=True).stdout
+    g = np.frombuffer(raw, np.uint8).reshape(-1, H, W).astype(np.float32)
+    return np.abs(np.diff(g, axis=0)).mean(axis=(1, 2))
+
+
+async def test_slow_approach_to_a_seam_keeps_the_pace(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Two generated segments meet on a pinned still: the first slows to a near
+    # stop over its last half second, the second starts from one.
+    ease = np.linspace(1.0, 0.08, 12)
+    a_t = np.concatenate([np.arange(36, dtype=float), 35 + np.cumsum(ease)])
+    b_t = a_t[-1] + np.concatenate([[0.0], np.cumsum(ease[::-1]), ease.sum() + 1 + np.arange(35)])
+    write_clip(Path("a.mp4"), [scene(t) for t in a_t])
+    write_clip(Path("b.mp4"), [scene(t) for t in b_t])
+    plain = await seamkit.join(FakeStimma(), ["a.mp4", "b.mp4"], "plain.mp4", pace=False)
+    report = await seamkit.join(FakeStimma(), ["a.mp4", "b.mp4"], "paced.mp4")
+    assert report["seams"][0]["slow_frames_left_out"] >= 4, report["seams"][0]
+    assert report["frames"] < plain["frames"] - 4
+
+    def slowest(path, at):
+        s = _steps(path)
+        typical = np.median(s)
+        window = s[max(0, at - 10):at + 10]
+        return np.convolve(window, np.ones(5) / 5, mode="valid").min() / typical
+
+    assert slowest("plain.mp4", plain["seams"][0]["at_frame"]) < 0.5
+    assert slowest("paced.mp4", report["seams"][0]["at_frame"]) > 0.6
+    info = await seamkit.probe(FakeStimma(), "paced.mp4")
+    assert abs(info["duration"] - report["frames"] / FPS) < 0.1
+
+
+async def test_repeated_frames_are_replaced_by_interpolated_ones(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Every fourth frame repeats the one before; the next frame catches up.
+    t = np.arange(48, dtype=float)
+    shown = [scene(x - 1 if i % 4 == 3 else x) for i, x in enumerate(t)]
+    write_clip(Path("a.mp4"), [scene(x) for x in range(-24, 0)])
+    write_clip(Path("b.mp4"), shown)
+    report = await seamkit.join(FakeStimma(), ["a.mp4", {"path": "b.mp4", "cut": True}], "out.mp4")
+    assert any("repeated" in a for a in report["segments"][1]["actions"]), report["segments"][1]
+    s = _steps("out.mp4")[24:-1]  # a repeat in the very last frame has nothing after it
+    assert s.min() > 0.4 * np.median(s)
