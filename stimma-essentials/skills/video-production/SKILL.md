@@ -179,6 +179,9 @@ out and comes back. Check the wrap with `seamkit.check(stimma, path, loop=True)`
 - **Local:** MiniMax H3 Reference to Video, pinning the previous segment's last
   second with sound at 0, the same voice reference, and the same reference images.
   Pin where each segment should land as a keyframe at its end. Join with `overlap`.
+  Run `seamkit.cuts` on each segment before joining it. A continuation is meant to
+  be one shot, but the model sometimes cuts to a new framing, most often right as
+  the pin ends; regenerate that segment rather than joining it.
 - **Cloud:** SkyReels V4 Extend, or MiniMax H3 Reference to Video with the clip's last
   few seconds in `input_videos` and `input_audios`. Join without `overlap`; seamkit
   drops repeated frames and matches the exposure.
@@ -254,6 +257,11 @@ BT.709, encoded once at high quality.
 `seamkit.motion(stimma, path)` reports motion per second relative to the clip's
 steady level, with `settles_at` and `fades_at`, the window where it's actually
 moving.
+`seamkit.cuts(stimma, path, ignore_before=0, seams=None)` finds hard cuts inside a
+clip or a joined video, with a time and confidence for each. Pass the pinned length
+as `ignore_before` for a continuation (the boundary where the pin ends is still
+checked), and your own join times as `seams` for a joined take, so a cut you made
+is marked `at_seam` and a cut inside a segment is not.
 
 ### Read the report
 

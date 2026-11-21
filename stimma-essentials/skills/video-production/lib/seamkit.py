@@ -665,3 +665,130 @@ async def motion(stimma, path, *, threshold=0.6):
         "settles_at": round(settles if settles >= 0.25 else 0.0, 2),
         "fades_at": round(fades if len(frames) / fps - fades >= 0.25 else len(frames) / fps, 2),
     }
+
+
+# ---------------------------------------------------------------- cut detection
+
+_CUT_W = 128          # analysis width; cuts are global, so a thumbnail is enough
+_CUT_SHIFT = 8        # motion compensation: best match over shifts up to this many px
+_CUT_WINDOW = 12      # frames each side that set the local baseline
+
+
+def _cut_structure(z, a, b):
+    """Motion-compensated difference between frames a[k] and b[k] (index arrays).
+
+    Exposure-normalized luma, compared at the best of a grid of shifts, so a pan,
+    a step or a fast gesture finds its match and a different picture does not.
+    About 0.03-0.1 between neighboring frames of a shot, 0.7-1.1 between
+    unrelated pictures.
+    """
+    r = _CUT_SHIFT
+    h, w = z.shape[1:]
+    out = []
+    for k in range(0, len(a), 256):   # in chunks, so a long take stays small in memory
+        core_a = z[a[k:k + 256]][:, r:h - r, r:w - r]
+        zb = z[b[k:k + 256]]
+        best = None
+        for dy in range(-r, r + 1, 2):
+            for dx in range(-r, r + 1, 2):
+                d = np.abs(core_a - zb[:, r + dy:h - r + dy, r + dx:w - r + dx]).mean(axis=(1, 2))
+                best = d if best is None else np.minimum(best, d)
+        out.append(best)
+    return np.concatenate(out)
+
+
+def _cut_scores(rgb):
+    """Score every frame boundary. ``rgb``: (n, h, w, 3) uint8 thumbnails.
+
+    ``structure``: the change across the boundary; ``ratio``: that change over the
+    clip's typical change nearby; ``persists``: the change from two frames before
+    to two frames after, over ``structure``. A cut happens in one step, so it
+    persists at about 1.0; motion keeps accumulating (1.4 and up); a flash or a
+    bad frame comes back (well under 1).
+    """
+    y = rgb[..., 0] * np.float32(0.2126) + rgb[..., 1] * np.float32(0.7152) + rgb[..., 2] * np.float32(0.0722)
+    z = (y - y.mean(axis=(1, 2), keepdims=True)) / (y.std(axis=(1, 2), keepdims=True) + 1e-6)
+    n = len(z)
+    idx = np.arange(n - 1)
+    step = _cut_structure(z, idx, idx + 1)
+    across = _cut_structure(z, np.maximum(idx - 1, 0), np.minimum(idx + 2, n - 1))
+    out = []
+    for i in idx:
+        near = [j for j in range(max(0, i - _CUT_WINDOW), min(n - 1, i + _CUT_WINDOW + 1)) if abs(j - i) > 1]
+        base = float(np.median(step[near] if near else step))
+        out.append({"frame": int(i + 1), "structure": float(step[i]),
+                    "ratio": float(step[i] / max(base, 0.02)),
+                    "persists": float(across[i] / max(step[i], 1e-6))})
+    return out
+
+
+def _sigmoid(x):
+    return 1 / (1 + math.exp(-max(-50.0, min(50.0, x))))
+
+
+def _cut_confidence(s):
+    """0..1: a visible change (structure), sudden for this clip (ratio), done in one step (persists)."""
+    if s["persists"] < 0.6:
+        return 0.0
+    visible = _sigmoid((s["structure"] - 0.10) / 0.02)
+    sudden = _sigmoid((math.log(max(s["ratio"], 1e-3)) - math.log(2.5)) / 0.15)
+    one_step = _sigmoid((1.3 - s["persists"]) / 0.06)
+    return round(visible * sudden * one_step, 3)
+
+
+async def cuts(stimma, path, *, ignore_before=0.0, seams=None, min_confidence=0.5):
+    """Find hard cuts in a clip or an assembled video.
+
+    A generated continuation should be one unbroken shot, but a model sometimes
+    jumps to a new framing or a new picture partway through. Watching a contact
+    sheet misses that; this measures every frame boundary instead. Each boundary
+    is compared with motion compensation (a pan, a step or a fast gesture finds
+    its match and scores low), against the clip's own level of change nearby (so
+    a busy clip does not read as cuts), and for persistence (a one-frame flash
+    that comes back is not a cut). A sudden lasting jump in exposure also reads
+    as a cut; look at the frames either side to tell which it is.
+
+    ``ignore_before``: seconds at the start to skip, such as a pinned prefix that
+    repeats earlier footage. The boundary where the prefix ends is still checked,
+    since a jump right after the pin is a cut in the joined video.
+    ``seams``: times (seconds) of your own joins in an assembled video; a cut
+    within two frames of one is marked ``at_seam``, so you can tell seams you
+    made from cuts inside a segment.
+
+    Returns ``{"duration", "fps", "checked_from", "cuts": [{"at", "frame",
+    "confidence", "at_seam"}], "continuous"}``. ``at`` is the time of the first
+    frame after the cut. ``continuous`` is True when no boundary reaches
+    ``min_confidence``. Confidence near 1 is an unmistakable cut; 0.5-0.8 is
+    usually a cut between similar framings of the same scene and is worth a look
+    at the frames either side.
+    """
+    info = await probe(stimma, path)
+    fps = info["fps"] or 24.0
+    w = _CUT_W
+    h = max(2 * _CUT_SHIFT + 8, round(info["height"] * w / info["width"] / 2) * 2)
+    work = Path(".seamkit") / uuid.uuid4().hex[:8]
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        raw = work / "thumbs.rgb"
+        await stimma.ffmpeg("-v", "error", "-y", "-i", str(path), "-map", "0:v:0",
+                            "-vf", f"scale={w}:{h}:flags=area,format=rgb24", "-f", "rawvideo",
+                            str(raw), timeout=1800)
+        frames = np.fromfile(raw, dtype=np.uint8).reshape(-1, h, w, 3)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    if len(frames) < 4:
+        raise ValueError(f"{path} is too short to measure")
+    first = int(math.ceil(ignore_before * fps - 1e-6))
+    seam_frames = [t * fps for t in (seams or [])]
+    found = []
+    for s in _cut_scores(frames):
+        if s["frame"] < first:
+            continue
+        c = _cut_confidence(s)
+        if c < min_confidence:
+            continue
+        found.append({"at": round(s["frame"] / fps, 3), "frame": s["frame"], "confidence": c,
+                      "at_seam": any(abs(s["frame"] - f) <= 2 for f in seam_frames)})
+    return {"duration": round(len(frames) / fps, 3), "fps": fps,
+            "checked_from": round(max(first, 0) / fps, 3), "cuts": found,
+            "continuous": not any(not c["at_seam"] for c in found)}
