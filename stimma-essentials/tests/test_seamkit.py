@@ -328,3 +328,26 @@ async def test_join_flags_a_seam_between_different_moments(tmp_path, monkeypatch
 
     clean = await seamkit.join(FakeStimma(), ["a.mp4", {"path": "b.mp4", "cut": True}], None)
     assert clean["seams"][0]["moment"] is None and not clean["warnings"]
+
+
+async def test_join_names_its_clips_as_the_output_sources(loop_clips):
+    """The encode reads raw frames, so seamkit tells the platform which clips went in."""
+    src, bridge = loop_clips
+    recorded = []
+
+    class Recording(FakeStimma):
+        async def record_sources(self, out, inputs):
+            recorded.append((out, inputs))
+            return []
+
+    report = await seamkit.join(Recording(), [{"path": src, "lock": True}, bridge], "joined.mp4")
+    assert recorded == [("joined.mp4", [str(src), str(bridge)])]
+    assert not any("sources" in w for w in report["warnings"])
+
+    class Failing(FakeStimma):
+        async def record_sources(self, out, inputs):
+            raise RuntimeError("no ledger")
+
+    report = await seamkit.join(Failing(), [{"path": src, "lock": True}, bridge], "joined2.mp4")
+    assert Path("joined2.mp4").is_file()
+    assert any("sources weren't recorded" in w for w in report["warnings"])

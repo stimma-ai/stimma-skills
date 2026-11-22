@@ -792,6 +792,19 @@ async def _lay_track(stimma, path, work, frames, fps):
                    "note": note}
 
 
+async def _record_sources(stimma, out, inputs):
+    """Name the input clips (in order) as the output's sources: the encode reads raw
+    frames, so the platform can't see them on its own. Older apps lack the call."""
+    record = getattr(stimma, "record_sources", None)
+    if record is None:
+        return None
+    try:
+        await record(str(out), [str(p) for p in inputs])
+    except Exception as e:  # history is a record, never a reason to fail the join
+        return f"the joined file's sources weren't recorded ({e}); pass sources= when saving it"
+    return None
+
+
 async def join(stimma, segments, out=None, *, loop=False, match=True, audio="auto",
                fps=None, crf=14, keep_work=False, preserve_state=False, pace=True,
                repair=True, audio_xfade=0.06, audio_search=0.25):
@@ -923,6 +936,9 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
         del frames
         await _encode(stimma, frames_path, track, size, out_fps, out, crf)
         report["out"] = str(out)
+        note = await _record_sources(stimma, out, [s.path for s in segs] + ([track_path] if track_path else []))
+        if note:
+            warnings.append(note)
         return report
     finally:
         for seg in locals().get("segs", []):
@@ -1071,10 +1087,13 @@ async def cuts(stimma, path, *, ignore_before=0.0, seams=None, min_confidence=0.
 
     Returns ``{"duration", "fps", "checked_from", "cuts": [{"at", "frame",
     "confidence", "at_seam"}], "continuous"}``. ``at`` is the time of the first
-    frame after the cut. ``continuous`` is True when no boundary reaches
-    ``min_confidence``. Confidence near 1 is an unmistakable cut; 0.5-0.8 is
-    usually a cut between similar framings of the same scene and is worth a look
-    at the frames either side.
+    frame after the cut. ``continuous`` is True when no cut was detected away
+    from the ``seams`` you gave (cuts marked ``at_seam`` don't count). It is a
+    screening result, not proof: a slow change of shot, or a segment that ignored
+    its pin from the first frame, isn't detected. ``confidence`` is a heuristic
+    strength score: higher values are clearer jumps, and 0.5-0.8 is often a cut
+    between similar framings of one scene. Look at the frames either side of any
+    cut it reports, and watch the playback.
     """
     info = await probe(stimma, path)
     fps = info["fps"] or 24.0
@@ -1354,10 +1373,12 @@ async def anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12
     """Do anchor stills agree with the source picture before you render video from them?
 
     Segments that start from separate stills only join smoothly when the stills
-    share the source's shape, framing and look: a bridge between two stills
-    framed differently resolves the difference with a cut, not a move. Image
-    edits often reframe a little tighter or shift the exposure without being
-    asked. Compare each anchor with the source and redo the ones that moved.
+    share the source's shape, framing and look. A segment between two stills
+    framed differently has to change framing on the way, and unless that's a
+    camera move the plan asks for, a model may make the change with a cut.
+    Image edits often reframe a little tighter or shift the exposure without
+    being asked. Compare each anchor with the source and redo the ones that
+    moved unless the plan meant them to.
 
     Per still: ``aspect`` (its width/height over the source's), ``framing_scale``
     (apparent zoom vs the source, above 1 = tighter) and ``framing_match``,
