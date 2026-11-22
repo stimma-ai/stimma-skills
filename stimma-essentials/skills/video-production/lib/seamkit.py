@@ -6,13 +6,14 @@ frame often repeats the frame it was pinned to, and an image-to-video head can
 carry the reference image's texture for a frame. ``join`` fixes the mechanical
 part of that at every seam:
 
-* drops a pinned frame that repeats its neighbour, and a head frame that pops;
+* drops a pinned frame that repeats its neighbor, and a head frame that pops;
 * fits a per-channel gain and offset at each end of every adjustable segment
   and ramps between them, so a bridge lands exactly on the footage at both
   ends;
 * crossfades frames two segments share (``overlap``);
 * matches audio loudness at the seams and removes clicks;
-* reports every seam before and after, including motion jumps it cannot fix.
+* reports every seam before and after, including motion jumps it cannot fix,
+  and flags a seam whose two sides show different moments (it needs a bridge).
 
 ``check`` runs the same measurements without writing anything. Both take the
 ``stimma`` object from ``run_code`` and work on workspace paths. Intermediates
@@ -37,7 +38,7 @@ _FADE_SAMPLES = 144  # 3 ms each side of a hard audio join: removes the click, i
 # ---------------------------------------------------------------- probing
 
 async def probe(stimma, path):
-    """Size, fps, frame count, colour tags and audio presence of a video file."""
+    """Size, fps, frame count, color tags and audio presence of a video file."""
     r = await stimma.ffprobe("-v", "error", "-show_streams", "-show_format", "-of", "json", str(path))
     data = json.loads(r.stdout)
     video = next((s for s in data["streams"] if s.get("codec_type") == "video"), None)
@@ -69,7 +70,7 @@ def _small(frame):
 
 
 def _luma_std(frame):
-    """Standardised luma: invariant to exposure, so it compares content only."""
+    """Standardized luma: invariant to exposure, so it compares content only."""
     f = _small(frame)
     y = 0.2126 * f[..., 0] + 0.7152 * f[..., 1] + 0.0722 * f[..., 2]
     return (y - y.mean()) / (y.std() + 1e-6)
@@ -77,6 +78,49 @@ def _luma_std(frame):
 
 def _content_diff(a, b):
     return float(np.abs(_luma_std(a) - _luma_std(b)).mean())
+
+
+def _layout(frame, width=64):
+    """Coarse standardized luma (about ``width`` blocks across): where things are
+    in the frame, without texture, noise or exposure. Stable across resolutions."""
+    f = np.asarray(frame, dtype=np.float32)
+    b = max(1, f.shape[1] // width)
+    h, w = f.shape[0] // b, f.shape[1] // b
+    f = f[:h * b, :w * b].reshape(h, b, w, b, 3).mean(axis=(1, 3))
+    y = 0.2126 * f[..., 0] + 0.7152 * f[..., 1] + 0.0722 * f[..., 2]
+    return (y - y.mean()) / (y.std() + 1e-6)
+
+
+def _layout_diff(a, b):
+    return float(np.abs(_layout(a) - _layout(b)).mean())
+
+
+# A seam whose two sides differ this much in layout, and by this many times a
+# normal frame step either side, shows two different moments. Calibrated on
+# still-to-still joins (jump <= 0.06, ratio <= 5) against two clips made from one
+# still and joined directly (jump 0.16, ratio 11-14).
+_MOMENT_JUMP = 0.10
+_MOMENT_RATIO = 6.0
+
+
+def _moment(prev_frames, next_frames, overlap=0, count=8):
+    """Do the two sides of a seam show the same instant?
+
+    Compares the last frame before the seam with the first after it (for an
+    overlap, the first pair of frames meant to be shared), on the raw frames,
+    before any pacing or blending, against the frame-to-frame change either side.
+    """
+    if len(prev_frames) < 2 or len(next_frames) < 2:
+        return None
+    a = prev_frames[-overlap] if 0 < overlap <= len(prev_frames) else prev_frames[-1]
+    pa = prev_frames[max(0, len(prev_frames) - count):]
+    nb = next_frames[:count]
+    jump = _layout_diff(a, next_frames[0])
+    steps = [_layout_diff(pa[i], pa[i + 1]) for i in range(len(pa) - 1)]
+    steps += [_layout_diff(nb[i], nb[i + 1]) for i in range(len(nb) - 1)]
+    ratio = jump / max(float(np.median(steps)), 0.005)
+    return {"jump": round(jump, 3), "ratio": round(ratio, 1),
+            "same": not (jump >= _MOMENT_JUMP and ratio >= _MOMENT_RATIO)}
 
 
 def _typical_step(frames, start, count=8):
@@ -466,7 +510,7 @@ def _solve(segs, loop, match):
             continue
         seg.head_t = head if head is not None else tail
         seg.tail_t = tail if tail is not None else seg.head_t
-        seg.actions.append("corrected exposure/colour " + ("ramping between both seams"
+        seg.actions.append("corrected exposure/color " + ("ramping between both seams"
                            if head is not None and tail is not None else "statically"))
     return fits
 
@@ -572,7 +616,7 @@ def _segment_audio(seg, fps, ext=0):
 
 
 def _match_loudness(segs, tracks, loop, window_s=2.0):
-    """Per-segment gain ramps toward locked neighbours' loudness, clamped to +-6 dB."""
+    """Per-segment gain ramps toward locked neighbors' loudness, clamped to +-6 dB."""
     win = int(window_s * SAMPLE_RATE)
     gains = {}
     n = len(segs)
@@ -806,12 +850,24 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
     work.mkdir(parents=True, exist_ok=True)
     try:
         segs, out_fps, warnings = await _load(stimma, segments, work, fps, audio in ("auto", "loop"))
-        before = {}
+        before, moments = {}, {}
         for prev, nxt in _seams(segs, loop):
             if len(prev.frames) and len(nxt.frames):
-                before[(prev.index, nxt.index)] = _measure_output(
+                key = (prev.index, nxt.index)
+                before[key] = _measure_output(
                     np.concatenate([prev.frames[-_REF_FRAMES:], nxt.frames[:_REF_FRAMES]]),
                     min(_REF_FRAMES, len(prev.frames)))
+                # Judged on the raw sides: pacing and blending later make any jump
+                # look smooth in the numbers, not to the eye.
+                moment = None if nxt.cut else _moment(prev.frames, nxt.frames, nxt.overlap)
+                if moment is not None:
+                    moments[key] = moment
+                    if not moment["same"]:
+                        warnings.append(
+                            f"seam {prev.index}->{nxt.index}: the two sides show different moments "
+                            f"(the picture jumps {moment['ratio']}x a normal frame step). Bridge it: "
+                            f"generate a clip from segment {prev.index}'s last frame to segment "
+                            f"{nxt.index}'s first frame and join through it, or mark a wanted cut cut=True.")
         # With a sound track, each frame's place on the timeline is its place on the
         # track: leaving frames out would slip the picture against the sound.
         if track_path is None:
@@ -827,7 +883,8 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
                                 "trim_tail": s.trim_tail, "actions": s.actions} for s in segs]}
         if out is None:
             for key, b in before.items():
-                report["seams"].append({"between": list(key), "before": b, "fit": fits.get(key)})
+                report["seams"].append({"between": list(key), "before": b, "moment": moments.get(key),
+                                        "fit": fits.get(key)})
             return report
 
         base = segs[0].info
@@ -843,7 +900,7 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
             at = positions.get(key[1])
             after = _measure_output(frames, 0 if wrap else at, wrap=wrap) if wrap or at is not None else None
             report["seams"].append({"between": list(key), "before": before[key],
-                                    "fit": fits.get(key), "after": after, "at_frame": 0 if wrap else at,
+                                    "moment": moments.get(key), "fit": fits.get(key), "after": after, "at_frame": 0 if wrap else at,
                                     "slow_frames_left_out": paced.get(key, 0)})
 
         track = None

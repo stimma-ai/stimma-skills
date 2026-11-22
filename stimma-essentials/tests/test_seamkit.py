@@ -119,6 +119,7 @@ async def test_overlapping_continuation_is_crossfaded(tmp_path, monkeypatch):
     assert abs(seam["fit"]["gain_rgb"][1] - 1 / 1.04) < 0.01, seam
     assert max(abs(d) for d in seam["after"]["median_delta_rgb"]) < 1.5, seam
     assert seam["after"]["motion_step_ratio"] < 2, seam
+    assert seam["moment"]["same"], seam["moment"]
 
 
 async def test_loop_bridge_with_clip_pins_at_both_ends(tmp_path, monkeypatch):
@@ -134,6 +135,7 @@ async def test_loop_bridge_with_clip_pins_at_both_ends(tmp_path, monkeypatch):
     for seam in report["seams"]:
         assert max(abs(d) for d in seam["after"]["median_delta_rgb"]) < 1.5, seam
         assert seam["after"]["motion_step_ratio"] < 2, seam
+        assert seam["moment"]["same"], seam["moment"]
 
 
 async def test_motion_finds_a_slow_start(tmp_path, monkeypatch):
@@ -285,3 +287,44 @@ async def test_sound_track_must_be_a_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with pytest.raises(ValueError, match="path of a sound track"):
         await seamkit.join(FakeStimma(), ["a.mp4"], "out.mp4", audio="automatic")
+
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "seams"
+
+
+def _sides(name):
+    """Frames either side of a real seam, stored as one strip: ``<name>-<frames before>.jpg``."""
+    from PIL import Image
+    path = next(FIXTURES.glob(f"{name}-*.jpg"))
+    split = int(path.stem.rsplit("-", 1)[1])
+    strip = np.asarray(Image.open(path).convert("RGB"))
+    tiles = [strip[:, x:x + 160] for x in range(0, strip.shape[1], 160)]
+    return tiles[:split], tiles[split:]
+
+
+def test_two_clips_from_one_still_show_different_moments():
+    # A sip clip's tail joined straight onto a talking clip from the same still:
+    # the mug and head jump, though framing, light and the opening still match.
+    moment = seamkit._moment(*_sides("different-moments"))
+    assert not moment["same"], moment
+
+
+@pytest.mark.parametrize("name", ["same-moment-kitchen", "same-moment-walk", "same-moment-walk-pinned"])
+def test_still_to_still_joins_show_the_same_moment(name):
+    # Reviewed joins between still-to-still segments, including a fast walk.
+    moment = seamkit._moment(*_sides(name))
+    assert moment["same"], moment
+
+
+async def test_join_flags_a_seam_between_different_moments(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    write_clip(Path("a.mp4"), [scene(t) for t in range(24)])
+    write_clip(Path("b.mp4"), [scene(t) for t in range(30, 54)])  # half a cycle later
+    report = await seamkit.join(FakeStimma(), ["a.mp4", "b.mp4"], "joined.mp4")
+    seam = report["seams"][0]
+    assert not seam["moment"]["same"], seam
+    assert any("different moments" in w and "Bridge it" in w for w in report["warnings"])
+    # Blending still smooths the numbers after the join; the flag doesn't depend on them.
+
+    clean = await seamkit.join(FakeStimma(), ["a.mp4", {"path": "b.mp4", "cut": True}], None)
+    assert clean["seams"][0]["moment"] is None and not clean["warnings"]
