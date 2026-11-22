@@ -1386,7 +1386,9 @@ async def anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12
     flagged outside ``framing_tolerance`` either way when the pictures align well
     enough to judge (``framing_match`` 0.5 or more); a still showing a new place
     can't be compared that way and is marked ``comparable: False``, so check its
-    framing by eye. Returns ``{"ok", "stills": [...]}``.
+    framing by eye. Returns ``{"ok", "summary", "stills": [...]}``; ``summary``
+    names each still to redo and why. Not ok means redo those stills from the
+    source before any video: every segment pinned to one inherits its fault.
     """
     limits = {**DRIFT_LIMITS, **(limits or {}), "framing": framing_tolerance, "framing_match": 0.5}
     size, info = await _analysis_size(stimma, source)
@@ -1407,4 +1409,22 @@ async def anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12
             out.append(row)
     finally:
         shutil.rmtree(work, ignore_errors=True)
-    return {"ok": not any(r["flags"] for r in out), "stills": out}
+    return {"ok": not any(r["flags"] for r in out), "summary": _anchors_summary(out), "stills": out}
+
+
+def _anchors_summary(rows):
+    def why(r):
+        reasons = {
+            "aspect": f"its shape is {r['aspect']:g}x the source's",
+            "framing": f"framed {r['framing_scale']:g}x " + ("tighter" if r["framing_scale"] > 1 else "wider"),
+            "exposure": f"exposure off by {r['exposure']:+g} levels",
+            "saturation": f"saturation off by {r['saturation']:+g}",
+            "color": "its colors differ from the source's",
+        }
+        return ", ".join(reasons.get(f, f) for f in r["flags"])
+
+    bad = [r for r in rows if r["flags"]]
+    if not bad:
+        return f"all {len(rows)} stills match the source's shape, framing and look"
+    return (f"redo {len(bad)} of {len(rows)} stills from the source before any video: "
+            + "; ".join(f"{Path(r['path']).name} ({why(r)})" for r in bad))

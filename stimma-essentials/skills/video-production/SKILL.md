@@ -50,14 +50,12 @@ fixed by what you use of each clip, how you pin, and where you join.
 
 ## Working rules
 
-**Design the key frames as stills first.** Settle composition, character, look and
-the frames that pin each segment as images: they're cheap to iterate and predict
-the video. Then render the video once, at final settings.
-
-**Make the stills at the video's shape.** Choose the video tool and output size
-first and make every pinned frame at that aspect; a frame of another shape gets
-stretched or cropped without warning. Crop or outpaint other images yourself, so
-you choose what's kept.
+**Design the key frames as stills first, at the video's shape.** Settle
+composition, character, look and the frames that pin each segment as images:
+they're cheap to iterate and predict the video; then render it once, at final
+settings. Choose the video tool and output size first, since a frame of another
+shape gets stretched or cropped without warning: crop or outpaint other images
+yourself, so you choose what's kept.
 
 **No draft video rounds.** A faster variant (⚡, Turbo, Fast, Max) doesn't predict
 the full model from the same prompt and seed; motion and look differ in kind. If
@@ -74,8 +72,11 @@ something crossing the frame, and shows in slow, static moments. A still pin
 can't carry speed, so with still pins join where motion momentarily stops.
 
 **Work at the tool's native length and frame rate**: the duration parameter states
-them. A take needs (its length ÷ the native length) segments, rounded up; a longer
-run per segment costs more GPU time and is redone whole when it fails. Clips in a join share one frame rate; regenerate rather than resample.
+them. Every segment and hop of a longer take runs at the native length, so a take
+needs (its length ÷ the native length) segments, rounded up. A longer run suits
+only a clip that stands alone and needs it: it costs more GPU time, drifts more
+within itself, and a failed one is redone whole instead of one short segment.
+Clips in a join share one frame rate; regenerate rather than resample.
 
 **Every join goes through seamkit.** It matches exposure, blends, repairs and
 reports each seam, and records the input clips as the joined file's sources. Check
@@ -88,64 +89,78 @@ the clip it's pinned to and builds on the result: colors saturate and darken, de
 smears, the framing creeps, and each hop looks fine next to the last. Stored state
 (a clip pinned from the library) slows the color drift without bounding it.
 **So choose anchors or continuation by what the take needs.** Anchors fit when the
-visual states along the take can be planned consistently: each segment runs from
-one clean still to the next, so no segment inherits another's error, however long
-the take, and they render in parallel. Continuation fits when evolving motion or a
-changing place matters more, as in a take that travels, where no still made ahead
-can predict where the previous segment ends: each hop pins the previous tail and
-describes the same ongoing action, and since each inherits the last one's drift,
-keep runs to a few hops. If the method you have can't hold the continuity the user
-asked for over the whole length, explain the tradeoff (visible drift, or a cut at
-a point you name) and let them choose before changing the shot plan. A requested
-long take gets no cuts they didn't agree to. Each video tool's instructions say how
-it handles each kind of pin.
+moments along the take can be planned as stills: each segment runs from one clean
+still to the next, so none inherits another's error and they render in parallel.
+Continuation fits a take that travels, where no still made ahead can predict where
+the previous segment ends; each hop inherits the last one's drift, so runs stay
+short. If neither holds the continuity the user asked for over the whole length,
+explain the tradeoff (visible drift, or a cut at a point you name) and let them
+choose: a requested long take gets no cuts they didn't agree to. Each video tool's
+instructions say how it handles each pin.
+
+**Get a go-ahead before the first video of a long take.** The stills are a cheap
+preview of a long GPU job: changing one now costs a still, later a batch of
+segments. Show them from `run_code` with `stimma.show(paths, role="intermediate",
+title=...)`, then call `ask_user` with the plan (segments or hops and their length,
+any cuts, roughly how long the GPU work takes) and options to go ahead or change
+something; the turn waits for the answer. Estimate from runs here at the planned settings:
+
+```python
+t = await stimma.tasks.run_time(tool, duration=segment_s)  # ≈ t["typical_s"] × ceil(segments ÷ await stimma.tasks.capacity(tool))
+```
+
+Anything that waits on an earlier result adds its own time; queueing and model
+loads add more. If the user said they're away, show the plan and go on.
 
 A planned long take with anchors, using a tool that pins frames at both ends:
 
-1. **Anchor stills**, one per key moment, each made directly from the source image
-   (never an edit of an edit), at the video's shape, sharing its framing, lens and
-   look, at moments where motion briefly settles (a still carries no speed). Check
-   them side by side and with `seamkit.anchors`, and redo any that reframed or
-   shifted (edit models often zoom in: try another seed): between stills framed
-   differently, a segment has to reframe, and unless the plan asks for that move
-   the model may do it with a cut. Make every still before any video, since
-   swapping image and video models on a GPU costs minutes.
-2. **Show the anchors and the plan, then wait for a go-ahead.** Show the stills as
-   pictures with one short message: segments and their length, any cuts, and
-   roughly how long the GPU work takes. Independent segments run in about
-   ceil(segments ÷ `stimma.tasks.capacity`) waves of `stimma.tasks.run_time` each;
-   anything that waits on an earlier result adds its own time, and queueing and
-   model loads add more. The anchors are the cheap preview of hours of GPU:
-   changing one now costs a still, later a wave. A continuation plan is shown the
-   same way. If the user said they're away, show it and go on.
+1. **Anchor stills**, one per key moment. An anchor is a new moment (the pose,
+   gesture and gaze at that point of the take) made by an image edit of the source
+   image (never an edit of an edit), at the video's shape, sharing its framing,
+   lens and look, where motion briefly settles (a still carries no speed). A crop
+   or reframe of the source shows the source's moment again, so it isn't an
+   anchor. Check them side by side and with `seamkit.anchors`; when it isn't `ok`,
+   redo the stills its `summary` names before any video (edit models often zoom
+   in: try another seed), since a segment between stills framed differently may
+   reframe with a cut. Make every still before any video: swapping image and video
+   models on a GPU costs minutes.
+2. **Go-ahead**, as above.
 3. **Segments:** one between each pair of neighboring anchors, at the tool's native
    length, the earlier anchor pinned at the start and the later one at the end, both
    passed as references, the same voice reference on every segment, and the prompt
    describing the action that takes one into the other.
-4. **Join** them in order with seamkit, `trim_head: 1` on every segment after the
-   first (its opening repeats the anchor the previous one ended on), none of them
-   locked. Each segment slows into the still it ends on and starts slowly from the
-   next; seamkit leaves those slow frames out (up to about half a second per
-   join), so plan a little extra length. Trim the last segment's tail so the take
-   is exactly the requested length.
+4. **Join** them in order with seamkit, none locked, `trim_head: 1` on every
+   segment after the first (it opens on the anchor the last one ended on). Segments
+   slow near their stills and seamkit leaves those frames out (up to about half a
+   second per join), so plan a little extra and trim the last tail to length.
+
+A take that travels, by continuation:
+
+1. **Runs and stills:** split the take into runs of two or three hops, with a cut
+   between runs at points you name, and make a fresh still for each run's start at
+   the video's shape.
+2. **Go-ahead**, as above, with the runs and where they cut.
+3. **Hops** at the native length: the first from its run's still, each next one
+   pinning the previous hop's tail ([Continue a clip](#continue-a-clip)) and
+   describing the same ongoing action.
+4. **Join** each run's hops with `overlap`, and the runs with `cut=True`.
 
 **Speech in a long take comes from one track**, since segments that each invent
 lines can't add up to continuous speech: the user's, or one made first (a talking
-take of the full length, or TTS), whose length sets the segment count. Segments keep the native length and the track is sliced to them,
-wherever a slice ends in a sentence: with N-frame segments sharing a frame at each
-join, segment k pins the track as sound from `k × (N − 1) / fps` seconds for
-`N / fps` seconds, with its two anchor stills, and passes the whole track as the
-voice reference. The pinned sound sets the words and timing, so the prompt says who
+take of the full length, or TTS), whose length sets the segment count. Segments
+keep the native length and the track is sliced to them, wherever a slice ends in a
+sentence: with N-frame segments sharing a frame at each join, segment k pins the
+track as sound from `k × (N − 1) / fps` seconds for `N / fps` seconds, with its two
+anchor stills, and passes the whole track as the voice reference. The pinned sound sets the words and timing, so the prompt says who
 speaks and how, not the words; watch the lip-sync on playback. Join with `audio=`
 set to the track: each frame keeps its place on it, so pacing stays off and a slow
 moment at a seam stays.
 
-**Submit independent segments together** once the shared setup (anchors, voice,
-settings) is settled, sized to `await stimma.tasks.workers(tool)`, inside
-`stimma.batch(title, total=N)` so the count is right from the start. Render one
-representative segment first only when an untested motion, audio or pinning
-behavior could spoil the whole batch; otherwise it only adds a render's wait, since
-each segment is checked and regenerated on its own.
+**Submit independent segments together** after the go-ahead, sized to
+`await stimma.tasks.workers(tool)`, inside `stimma.batch(title, total=N)` so the
+count is right from the start. A pilot segment only adds a render's wait, since
+each segment is checked and regenerated on its own; render one first only when an
+untested motion, audio or pinning behavior could spoil the whole batch.
 
 **Check every segment; fix only what failed.** Run `seamkit.cuts` on each segment
 (a cut in the first few frames means it popped off its start anchor); after joining,
@@ -217,7 +232,8 @@ out and comes back. Check the wrap with `seamkit.check(stimma, path, loop=True)`
 
 ### Continue a clip
 
-For a short extension (see [Long takes](#long-takes) for anything longer):
+An extension runs in hops at the native length; past two or three, see
+[Long takes](#long-takes).
 
 - Check where the previous segment's motion fades (`seamkit.motion`). Continue from
   before a slow ending, not from inside it.
@@ -242,12 +258,11 @@ the bridge is adjusted to fit both.
 ### Talking head and dialogue
 
 - Generate one sentence or line per segment and **cut** between segments (a new
-  angle, or B-roll). When the speech must run continuously through one take,
-  pin each segment's slice of one track instead (see [Long takes](#long-takes)).
+  angle, or B-roll). Speech that runs through one take, or a given or TTS
+  voiceover, sets the timing: pin each segment's slice of it as sound where the
+  tool can ([Long takes](#long-takes)), or use a driving-audio tool.
 - Use the same voice reference (`input_audios` on H3 Reference to Video) and face
   references on every segment.
-- A given or TTS voiceover sets the timing: pin each segment's piece as sound where
-  the tool can, or use a driving-audio tool.
 - For dialogue, models with strong lip-sync (Veo 3.1, MiniMax H3, Seedance 2.0)
   beat generating silent video and syncing it afterwards.
 
@@ -271,13 +286,8 @@ controls and the limits of each measurement.
 | `motion(stimma, path)` | `{duration, fps, per_second, settles_at, fades_at}` |
 | `cuts(stimma, path, *, ignore_before=0, seams=None, min_confidence=0.5)` | `{duration, fps, checked_from, continuous, cuts: [{at, frame, confidence, at_seam}]}` |
 | `drift(stimma, video_or_segments, *, reference=None, window=4.0, limits=None)` | `{ok, summary, worst, windows: [{start, end, flags, ...}]}` |
-| `anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12)` | `{ok, stills: [{path, aspect, framing_scale, comparable, flags, ...}]}` |
+| `anchors(stimma, source, stills, *, limits=None, framing_tolerance=1.12)` | `{ok, summary, stills: [{path, aspect, framing_scale, comparable, flags, ...}]}` |
 | `probe(stimma, path)` | `{width, height, fps, duration, color_range, color_space, has_audio}` |
-
-`match=False` skips the color fit; `audio_xfade` and `audio_search` set the sound
-switch's crossfade and search window (seconds); `min_confidence` is the score a cut
-must reach; `window`, `limits` and `framing_tolerance` set drift's stretch length and
-the drift and anchor thresholds.
 
 Times are in seconds; `before` and `after` are `{median_delta_rgb, motion_step_ratio}`;
 `moment` is `{jump, ratio, same}`; `sound` (with an `audio=` track) is
@@ -318,16 +328,12 @@ last resort. The output is H.264, BT.709, encoded once. `preserve_state=True` cu
 hard after each overlap and keeps stored state on the joined file, so the joins can
 show; to extend a finished take, pin its last segment from the library instead.
 
-`motion` gives motion per second against the clip's steady level; `settles_at`
-and `fades_at` bound where it's actually moving. `cuts` finds hard cuts inside a
-clip or a joined video: pass the pinned length as `ignore_before` for a continuation
-(the boundary where the pin ends is still checked), and your own join times as
-`seams` for a joined take, so a cut you made is marked `at_seam`; its `confidence`
-is a heuristic strength score, and a slow change of shot can pass unflagged. `drift` compares
-each stretch of a take with its opening (framing with `reference`, such as the start
-image); a planned change (a new place, a push-in) flags too, so read flags against
-the plan. `anchors` checks anchor stills against the source the same way, before
-rendering.
+`motion`'s `settles_at` and `fades_at` bound where a clip actually moves. `cuts`
+finds hard cuts: pass the pinned length as `ignore_before` for a continuation and
+your own join times as `seams`, so a cut you made is marked `at_seam`; a slow change
+of shot can pass unflagged. `drift` compares each stretch of a take with its opening
+(framing with `reference`, such as the start image); a planned change flags too, so
+read flags against the plan.
 
 ### Read the report
 
@@ -357,8 +363,7 @@ process the joined video once, without re-encoding between steps.
 
 ## Talking to the user
 
-- When it's done, describe the joins in plain words ("both joins in the loop look
-  seamless; the second one needed a small exposure correction"), not the numbers,
-  unless they ask.
+- When it's done, describe the joins in plain words ("both joins look seamless;
+  the second needed a small exposure correction"), not the numbers, unless asked.
 - If a join can't be made invisible, say why and offer a fix: a cut, another join
   point, or a stronger pin.

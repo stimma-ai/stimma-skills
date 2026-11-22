@@ -351,3 +351,25 @@ async def test_join_names_its_clips_as_the_output_sources(loop_clips):
     report = await seamkit.join(Failing(), [{"path": src, "lock": True}, bridge], "joined2.mp4")
     assert Path("joined2.mp4").is_file()
     assert any("sources weren't recorded" in w for w in report["warnings"])
+
+
+def write_still(path, image):
+    raw = path.with_suffix(".rgb")
+    np.clip(np.rint(image), 0, 255).astype(np.uint8).tofile(raw)
+    h, w = image.shape[:2]
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}",
+                    "-i", raw, path], check=True)
+
+
+async def test_anchors_summary_names_the_stills_to_redo(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    write_still(Path("source.png"), scene(0))
+    write_still(Path("good.png"), scene(0))
+    write_still(Path("wide.png"), np.concatenate([scene(0), scene(0)[:, : W // 2]], 1))
+    report = await seamkit.anchors(FakeStimma(), "source.png", ["good.png", "wide.png"])
+    assert not report["ok"]
+    assert report["summary"].startswith("redo 1 of 2 stills from the source before any video: wide.png (")
+    assert "shape" in report["summary"] and "good.png" not in report["summary"]
+
+    fine = await seamkit.anchors(FakeStimma(), "source.png", ["good.png"])
+    assert fine["ok"] and fine["summary"].startswith("all 1 stills match")
