@@ -208,3 +208,80 @@ async def test_repeated_frames_are_replaced_by_interpolated_ones(tmp_path, monke
     assert any("repeated" in a for a in report["segments"][1]["actions"]), report["segments"][1]
     s = _steps("out.mp4")[24:-1]  # a repeat in the very last frame has nothing after it
     assert s.min() > 0.4 * np.median(s)
+
+
+def _speechlike(n, seed=7):
+    """Noise bursts with pauses: no two stretches alike, so any slip shows as a lag."""
+    rng = np.random.default_rng(seed)
+    env = np.repeat(rng.random(n // 2400 + 1) > 0.4, 2400)[:n].astype(np.float32)
+    return (0.3 * rng.standard_normal(n) * env).astype(np.float32)
+
+
+def _write_with_sound(path, frames, sound):
+    raw, pcm = path.with_suffix(".rgb"), path.with_suffix(".f32")
+    np.clip(np.rint(np.stack(frames)), 0, 255).astype(np.uint8).tofile(raw)
+    np.stack([sound, sound], 1).astype(np.float32).tofile(pcm)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                    "-framerate", str(FPS), "-i", raw, "-f", "f32le", "-ar", "48000", "-ac", "2", "-i", pcm,
+                    "-c:v", "libx264", "-crf", "4", "-pix_fmt", "yuv444p", "-colorspace", "bt709",
+                    "-color_range", "tv", "-c:a", "pcm_s16le", "-shortest", path.with_suffix(".mov")], check=True)
+    path.with_suffix(".mov").rename(path)
+
+
+def _sound(path):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-ac", "1", "-ar", "48000",
+                          "-f", "f32le", "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32)
+
+
+def _lag_ms(a, b, max_ms=200):
+    """Lag of b against a, by cross-correlation of the first seconds."""
+    n = min(len(a), len(b), 48000 * 6)
+    a, b = a[:n] - a[:n].mean(), b[:n] - b[:n].mean()
+    m = 48 * max_ms
+    lags = range(-m, m + 1, 12)
+    scores = [float(np.dot(a[max(0, -k):n - max(0, k)], b[max(0, k):n - max(0, -k)])) for k in lags]
+    return list(lags)[int(np.argmax(scores))] / 48
+
+
+async def test_pinned_sound_track_keeps_picture_and_speech_in_sync(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Three still-to-still segments of one take, each 49 frames sharing a frame
+    # with the next, each slowing into and out of its end stills (what pacing
+    # trims), each pinned to its slice of one continuous track.
+    seg_n, step = 49, 48
+    total = 1 + 3 * step
+    track = _speechlike(round(total / FPS * 48000))
+    _write_with_sound(Path("speech.mov"), [scene(0)] * total, track)
+    ease = np.concatenate([np.linspace(0.1, 1, 12), np.ones(seg_n - 25), np.linspace(1, 0.1, 12)])
+    paths = []
+    for k in range(3):
+        t = k * 20.0 + np.concatenate([[0.0], np.cumsum(ease)]) * 20.0 / ease.sum()
+        a = round(k * step / FPS * 48000)
+        part = track[a:a + round(seg_n / FPS * 48000)]
+        p = Path(f"seg{k}.mov")
+        _write_with_sound(p, [scene(x) for x in t], part)
+        paths.append(p)
+    segments = [{"path": str(paths[0])}] + [{"path": str(p), "trim_head": 1} for p in paths[1:]]
+
+    paced = await seamkit.join(FakeStimma(), segments, "paced.mp4")
+    report = await seamkit.join(FakeStimma(), segments, "take.mp4", audio="speech.mov")
+
+    # Pacing alone leaves frames out, so its picture runs short of the speech.
+    assert paced["frames"] < total
+    # With the track, every frame keeps its place and the sound is the track itself.
+    assert report["frames"] == total
+    assert all(s["slow_frames_left_out"] == 0 for s in report["seams"])
+    assert report["sound"]["note"] is None
+    out = _sound("take.mp4")
+    assert abs(_lag_ms(track, out)) < 2
+    tail = slice(len(out) - 48000 * 2, len(out) - 4800)
+    assert np.corrcoef(track[tail], out[tail])[0, 1] > 0.95
+    info = await seamkit.probe(FakeStimma(), "take.mp4")
+    assert abs(info["duration"] - total / FPS) < 0.06
+
+
+async def test_sound_track_must_be_a_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ValueError, match="path of a sound track"):
+        await seamkit.join(FakeStimma(), ["a.mp4"], "out.mp4", audio="automatic")

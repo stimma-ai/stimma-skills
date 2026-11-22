@@ -725,6 +725,29 @@ async def _encode(stimma, frames_path, audio, size, fps, out, crf):
         await stimma.ffmpeg(*args, "-q:v", "2", str(out), timeout=3600)
 
 
+async def _lay_track(stimma, path, work, frames, fps):
+    """The track's sound for ``frames`` output frames from frame 0, and a note on any mismatch."""
+    pcm = work / "track.f32"
+    await stimma.ffmpeg("-v", "error", "-y", "-i", str(path), "-map", "0:a:0", "-ac", "2",
+                        "-ar", str(SAMPLE_RATE), "-f", "f32le", str(pcm))
+    sound = np.fromfile(pcm, dtype=np.float32).reshape(-1, 2)
+    n = round(frames * SAMPLE_RATE / fps)
+    picture_s, track_s = frames / fps, len(sound) / SAMPLE_RATE
+    note = None
+    if track_s > picture_s + 1 / fps:
+        note = (f"the sound track runs {track_s - picture_s:.2f} s past the picture; its end was left out")
+    elif track_s < picture_s - 1 / fps:
+        note = f"the sound track ends {picture_s - track_s:.2f} s before the picture; the rest is silent"
+    if len(sound) < n:
+        sound = np.concatenate([sound, np.zeros((n - len(sound), 2), np.float32)])
+    f = min(_FADE_SAMPLES, n)
+    sound = sound[:n].copy()
+    if f and track_s > picture_s + 1 / fps:
+        sound[-f:] *= np.linspace(1, 0, f, dtype=np.float32)[:, None]
+    return sound, {"track": str(path), "picture_s": round(picture_s, 3), "track_s": round(track_s, 3),
+                   "note": note}
+
+
 async def join(stimma, segments, out=None, *, loop=False, match=True, audio="auto",
                fps=None, crf=14, keep_work=False, preserve_state=False, pace=True,
                repair=True, audio_xfade=0.06, audio_search=0.25):
@@ -746,7 +769,12 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
     ``loop=True`` treats the last segment as joining back to the first.
     ``audio``: "auto" joins each segment's own audio (silence where it has none);
     "loop" replaces the soundtrack with a seamless loop of the locked
-    segments' audio, for silent bridges; "none" drops audio.
+    segments' audio, for silent bridges; "none" drops audio. A workspace path
+    instead is the take's own sound track, for segments whose sound was pinned
+    to consecutive slices of it: the track is laid back from the first output
+    frame, and every frame keeps its place on the track's timeline (no frames
+    are left out or dropped automatically; explicit trims, overlaps and repairs
+    still apply), so the picture stays in sync with it.
     ``out=None`` measures and reports without writing (same as ``check``).
 
     ``pace=True`` keeps motion at the surrounding pace through hard seams: where
@@ -767,22 +795,30 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
         report["seams"] = measured["seams"]
         report["warnings"] = measured["warnings"]
         return report
+    track_path = None
     if audio not in ("auto", "loop", "none"):
-        raise ValueError('audio must be "auto", "loop" or "none"')
+        track_path = Path(str(audio))
+        if not track_path.is_file():
+            raise ValueError(f'audio must be "auto", "loop", "none" or the path of a sound track; {audio!r} is none of these')
+        if loop:
+            raise ValueError("a sound track can't be joined as a loop")
     work = Path(".seamkit") / uuid.uuid4().hex[:8]
     work.mkdir(parents=True, exist_ok=True)
     try:
-        segs, out_fps, warnings = await _load(stimma, segments, work, fps, audio != "none")
+        segs, out_fps, warnings = await _load(stimma, segments, work, fps, audio in ("auto", "loop"))
         before = {}
         for prev, nxt in _seams(segs, loop):
             if len(prev.frames) and len(nxt.frames):
                 before[(prev.index, nxt.index)] = _measure_output(
                     np.concatenate([prev.frames[-_REF_FRAMES:], nxt.frames[:_REF_FRAMES]]),
                     min(_REF_FRAMES, len(prev.frames)))
-        _trim(segs, loop)
+        # With a sound track, each frame's place on the timeline is its place on the
+        # track: leaving frames out would slip the picture against the sound.
+        if track_path is None:
+            _trim(segs, loop)
         if repair and out is not None:
             await _repair_repeats(stimma, segs, work)
-        paced = _match_pace(segs, loop, out_fps, 2) if pace else {}
+        paced = _match_pace(segs, loop, out_fps, 2) if pace and track_path is None else {}
         fits = _solve(segs, loop, match)
         plan = _plan(segs, loop)
         report = {"frames": len(plan), "fps": out_fps, "warnings": warnings, "seams": [],
@@ -811,7 +847,11 @@ async def join(stimma, segments, out=None, *, loop=False, match=True, audio="aut
                                     "slow_frames_left_out": paced.get(key, 0)})
 
         track = None
-        if audio == "auto" and any(s.audio is not None for s in segs):
+        if track_path is not None:
+            track, report["sound"] = await _lay_track(stimma, track_path, work, len(plan), out_fps)
+            if report["sound"]["note"]:
+                warnings.append(report["sound"]["note"])
+        elif audio == "auto" and any(s.audio is not None for s in segs):
             xfade = round(max(0.0, audio_xfade) * SAMPLE_RATE)
             search = round(max(0.0, audio_search) * SAMPLE_RATE)
             tracks = [_segment_audio(s, out_fps, search + xfade) for s in segs]

@@ -107,6 +107,19 @@ with a tool that pins frames at both ends:
    join), so plan a little extra length. Trim the last segment's tail so the take
    is exactly the requested length.
 
+**Speech in a long take comes from one track.** Segments that each invent their own
+lines can't add up to continuous speech. Use the user's track, or generate the
+speech first (a talking take of the full length, or TTS), and let every segment
+follow its own slice. With N-frame segments sharing a frame at each join, segment
+k pins the track as sound from `k × (N − 1) / fps` seconds for `N / fps` seconds,
+alongside its two anchor stills, and passes the whole track as the voice reference.
+The model then speaks that slice with its timing and lip-syncs to it, so the
+prompt describes who speaks and how, not the words. Join with `audio=` set to the
+track: the take's sound is then the track itself, and each frame keeps its place
+on it. Pacing would slip the picture against the speech, so it stays off there,
+and a slow moment at a seam stays in. The take's length is the track's, so
+choose segment counts to cover it.
+
 Every segment renders at once, so every GPU works. Submit them together, sized to
 `await stimma.tasks.workers(tool)`, inside `stimma.batch(title, total=N)` so the
 count is right from the start. On local H3 (5 s native) each segment adds 5 s.
@@ -143,18 +156,22 @@ twice, redo the anchor.
 
 From strongest to weakest:
 
-1. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
+1. **Sound pinned over a span** (local MiniMax H3 keyframes: an audio item, or a
+   video with `picture: false`). The output plays that sound with its timing and the
+   picture lip-syncs to it; stills or clips pinned with it still hold the picture.
+   It carries speech, not picture.
+2. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
    Carries picture, motion and audio; the output repeats the pinned clip, giving
    real overlap to crossfade. LTX keyframes pin clips too, picture only. It carries
    on only what the clip is already doing; ask for a different action or framing and
    local H3 cuts away from it.
-2. **A reference video plus a voice reference** (H3 Reference to Video on Stimma
+3. **A reference video plus a voice reference** (H3 Reference to Video on Stimma
    Cloud). Carries motion and voice; opens near the reference's last frame, not on it.
-3. **An extend tool** (SkyReels V4 Extend on the cloud, LTX Extend Video locally).
+4. **An extend tool** (SkyReels V4 Extend on the cloud, LTX Extend Video locally).
    The model continues the clip from its own context.
-4. **First and last still frames** (most image-to-video tools). Fixes position at
+5. **First and last still frames** (most image-to-video tools). Fixes position at
    both ends, not motion, and usually no audio.
-5. **The last frame as a first frame.** Fine for one or two continuations; warn that
+6. **The last frame as a first frame.** Fine for one or two continuations; warn that
    the join may show, since neither motion nor voice carries over.
 
 Pick the strongest one the available tools offer.
@@ -228,11 +245,13 @@ the bridge is adjusted to fit both.
 ### Talking head and dialogue
 
 - Generate one sentence or line per segment and **cut** between segments (a new
-  angle, or B-roll) rather than making spoken segments continuous.
+  angle, or B-roll). When the speech must run continuously through one take,
+  pin each segment's slice of one track instead (see [Long takes](#long-takes)).
 - Use the same voice reference (`input_audios` on H3 Reference to Video) and face
   references on every segment.
 - If the voiceover is given or comes from TTS, fix its timing first, then generate
-  each segment to its piece, with a driving-audio tool if there is one.
+  each segment to its piece: pin the piece as sound where the tool can, or use a
+  driving-audio tool.
 - For dialogue, models with strong lip-sync (Veo 3.1, MiniMax H3, Seedance 2.0)
   beat generating silent video and syncing it afterwards.
 
@@ -276,6 +295,10 @@ Each segment is a path, or a dict with:
 Options: `loop=True` joins the end back to the start. `audio="auto"` (the default)
 joins each segment's sound, matches loudness at the seams and removes clicks;
 `"loop"` makes a seamless loop of the locked segments' sound; `"none"` drops audio.
+A path is the take's own sound track, for segments pinned to its slices: it's laid
+from the first frame, and every frame keeps its place on it (no automatic drops or
+pacing; your trims, overlaps and repairs still apply). The report's `sound` says
+how the track and picture lengths compare.
 `fps=` resamples mismatched frame rates as a last resort. `pace=True` (default)
 leaves out slow frames next to a hard seam and blends two frames across it;
 `repair=True` (default) replaces repeated frames with interpolated ones. At every
