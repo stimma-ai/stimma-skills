@@ -12,181 +12,116 @@ provides: [seamkit]
 
 # Video Production
 
-Making several clips play as one is where video work goes wrong, and it goes wrong
-the same ways every time. This skill plans the shots, picks how to generate each,
-and joins them so the joins can't be seen.
+A single generation is easy. Making several clips play as one is where video work
+goes wrong, and it goes wrong the same ways every time. This skill covers planning
+the shots, choosing how to generate each one, and joining the results so the joins
+can't be seen.
 
 Use **Tool Selection** to pick a model family. Each video tool's own instructions
-record what it can do and how it misbehaves (pin types, native length and frame
+record what it can do and how it misbehaves (pin types, maximum length and frame
 rate, crops, audio limits). Read them before planning around a tool.
 
 ## What goes wrong at a join
 
-**A join reads as one shot only when both sides show the same instant**: one clip's
-last frame and the next one's first agree on pose, gaze, hands and objects, not just
-framing and light. Two clips made from one still share only their first frame, so
-their ends show different moments and need a bridge like any other pair.
-
 A pin fixes what's in the frame (geometry), not its exposure and color (photometry).
-Every continuous join can also carry any of these:
+Every join between two clips can carry any of these:
 
-- **Exposure and color offset.** Each run lands at its own exposure, a few levels
-  apart. It pulses at the seam even when everything else matches.
-- **A repeated frame.** A pinned clip starts or ends on a copy of the pinned frame,
-  which plays twice and reads as a hitch.
-- **A head that pops.** An image-to-video clip's first frame is often the reference
-  image itself, crisper than what follows, and pops for one frame.
-- **A motion jump.** A still pin fixes position, not speed or direction.
-- **An audio jump.** Loudness and room tone change between runs; a hard splice clicks.
+- **Exposure and color offset.** Each run lands at its own exposure, usually a
+  small gain change of a few levels shared across all three channels. It shows as
+  a pulse at the seam even when everything else matches.
+- **A repeated frame.** A clip pinned to a frame starts or ends on a copy of it.
+  Splice it in as-is and the frame plays twice, which reads as a hitch.
+- **A head that pops.** The first frame of an image-to-video clip is often the
+  reference image itself, crisper than the frames after it and with a different
+  texture. It pops for one frame.
+- **A motion jump.** A still pin fixes position, not speed. Two clips can meet on
+  the same frame and still visibly change speed or direction.
+- **An audio jump.** Loudness, room tone and ambience change between runs just like
+  exposure does, and a hard splice clicks.
 - **A slow start.** Image-to-video often opens with a lull of a second or so while
-  motion builds (MiniMax H3 often), and a clip pinned to a last frame can coast
-  into one. Loop or join across a lull and the rhythm breaks: slow, pause, jump.
-- **Judder.** Some generated clips repeat a frame in a steady cadence, so motion
-  stutters inside the clip.
+  motion builds from the still, before it settles into its rhythm (MiniMax H3 does
+  this often). A clip pinned to a last frame can coast into it the same way. Loop
+  or join across a lull and the rhythm breaks every time it comes around.
 
-`seamkit` fixes exposure, repeated frames, popping heads, judder, slow frames at a
-seam and audio, and flags sides that show different moments. The rest of motion is
-fixed by what you use of each clip, how you pin, and where you join.
+`seamkit` fixes the exposure offset, repeated frames, popping heads and audio
+mechanically, and measures motion. Motion is fixed by choosing which part of
+each clip to use, by how you pin, and by where you put the join.
 
 ## Working rules
 
-**Design the key frames as stills first, at the video's shape.** Settle
-composition, character, look and the frames that pin each segment as images:
-they're cheap to iterate and predict the video; then render it once, at final
-settings. Choose the video tool and output size first, since a frame of another
-shape gets stretched or cropped without warning: crop or outpaint other images
-yourself, so you choose what's kept.
+**Design the key frames as stills first.** Settle composition, character, look and
+the frames that pin each segment as images, and get them approved. Stills are the
+preview; they're cheap to iterate and they predict the video. Then render the video
+once, at final settings.
 
-**No draft video rounds.** A faster variant (⚡, Turbo, Fast, Max) doesn't predict
-the full model from the same prompt and seed; motion and look differ in kind. If
-speed matters, make the faster model the final one and say so. Test at lower
-resolution or length only when the user asks.
+**Make the stills at the video's shape.** Choose the video tool and its output size
+before generating any frame you'll pin, and generate every pinned frame at that
+aspect. A frame of another shape gets stretched or cropped to fit, and nothing in the
+still warns you. To use an image of another shape, crop or outpaint it to the video's
+aspect yourself, so you choose what's kept.
 
-**Cuts are free.** If the story allows a cut, cut; it needs no matching. Cuts written
-into one prompt (H3 shot syntax, Wan 2.7 multi-shot, LTX multishot) are better
-still, since the model keeps the look consistent. Join continuously only when the
-shot must be continuous.
+**No draft video rounds.** A faster or distilled variant (⚡, Turbo, Fast, Max) does
+not predict what the full model will make from the same prompt and seed. Its motion
+and look differ in kind, not just in quality. If speed matters, make the faster
+model the final model and say so. Lower resolution or a shorter test clip only when
+the user asks for one.
 
-**Put joins where there's motion.** A join disappears under fast action or
-something crossing the frame, and shows in slow, static moments. A still pin
-can't carry speed, so with still pins join where motion momentarily stops.
+**Use original generation state for supported continuations.** A pinned library
+video automatically supplies its stored companion state when the tool can use it;
+keep using the ordinary media ID and keyframe arguments. For local H3, the tested
+continuation is the last 39 frames (1.625 seconds at 24 fps), pinned at zero with
+sound. Use the workflow's instructions for other formats/windows. Inspect
+`media_info` when a fallback needs diagnosis; do not load raw tensors yourself.
+For these clean overlapping continuations, assemble with
+`seamkit.join(stimma, segments, out="long.mp4", preserve_state=True)`, supplying
+each continuation's `overlap` in frames. This removes overlap without matching,
+crossfading or mixing and preserves reusable state through the assembled timeline.
+Read the seam report and inspect the boundaries. If repair is needed, use the
+ordinary repair path; affected coverage no longer inherits original state.
 
-**Work at the tool's native length and frame rate**: the duration parameter states
-them. Every segment and hop of a longer take runs at the native length, so a take
-needs (its length ÷ the native length) segments, rounded up. A longer run suits
-only a clip that stands alone and needs it: it costs more GPU time, drifts more
-within itself, and a failed one is redone whole instead of one short segment.
-Clips in a join share one frame rate; regenerate rather than resample.
+**Use fixed anchors when original state cannot be reused.** Each pixel-based continuation starts from the last
+one's output, so its errors compound: identity, exposure and saturation drift a
+little with every hop. Segments pinned at both ends to frames from one master take
+or one set of reference images keep their error bounded. Chain at most two or
+three hops. Reuse the same reference images and voice reference on every segment.
 
-**Every join goes through seamkit.** It matches exposure, blends, repairs and
-reports each seam, and records the input clips as the joined file's sources. Check
-the report, look at the frames either side of each seam, play it through, then deliver.
+**Cuts are free.** If the story allows a cut, cut. A cut needs no matching at all.
+Cuts written into one prompt (shot syntax in MiniMax H3, Wan 2.7's multi-shot, LTX
+multishot text to video) are better still: the model keeps the look consistent
+across them for you. Use a continuous join only when the shot must be continuous.
 
-## Long takes
+**Put joins where there's motion.** A join disappears under a whip pan, a fast
+action, or something crossing the frame. It shows in slow, static moments. When you
+can only pin stills, join where motion momentarily stops: the top of a breath, the
+turn of a swing, a held pose. A still pin can't carry speed, so meet at a point
+where speed is near zero.
 
-**Error compounds with every hop, stored state or not.** A continuation re-renders
-the clip it's pinned to and builds on the result: colors saturate and darken, detail
-smears, the framing creeps, and each hop looks fine next to the last. Stored state
-(a clip pinned from the library) slows the color drift without bounding it.
-**So choose anchors or continuation by what the take needs.** Anchors fit when the
-moments along the take can be planned as stills: each segment runs from one clean
-still to the next, so none inherits another's error and they render in parallel.
-Continuation fits a take that travels, where no still made ahead can predict where
-the previous segment ends; each hop inherits the last one's drift, so runs stay
-short. If neither holds the continuity the user asked for over the whole length,
-explain the tradeoff (visible drift, or a cut at a point you name) and let them
-choose: a requested long take gets no cuts they didn't agree to. Each video tool's
-instructions say how it handles each pin.
+**Work at the tool's frame rate, within its maximum length.** Plan segment counts
+from the length each segment needs. Every clip in a join must share one frame
+rate. Regenerate rather than resample when you can.
 
-**Get a go-ahead before the first video of a long take.** The stills are a cheap
-preview of a long GPU job: changing one now costs a still, later a batch of
-segments. Show them from `run_code` with `stimma.show(paths, role="intermediate",
-title=...)`, then call `ask_user` with the plan (segments or hops and their length,
-any cuts, roughly how long the GPU work takes) and options to go ahead or change
-something; the turn waits for the answer. Estimate from runs here at the planned settings:
-
-```python
-t = await stimma.tasks.run_time(tool, duration=segment_s)  # ≈ t["typical_s"] × ceil(segments ÷ await stimma.tasks.capacity(tool))
-```
-
-Anything that waits on an earlier result adds its own time; queueing and model
-loads add more. If the user said they're away, show the plan and go on.
-
-A planned long take with anchors, using a tool that pins frames at both ends:
-
-1. **Anchor stills**, one per key moment. An anchor is a new moment (the pose,
-   gesture and gaze at that point of the take) made by an image edit of the source
-   image (never an edit of an edit), at the video's shape, sharing its framing,
-   lens and look, where motion briefly settles (a still carries no speed). A crop
-   or reframe of the source shows the source's moment again, so it isn't an
-   anchor. Check them side by side and with `seamkit.anchors`; when it isn't `ok`,
-   redo the stills its `summary` names before any video (edit models often zoom
-   in: try another seed), since a segment between stills framed differently may
-   reframe with a cut. Make every still before any video: swapping image and video
-   models on a GPU costs minutes.
-2. **Go-ahead**, as above.
-3. **Segments:** one between each pair of neighboring anchors, at the tool's native
-   length, the earlier anchor pinned at the start and the later one at the end, both
-   passed as references, the same voice reference on every segment, and the prompt
-   describing the action that takes one into the other.
-4. **Join** them in order with seamkit, none locked, `trim_head: 1` on every
-   segment after the first (it opens on the anchor the last one ended on). Segments
-   slow near their stills and seamkit leaves those frames out (up to about half a
-   second per join), so plan a little extra and trim the last tail to length.
-
-A take that travels, by continuation:
-
-1. **Runs and stills:** split the take into runs of two or three hops, with a cut
-   between runs at points you name, and make a fresh still for each run's start at
-   the video's shape.
-2. **Go-ahead**, as above, with the runs and where they cut.
-3. **Hops** at the native length: the first from its run's still, each next one
-   pinning the previous hop's tail ([Continue a clip](#continue-a-clip)) and
-   describing the same ongoing action.
-4. **Join** each run's hops with `overlap`, and the runs with `cut=True`.
-
-**Speech in a long take comes from one track**, since segments that each invent
-lines can't add up to continuous speech: the user's, or one made first (a talking
-take of the full length, or TTS), whose length sets the segment count. Segments
-keep the native length and the track is sliced to them, wherever a slice ends in a
-sentence: with N-frame segments sharing a frame at each join, segment k pins the
-track as sound from `k × (N − 1) / fps` seconds for `N / fps` seconds, with its two
-anchor stills, and passes the whole track as the voice reference. The pinned sound sets the words and timing, so the prompt says who
-speaks and how, not the words; watch the lip-sync on playback. Join with `audio=`
-set to the track: each frame keeps its place on it, so pacing stays off and a slow
-moment at a seam stays.
-
-**Submit independent segments together** after the go-ahead, sized to
-`await stimma.tasks.workers(tool)`, inside `stimma.batch(title, total=N)` so the
-count is right from the start. A pilot segment only adds a render's wait, since
-each segment is checked and regenerated on its own; render one first only when an
-untested motion, audio or pinning behavior could spoil the whole batch.
-
-**Check every segment; fix only what failed.** Run `seamkit.cuts` on each segment
-(a cut in the first few frames means it popped off its start anchor); after joining,
-check each seam's motion ratio, run `seamkit.drift` and watch the take. Regenerate
-only what failed, with a new seed; if the same pair fails twice, redo the anchor.
+**Every join goes through seamkit.** Its state-preserving path uses the trusted
+frame-accurate assembler; its repair path can match and blend. Bare ffmpeg edits
+do not automatically preserve companion coverage.
+Check the report, look at the frames either side of each seam, then deliver.
 
 ## How much a pin carries
 
 From strongest to weakest:
 
-1. **Sound pinned over a span** (local MiniMax H3 keyframes: an audio item, or a
-   video with `picture: false`). The output follows that recording and its timing,
-   whether speech, music or ambience; stills or clips pinned with it carry the
-   picture. On-screen speech is lip-synced to it, which is worth checking by eye.
-2. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
-   Carries picture, motion and audio, and repeats the clip, giving real overlap to
-   crossfade (LTX keyframes pin clips too, picture only). It carries on only what the
-   clip is already doing; ask for another action or framing and local H3 tends to cut.
-3. **A reference video plus a voice reference** (H3 Reference to Video on Stimma
-   Cloud). Carries motion and voice; opens near the reference's last frame, not on it.
-4. **An extend tool** (SkyReels V4 Extend on the cloud, LTX Extend Video locally).
+1. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
+   Carries picture, motion and audio across the join. The output repeats the pinned
+   clip, which gives seamkit real overlap to crossfade. LTX keyframes in ComfyUI pin
+   clips too, but picture only.
+2. **A reference video plus a voice reference** (MiniMax H3 Reference to Video on
+   Stimma Cloud). Carries motion and voice. It opens near the reference's last
+   frame, not on it, so there's no exact overlap.
+3. **An extend tool** (SkyReels V4 Extend on the cloud, LTX Extend Video locally).
    The model continues the clip from its own context.
-5. **First and last still frames** (most image-to-video tools). Fixes position at
+4. **First and last still frames** (most image-to-video tools). Fixes position at
    both ends, not motion, and usually no audio.
-6. **The last frame as a first frame.** Fine for one or two continuations; warn that
-   the join may show, since neither motion nor voice carries over.
+5. **The last frame as a first frame.** Fine for one or two continuations. Tell the
+   user the join may show, because neither motion nor voice carries over.
 
 Pick the strongest one the available tools offer.
 
@@ -200,77 +135,84 @@ from the end back to the start, then join with `loop=True`.
 **Choose the loop window first, before generating the bridge.** The bridge is
 pinned to the window's ends, so the window can't change afterwards.
 
-- **By default, leave out a few frames at each end** (2–4 at 24 fps), where
-  reference frames, pinned frames and slow-downs sit.
+- **By default, leave out a few frames at each end** (2–4 at 24 fps). The first
+  frame is often the reference image, with its own texture. The ends are where
+  pinned frames and slow-downs sit. Losing them costs nothing and removes a
+  likely discontinuity.
 - **Then measure the motion:** `await seamkit.motion(stimma, path)`. If `settles_at`
   is past about half a second, the clip opens with a lull: start the window
   there. If `fades_at` is well before the end, it slows down into its last frame:
   end the window there.
-- **Keep the length if it matters:** make the bridge longer by however much you cut.
+- **Keep the length if it matters.** Make the bridge longer by however much you
+  cut. A 1.5 s lull cut from the start comes back as a bridge 1.5 s longer, so the
+  loop runs the same length with the stall gone.
 - Take the bridge's pins (frames or clips) from the window's ends, not the clip's.
   Join with the same window: `trim_head` and `trim_tail` on the locked segment.
+- If the clip's ends move fast and the tool only pins stills, also prefer window
+  ends where motion pauses.
 
 Then generate the bridge:
 
 - **Local MiniMax H3 Reference to Video:** pin the window's last second (with sound)
-  at 0 and its first second at the end, with the clip in `input_audios` for the
-  voice, and join with `overlap` set to the pinned frame count on both segments;
-  clip pins carry motion, so the bridge has no lull. Run `seamkit.cuts` on it: when
-  the window's ends differ much, H3 can cut into the end clip; then pin the window's
-  last and first frames as stills instead.
-- **LTX Loop (local):** bridges and joins in one step. Trim the clip to its window
-  first, then `seamkit.check` the result with `loop=True`.
+  at 0 and its first second at the end. Pass the clip in `input_audios` for the
+  voice. Join with `overlap` set to the pinned frame count on both segments (see
+  [seamkit](#seamkit)). Clip pins carry motion, so the bridge doesn't open with its own
+  lull. A bridge pinned to stills can, which is one more reason to prefer clips.
+- **LTX Loop (local):** does the bridge and the join in one step, on the whole clip.
+  Trim the clip to its window first, then run `seamkit.check` on the result with
+  `loop=True`.
 - **Cloud, or any first/last-frame tool:** first frame = the window's last frame,
   last frame = its first frame. Pick a tool that returns its pinned frames exactly;
   LTX 2.5 returns them cropped.
-- **Sound:** a silent bridge (Kling with frames) gets `audio="loop"`: a seamless loop of the clip's sound.
+- **Sound:** if the bridge comes back silent (Kling with frames, for example), use
+  `audio="loop"`, which builds a seamless loop of the clip's own sound.
 
 ### Loop from scratch
 
 Pin the same image as both the first and the last frame. Describe motion that goes
 out and comes back. Check the wrap with `seamkit.check(stimma, path, loop=True)`.
 
-### Continue a clip
-
-An extension runs in hops at the native length; past two or three, see
-[Long takes](#long-takes).
+### Continue a clip, or build a long take
 
 - Check where the previous segment's motion fades (`seamkit.motion`). Continue from
   before a slow ending, not from inside it.
-- **Local:** H3 Reference to Video, pinning the previous segment's tail clip with
-  sound at 0 from the library, with the same voice and reference images. The clip
-  sets the opening framing, so the prompt describes what happens next and any change
-  of framing as camera movement. Run `seamkit.cuts` with the pinned length as
-  `ignore_before`, regenerate a segment that cuts, and join with `overlap`.
+- **Local:** MiniMax H3 Reference to Video, pinning the previous segment's last
+  second with sound at 0, the same voice reference, and the same reference images.
+  Pin where each segment should land as a keyframe at its end. Join with `overlap`.
 - **Cloud:** SkyReels V4 Extend, or MiniMax H3 Reference to Video with the clip's last
   few seconds in `input_videos` and `input_audios`. Join without `overlap`; seamkit
   drops repeated frames and matches the exposure.
+- **For a long take with a known route:** design key-frame stills along the path,
+  generate a first/last-frame segment between each consecutive pair, and put each
+  join on a moment of motion. The segments never chain, so they never drift.
 
-### Bridge two clips
+### Bridge two different clips
 
-Any two clips whose ends show different moments, including two made from one still.
 The bridge's first frame is clip A's last frame and its last frame is clip B's
 first. Locally, LTX Stitch does this and keeps the source audio. Otherwise use a
-first/last-frame tool, or local H3 with those two frames pinned as stills (H3 tends
-to cut into a clip pinned at the end unless the two clips nearly match). Lock both clips;
+first/last-frame tool, or local H3 with clips pinned at both ends. Lock both clips;
 the bridge is adjusted to fit both.
 
 ### Talking head and dialogue
 
-- Generate one sentence or line per segment and **cut** between segments (a new
-  angle, or B-roll). Speech that runs through one take, or a given or TTS
-  voiceover, sets the timing: pin each segment's slice of it as sound where the
-  tool can ([Long takes](#long-takes)), or use a driving-audio tool.
-- Use the same voice reference (`input_audios` on H3 Reference to Video) and face
-  references on every segment.
+- Split the script at sentence boundaries. Generate one sentence or line per segment
+  and **cut** between segments: change the angle, or cut to B-roll. Don't try to
+  make spoken segments continuous.
+- Keep the voice consistent with a voice reference on every segment (`input_audios`
+  on H3 Reference to Video), plus the same face reference images.
+- If the user supplies the voiceover, or it comes from a TTS tool, make the audio
+  first and fix its timing before generating any video. Then generate each segment
+  to its piece of the audio, with a tool that takes driving audio if one is
+  available.
 - For dialogue, models with strong lip-sync (Veo 3.1, MiniMax H3, Seedance 2.0)
   beat generating silent video and syncing it afterwards.
 
 ### Multi-shot sequence
 
 Write the cuts into one generation when the shots fit its length. Across separate
-generations, keep the same reference images and voice and join with `cut=True`;
-seamkit still encodes every clip once, consistently.
+generations, keep identity with the same reference images and voice, and join with
+`cut=True`. A cut needs no matching. Run seamkit anyway, so every clip is encoded
+once, consistently.
 
 ## seamkit
 
@@ -342,7 +284,7 @@ jump over a normal frame step; each segment lists its `actions`.
 
 - **`moment.same` is false (a warning says "different moments"):** pacing and
   blending smooth the numbers, not what the eye sees. Bridge it
-  ([Bridge two clips](#bridge-two-clips)), or mark a wanted cut `cut=True`.
+  ([Bridge two clips](#bridge-two-different-clips)), or mark a wanted cut `cut=True`.
 - **After:** deltas within 1–2 levels and a motion ratio under about 2 usually don't
   show. These are screening signals, not proof: play the take around each seam.
 - **`motion_step_ratio` well above 2 after the join:** the motion jumps, and color
@@ -357,13 +299,17 @@ catch everything else.
 
 ## Finishing
 
-Join with seamkit → interpolate if wanted → upscale if wanted → deliver. Processing
-segments separately treats each a little differently and makes new seams, so
-process the joined video once, without re-encoding between steps.
+The order: join with seamkit → frame interpolation if wanted → upscale if wanted →
+deliver. Upscaling or interpolating segments separately treats each one a little
+differently, and that creates new seams. Process the joined video once. Don't
+re-encode between steps unless a tool requires it.
 
 ## Talking to the user
 
-- When it's done, describe the joins in plain words ("both joins look seamless;
-  the second needed a small exposure correction"), not the numbers, unless asked.
-- If a join can't be made invisible, say why and offer a fix: a cut, another join
-  point, or a stronger pin.
+- Before a long render, state the plan in one short message: the segments, the tool,
+  the lengths, which joins are cuts and which are continuous. Then run all of it.
+- When it's done, describe the joins in plain words ("both joins in the loop are
+  invisible; the second one needed a small exposure correction"), not the numbers,
+  unless they ask.
+- If a join can't be made invisible, say why, and offer the fix: a cut, a different
+  join point, or a bridge with a stronger pin.
