@@ -102,11 +102,11 @@ Exception to the imperative rule: when a mask defines the edit region, prompt sh
 
 ## Image-to-Video Prompts
 
-The start image supplies how everything looks, and the prompt supplies what happens. But the model draws every frame again, and whatever the prompt doesn't hold onto drifts toward the typical as the clip plays: faces turn generic, unusual details smooth away, and the framing widens. Describe the motion, and also say what stays the same.
+The start image supplies how everything looks, and the prompt supplies what happens. Write what changes and the constraints on it, never what the image already shows. A description of the people, their clothes, the place or the light that differs even slightly from the image gives the model two versions of the scene to reconcile, and it does that with a jump or a cut, often within the first second. The same goes for any frame or clip pinned on a video's timeline.
 
-- **Hold the camera still by default.** Unless the user asks for camera movement, write a static shot that keeps the start image's framing ("static shot, framing unchanged, no zoom or pull-back"). When the user wants a move, name it exactly ("slow push-in").
-- **Frame relative to the subject, not the scene.** "Close on the subject, framed as in the start image" keeps the subject large. Framing described through the setting lets the shot drift wide and shrinks the subject.
+- **Hold the camera still by default.** Unless the user asks for camera movement, write a static shot that keeps the start image's framing ("static shot, framing unchanged, no zoom or pull-back"). An unstated camera tends to move. When the user wants a move, name it exactly ("slow push-in").
+- **Refer to the subject, don't describe it.** Write "the woman" or "the woman in the image", not her hair, outfit or build. If something must stay as shown, say that it stays ("still in the same outfit"), not what it looks like.
+- **Frame relative to the subject, as in the start image.** "Close on the subject, framed as in the start image" keeps the subject large. Framing described through the setting lets the shot drift wide and shrinks the subject.
 - **Restate the framing as the action unfolds.** One framing line at the start fades as the motion builds. Close motion sentences with where the subject sits in the frame ("…turns, still filling the frame").
-- **Describe the appearance that must hold, in positive terms.** "Wearing exactly the outfit shown" holds better than "don't change the clothes." Name distinctive features outright. If you only warn against change, the model fills in the typical and erases what made the subject distinctive.
-- **Spend words on what must stay.** What the prompt dwells on stays stable, and what it mentions once drifts. Give the subject and framing most of the words, and keep the setting to a clause unless it is the subject.
+- **Describe only what's new.** Name a new object, person or change of light when it enters, because the image can't show it yet.
 - **Word each video in a set differently.** Several clips written from one template with swapped nouns drift toward each other. Phrase each one's motion and description in its own words.

@@ -83,7 +83,14 @@ ordinary repair path; affected coverage no longer inherits original state.
 one's output, so its errors compound: identity, exposure and saturation drift a
 little with every hop. Segments pinned at both ends to frames from one master take
 or one set of reference images keep their error bounded. Chain at most two or
-three hops. Reuse the same reference images and voice reference on every segment.
+three hops. Reuse the same voice reference on every segment.
+
+**Prompt what changes, not what a pin shows.** A start image or a pinned frame or
+clip already sets how everything looks. Write the motion, the camera (say "static
+shot" when it should hold) and what must stay; never describe the people, clothes,
+place or light it shows. A second description that differs even slightly makes the
+model jump or cut to reconcile the two. A cut or jump right after a pin almost always
+means the prompt conflicts with the pin: fix the prompt before blaming the tool.
 
 **Cuts are free.** If the story allows a cut, cut. A cut needs no matching at all.
 Cuts written into one prompt (shot syntax in MiniMax H3, Wan 2.7's multi-shot, LTX
@@ -109,7 +116,7 @@ Check the report, look at the frames either side of each seam, then deliver.
 
 From strongest to weakest:
 
-1. **A clip pinned with its sound** (local MiniMax H3 Reference to Video keyframes).
+1. **A clip pinned with its sound** (local MiniMax H3 keyframes).
    Carries picture, motion and audio across the join. The output repeats the pinned
    clip, which gives seamkit real overlap to crossfade. LTX keyframes in ComfyUI pin
    clips too, but picture only.
@@ -176,9 +183,12 @@ out and comes back. Check the wrap with `seamkit.check(stimma, path, loop=True)`
 
 - Check where the previous segment's motion fades (`seamkit.motion`). Continue from
   before a slow ending, not from inside it.
-- **Local:** MiniMax H3 Reference to Video, pinning the previous segment's last
-  second with sound at 0, the same voice reference, and the same reference images.
-  Pin where each segment should land as a keyframe at its end. Join with `overlap`.
+- **Local:** MiniMax H3 Text to Video, pinning the previous segment's last 39
+  frames with sound at 0. Prompt only what happens next and how the camera behaves.
+  Never pass the first segment's start image: the pin already carries the look, and
+  a picture of an earlier moment conflicts with it. Use Reference to Video only for
+  something the pin can't carry, such as a voice that hasn't spoken yet. Pin where a
+  segment should land as a keyframe at its end. Join with `overlap`.
 - **Cloud:** SkyReels V4 Extend, or MiniMax H3 Reference to Video with the clip's last
   few seconds in `input_videos` and `input_audios`. Join without `overlap`; seamkit
   drops repeated frames and matches the exposure.
