@@ -47,7 +47,7 @@ attention, in what order, with what explanation, and what you need from them.
   again rather than re-showing items in chat. When you revise after a review,
   lead with what changed and what still needs the user's eyes. Work they've
   already reviewed and you didn't change doesn't need to be in front of them
-  again at full size: show it as a small strip, collapse it, summarize it, or
+  again at a large size: show it as a small strip, collapse it, summarize it, or
   take it off, whichever suits the task. Don't assume what they didn't comment
   on is settled; ask when it matters ("Keep the other two as they are?").
 - **Keeps your judgment visible.** If you set something aside, you can keep it
@@ -72,7 +72,9 @@ cropped. There are no scripts and no external URLs.
 - `stimma-section`: `label`, `note`; `collapsible` and `collapsed` fold it,
   keeping a strip of its pictures in the header.
 - `stimma-media`: `ref` names the media (its media id, `asset:<id>`, or a
-  workspace path); `caption` is optional.
+  workspace path); `caption` is optional. Pictures go in a
+  `stimma-media-group`. One on its own is a featured picture, shown larger:
+  use that for a single hero, never for a set.
 - `stimma-media-group`: `layout` is `rows` (justified rows, the default; good
   for almost everything, mixed or uniform), `masonry` (portrait-heavy mixes) or
   `uniform` (equal cells set by `aspect="16/9"`, for sweeps where position
@@ -228,7 +230,7 @@ from a template:
   rationale, followed by the choice.
 - **Tuning a prompt or a setting:** `rating="stars"`, uniform cells, the
   variable as each caption.
-- **Converging on a set:** what's new or redone first, at full size, each with
+- **Converging on a set:** what's new or redone first, at size `l`, each with
   what you did about the comment it answers; work that's already settled as a
   small strip; earlier takes collapsed or gone.
 - **A body of work that keeps growing:** a "Start here" section with the best so
@@ -239,5 +241,8 @@ from a template:
   ready, not the working sheet with its history.
 - **A batch of deliverables:** one row per item with its specs (a thumbs up is
   the approval), plus a comparison wherever you retouched something.
+- **A dataset or a frame pull:** dozens of pictures of one subject. One group
+  per round or angle at size `s` or `m`, so the whole set reads at a glance and
+  gaps stand out; the user opens any frame full size in the slideshow.
 - **A storyboard or sequence:** sections in story order, each with its shots
   and the shot notes beside them.
