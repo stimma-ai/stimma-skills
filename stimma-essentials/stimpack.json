@@ -1,8 +1,8 @@
 {
   "name": "stimma-essentials",
   "display_name": "Stimma Essentials",
-  "description": "Core skills for everyday Stimma work: contact sheets, tool selection, prompt writing, variations, layout design, vector design, video production, parameter grids, and subject isolation",
-  "version": "4",
+  "description": "Core skills for everyday Stimma work: contact sheets, tool selection, prompt writing, variations, layout design, vector design, video production, parameter grids, subject isolation, and building elements",
+  "version": "5",
   "format": 1,
   "author": "system",
   "tags": [
