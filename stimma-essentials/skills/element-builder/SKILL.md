@@ -68,6 +68,33 @@ sections; keep that shape.
   locking traits. It tells the writer it may follow the prompt instead of
   repeating the reference.
 
+### Let the images carry the look
+
+When a reference image or a LoRA is in play, it is the source of truth for how
+the subject looks. Writing the face, hair or product out again in the prompt
+gives the model a second, rougher version to blend with the image, and the
+result drifts toward the words. So the prompt should point at the image the way
+the model expects ("the woman in image 1") and spend its words on what changes in
+this shot: pose, expression, outfit, setting, light.
+
+Put the written description of the locked look inside a condition, so it is used
+only when nothing visual carries it, such as a text-only tool or a run where none
+of the element's images were placed:
+
+```markdown
+{{#if refs_active or lora_active}}
+She is the woman in the reference image. Don't describe her face, hair or build;
+describe what she wears, does and where she is.
+{{else}}
+Hazel eyes, a short black bob, a small scar through the right eyebrow.
+{{/if}}
+```
+
+Keep outside the condition only what no image can show and the prompt must
+still say: "always left-handed", "the label text reads 'North Fork' word for
+word", "never smiling with teeth". A trait the images show doesn't go there just
+because it matters.
+
 Add a default where one helps ("usually in her green field jacket unless the
 prompt says otherwise"), but keep defaults few. Every unnecessary rule becomes a
 fight with the user's prompt.
@@ -154,18 +181,10 @@ Each entry in `loras` names a LoRA the user has:
 A LoRA needs a `fingerprint` or a `display_name`. Set `model_family` so it is
 only offered on matching tools, and add a `trigger` word if the LoRA needs one.
 
-When a LoRA is active it owns the identity. Describing the face again in the
-prompt fights it and usually makes the likeness worse, so the instructions should
-say so. Use the `lora_active` condition:
-
-```markdown
-{{#if lora_active}}
-Her likeness comes from the LoRA. Don't describe her face, eyes or hair color;
-describe outfit, pose, expression and setting only.
-{{else}}
-Hazel eyes, a short black bob, a small scar through the right eyebrow.
-{{/if}}
-```
+When a LoRA is active it owns the identity, the same way a reference image does
+(see "Let the images carry the look"). The `refs_active or lora_active` block
+covers both. Add a LoRA-only line only when the LoRA needs something of its own,
+such as its trigger word or a weight note.
 
 ## Per-model instructions
 
@@ -196,6 +215,8 @@ The conditions you can count on:
 - `task_type` and `media_kind` (image or video), `supports_images` and
   `max_ref_images` (how many reference slots the tool has).
 - `lora_available` and `lora_active`.
+- `refs_active`: one or more of this element's images are in the run's
+  reference slots.
 - `aspect_ratio` and `orientation` (`portrait`, `landscape` or `square`).
 - `surface`: `chat` when you read it yourself.
 
@@ -210,8 +231,9 @@ it doesn't recognize.
 **Character.** Lock the face, build, skin, eyes, hair color and distinguishing
 marks; leave clothes, hair styling, expression and setting free unless the user
 says otherwise. Cover angles and distances first, then expressions. Check every
-face reference with `face_similarity` against the cover. If there's a LoRA, the
-instructions should stop describing the face when it's active.
+face reference with `face_similarity` against the cover. The face description
+goes only in the `{{else}}` of a `refs_active or lora_active` block: with an
+image or a LoRA in play, the prompt points at it and describes the shot.
 
 **Product.** Lock silhouette, proportions, materials, colors, finish, logo
 placement and any text on the product, word for word. Reference the front, a
@@ -247,7 +269,13 @@ wordmarks are best added afterward.
 3. Try it: generate a few varied prompts with the element and show the results
    side by side. Note where it drifts.
 4. Fix what drifted: sharpen a locked trait, swap a weak reference, add a missing
-   angle, write a per-model block. Save with a note saying what changed.
+   angle, write a per-model block. Save with a note saying what changed. If the
+   likeness drifts while a reference is in use, check first that the instructions
+   aren't describing the face again outside the `{{else}}`.
+
+When you open an older element whose instructions describe the face or the
+product with no condition around it, move that description into the `{{else}}`
+of a `refs_active or lora_active` block and tell the user why in a sentence.
 
 When the user asks to change something ("make her jacket red from now on"),
 open the element, edit the instructions, and save. Don't just remember it for
